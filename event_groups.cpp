@@ -36,11 +36,11 @@
 #include "task.hpp"
 #include "timers.h"
 
-typedef struct EventGroupDef_t {
+struct EventGroup_t {
   EventBits_t EventBits;
   List_t<TCB_t> TasksWaitingForBits;
   uint8_t StaticallyAllocated;
-} EventGroup_t;
+};
 
 static BaseType_t TestWaitCondition(const EventBits_t uxCurrentEventBits,
                                     const EventBits_t uxBitsToWaitFor,
@@ -49,10 +49,6 @@ static BaseType_t TestWaitCondition(const EventBits_t uxCurrentEventBits,
 EventGroupHandle_t xEventGroupCreateStatic(
     StaticEventGroup_t *EventGroupBuffer) {
   EventGroup_t *EventBits;
-  configASSERT(EventGroupBuffer);
-#if (configASSERT_DEFINED == 1)
-  { configASSERT(sizeof(StaticEventGroup_t) == sizeof(EventGroup_t)); }
-#endif
   EventBits = (EventGroup_t *)EventGroupBuffer;
   if (EventBits != NULL) {
     EventBits->EventBits = 0;
@@ -83,14 +79,6 @@ EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
   EventGroup_t *EventBits = xEventGroup;
   BaseType_t xAlreadyYielded;
   BaseType_t xTimeoutOccurred = false;
-  configASSERT((uxBitsToWaitFor & EVENT_BITS_CONTROL_BYTES) == 0);
-  configASSERT(uxBitsToWaitFor != 0);
-#if ((INCLUDE_TaskGetSchedulerState == 1) || (configUSE_TIMERS == 1))
-  {
-    configASSERT(!((GetSchedulerState() == taskSCHEDULER_SUSPENDED) &&
-                   (xTicksToWait != 0)));
-  }
-#endif
   TaskSuspendAll();
   {
     uxOriginalBitValue = EventBits->EventBits;
@@ -151,15 +139,6 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
   BaseType_t xWaitConditionMet, xAlreadyYielded;
   BaseType_t xTimeoutOccurred = false;
 
-  configASSERT(xEventGroup);
-  configASSERT((uxBitsToWaitFor & EVENT_BITS_CONTROL_BYTES) == 0);
-  configASSERT(uxBitsToWaitFor != 0);
-#if ((INCLUDE_TaskGetSchedulerState == 1) || (configUSE_TIMERS == 1))
-  {
-    configASSERT(!((GetSchedulerState() == taskSCHEDULER_SUSPENDED) &&
-                   (xTicksToWait != 0)));
-  }
-#endif
   TaskSuspendAll();
   {
     const EventBits_t uxCurrentEventBits = EventBits->EventBits;
@@ -222,8 +201,6 @@ EventBits_t xEventGroupClearBits(EventGroupHandle_t xEventGroup,
   EventGroup_t *EventBits = xEventGroup;
   EventBits_t uRet;
 
-  configASSERT(xEventGroup);
-  configASSERT((uxBitsToClear & EVENT_BITS_CONTROL_BYTES) == 0);
   ENTER_CRITICAL();
   {
     uRet = EventBits->EventBits;
@@ -247,8 +224,6 @@ EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
   EventGroup_t *EventBits = xEventGroup;
   BaseType_t xMatchFound = false;
 
-  configASSERT(xEventGroup);
-  configASSERT((uxBitsToSet & EVENT_BITS_CONTROL_BYTES) == 0);
   List_t<TCB_t> *List = &(EventBits->TasksWaitingForBits);
   Item_t<TCB_t> const *ListEnd = &List->End;
   TaskSuspendAll();
@@ -293,7 +268,6 @@ EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
 
 void vEventGroupDelete(EventGroupHandle_t xEventGroup) {
   EventGroup_t *EventBits = xEventGroup;
-  configASSERT(EventBits);
   List_t<TCB_t> *TasksWaitingForBits = &(EventBits->TasksWaitingForBits);
   TaskSuspendAll();
   {
@@ -321,8 +295,6 @@ BaseType_t xEventGroupGetStaticBuffer(EventGroupHandle_t xEventGroup,
                                       StaticEventGroup_t **EventGroupBuffer) {
   BaseType_t Ret;
   EventGroup_t *EventBits = xEventGroup;
-  configASSERT(EventBits);
-  configASSERT(EventGroupBuffer);
 
   if (EventBits->StaticallyAllocated == (uint8_t) true) {
     *EventGroupBuffer = (StaticEventGroup_t *)EventBits;

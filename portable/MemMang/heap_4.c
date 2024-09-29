@@ -106,11 +106,6 @@ typedef struct A_BLOCK_LINK
 #else
     #define heapPROTECT_BLOCK_POINTER( Block )    ( Block )
 #endif /* configENABLE_HEAP_PROTECTOR */
-/* Assert that a heap block pointer is within the heap bounds. */
-#define heapVALIDATE_BLOCK_POINTER( Block )                          \
-    configASSERT( ( ( uint8_t * ) ( Block ) >= &( ucHeap[ 0 ] ) ) && \
-                  ( ( uint8_t * ) ( Block ) <= &( ucHeap[ configTOTAL_HEAP_SIZE - 1 ] ) ) )
-
 /*
  * Inserts a block of memory that is being freed into the correct position in
  * the list of free memory blocks.  The block being freed will be merged with
@@ -215,16 +210,14 @@ void * pvPortMalloc( size_t xWantedSize )
                     PreviousBlock->NextFreeBlock = Block->NextFreeBlock;
                     /* If the block is larger than required it can be split into
                      * two. */
-                    configASSERT( heapSUBTRACT_WILL_UNDERFLOW( Block->xBlockSize, xWantedSize ) == 0 );
-                    if( ( Block->xBlockSize - xWantedSize ) > heapMINIMUM_BLOCK_SIZE )
+                                        if( ( Block->xBlockSize - xWantedSize ) > heapMINIMUM_BLOCK_SIZE )
                     {
                         /* This block is to be split into two.  Create a new
                          * block following the number of bytes requested. The void
                          * cast is used to prevent byte alignment warnings from the
                          * compiler. */
                         NewBlockLink = ( void * ) ( ( ( uint8_t * ) Block ) + xWantedSize );
-                        configASSERT( ( ( ( size_t ) NewBlockLink ) & portBYTE_ALIGNMENT_MASK ) == 0 );
-                        /* Calculate the sizes of two blocks split from the
+                                                /* Calculate the sizes of two blocks split from the
                          * single block. */
                         NewBlockLink->xBlockSize = Block->xBlockSize - xWantedSize;
                         Block->xBlockSize = xWantedSize;
@@ -261,8 +254,7 @@ void * pvPortMalloc( size_t xWantedSize )
         }
     }
     #endif /* if ( configUSE_MALLOC_FAILED_HOOK == 1 ) */
-    configASSERT( ( ( ( size_t ) pvReturn ) & ( size_t ) portBYTE_ALIGNMENT_MASK ) == 0 );
-    return pvReturn;
+        return pvReturn;
 }
 
 void vPortFree( void * pv )
@@ -277,9 +269,7 @@ void vPortFree( void * pv )
         /* This casting is to keep the compiler from issuing warnings. */
         Link = ( void * ) puc;
         heapVALIDATE_BLOCK_POINTER( Link );
-        configASSERT( heapBLOCK_IS_ALLOCATED( Link ) != 0 );
-        configASSERT( Link->NextFreeBlock == heapPROTECT_BLOCK_POINTER( NULL ) );
-        if( heapBLOCK_IS_ALLOCATED( Link ) != 0 )
+                        if( heapBLOCK_IS_ALLOCATED( Link ) != 0 )
         {
             if( Link->NextFreeBlock == heapPROTECT_BLOCK_POINTER( NULL ) )
             {

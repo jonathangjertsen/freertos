@@ -317,8 +317,8 @@ BaseType_t PriorityInherit(TaskHandle_t const pMutexHolder);
 
 BaseType_t PriorityDisinherit(TaskHandle_t const pMutexHolder);
 
-void PriorityDisinheritAfterTimeout(
-    TaskHandle_t const pMutexHolder, UBaseType_t uxHighestPriorityWaitingTask);
+void PriorityDisinheritAfterTimeout(TaskHandle_t const pMutexHolder,
+                                    UBaseType_t uxHighestPriorityWaitingTask);
 
 TaskHandle_t IncrementMutexHeldCount(void);
 

@@ -303,8 +303,7 @@ static uint32_t ProcessTickInterrupt( void )
 {
     uint32_t ulSwitchRequired;
     /* Process the tick itself. */
-    configASSERT( xPortRunning );
-    ulSwitchRequired = ( uint32_t ) TaskIncrementTick();
+        ulSwitchRequired = ( uint32_t ) TaskIncrementTick();
     return ulSwitchRequired;
 }
 
@@ -385,8 +384,7 @@ static void ProcessSimulatedInterrupts( void )
                 ThreadState = ( ThreadState_t * ) ( *( size_t * ) CurrentTCB );
                 /* ThreadState->pvThread can be NULL if the task deleted
                  * itself - but a deleted task should never be resumed here. */
-                configASSERT( ThreadState->pvThread != NULL );
-                ResumeThread( ThreadState->pvThread );
+                                ResumeThread( ThreadState->pvThread );
             }
             /* If the thread that is about to be resumed stopped running
              * because it yielded then it will wait on an event when it resumed
@@ -423,10 +421,8 @@ void vPortDeleteThread( void * TaskToDelete )
          * tasks (rather than deleting themselves) as the task stacks will not be
          * freed. */
         ulErrorCode = TerminateThread( ThreadState->pvThread, 0 );
-        configASSERT( ulErrorCode );
-        ulErrorCode = CloseHandle( ThreadState->pvThread );
-        configASSERT( ulErrorCode );
-        ReleaseMutex( pvInterruptEventMutex );
+                ulErrorCode = CloseHandle( ThreadState->pvThread );
+                ReleaseMutex( pvInterruptEventMutex );
     }
 }
 
@@ -454,8 +450,7 @@ void vPortCloseRunningThread( void * TaskToDelete,
     ThreadState->pvThread = NULL;
     /* Close the thread. */
     ulErrorCode = CloseHandle( pvThread );
-    configASSERT( ulErrorCode );
-    /* This is called from a critical section, which must be exited before the
+        /* This is called from a critical section, which must be exited before the
      * thread stops. */
     EXIT_CRITICAL();
     /* Record that a yield is pending so that the next tick interrupt switches
@@ -482,8 +477,7 @@ void vPortEndScheduler( void )
 void vPortGenerateSimulatedInterrupt( uint32_t ulInterruptNumber )
 {
     ThreadState_t * ThreadState = ( ThreadState_t * ) *( ( size_t * ) CurrentTCB );
-    configASSERT( xPortRunning );
-    if( ( ulInterruptNumber < portMAX_INTERRUPTS ) && ( pvInterruptEventMutex != NULL ) )
+        if( ( ulInterruptNumber < portMAX_INTERRUPTS ) && ( pvInterruptEventMutex != NULL ) )
     {
         WaitForSingleObject( pvInterruptEventMutex, INFINITE );
         ulPendingInterrupts |= ( 1 << ulInterruptNumber );
@@ -526,8 +520,7 @@ void vPortGenerateSimulatedInterruptFromWindowsThread( uint32_t ulInterruptNumbe
          * handler thread.  Must be outside of a critical section to get here so
          * the handler thread can execute immediately pvInterruptEventMutex is
          * released. */
-        configASSERT( ulCriticalNesting == 0UL );
-        SetEvent( pvInterruptEvent );
+                SetEvent( pvInterruptEvent );
         /* Give back the mutex so the simulated interrupt handler unblocks
          * and can access the interrupt handler variables. */
         ReleaseMutex( pvInterruptEventMutex );
@@ -581,8 +574,7 @@ void vPortExitCritical( void )
             if( ulPendingInterrupts != 0UL )
             {
                 ThreadState_t * ThreadState = ( ThreadState_t * ) *( ( size_t * ) CurrentTCB );
-                configASSERT( xPortRunning );
-                /* The interrupt won't actually executed until
+                                /* The interrupt won't actually executed until
                  * pvInterruptEventMutex is released as it waits on both
                  * pvInterruptEventMutex and pvInterruptEvent.
                  * pvInterruptEvent is only set when the simulated
@@ -607,8 +599,7 @@ void vPortExitCritical( void )
     {
         if( lMutexNeedsReleasing  )
         {
-            configASSERT( xPortRunning );
-            ReleaseMutex( pvInterruptEventMutex );
+                        ReleaseMutex( pvInterruptEventMutex );
         }
     }
 }

@@ -26,10 +26,7 @@
  * https://github.com/FreeRTOS
  *
  */
-
-#ifndef INC_FREERTOS_H
-#define INC_FREERTOS_H
-
+#pragma once
 #include <stddef.h>
 #include <stdint.h>
 
@@ -80,10 +77,6 @@
 #endif
 #if (configUSE_PICOLIBC_TLS == 1)
 #include "picolibc-freertos.h"
-#endif
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 #ifndef configUSE_C_RUNTIME_TLS_SUPPORT
@@ -250,27 +243,7 @@ extern "C" {
 #if configMAX_TASK_NAME_LEN < 1
 #error configMAX_TASK_NAME_LEN must be set to a minimum of 1 in FreeRTOSConfig.h
 #endif
-#ifndef configASSERT
-#define configASSERT(x)
-#define configASSERT_DEFINED 0
-#else
-#define configASSERT_DEFINED 1
-#endif
 
-#ifndef configPRECONDITION
-#define configPRECONDITION(X) configASSERT(X)
-#define configPRECONDITION_DEFINED 0
-#else
-#define configPRECONDITION_DEFINED 1
-#endif
-#ifndef configCHECK_HANDLER_INSTALLATION
-#define configCHECK_HANDLER_INSTALLATION 1
-#else
-
-#if ((configCHECK_HANDLER_INSTALLATION == 1) && (configASSERT_DEFINED == 0))
-#error You must define configASSERT() when configCHECK_HANDLER_INSTALLATION is 1.
-#endif
-#endif
 #ifndef portMEMORY_BARRIER
 #define portMEMORY_BARRIER()
 #endif
@@ -617,7 +590,3 @@ typedef struct xSTATIC_STREAM_BUFFER {
 } StaticStreamBuffer_t;
 
 typedef StaticStreamBuffer_t StaticMessageBuffer_t;
-#ifdef __cplusplus
-}
-#endif
-#endif

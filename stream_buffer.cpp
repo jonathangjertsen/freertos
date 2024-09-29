@@ -218,15 +218,11 @@ StreamBufferHandle_t xStreamBufferGenericCreate(
 
   if (xStreamBufferType == sbTYPE_MESSAGE_BUFFER) {
     ucFlags = sbFLAGS_IS_MESSAGE_BUFFER;
-    configASSERT(xBufferSizeBytes > sbBYTES_TO_STORE_MESSAGE_LENGTH);
   } else if (xStreamBufferType == sbTYPE_STREAM_BATCHING_BUFFER) {
     ucFlags = sbFLAGS_IS_BATCHING_BUFFER;
-    configASSERT(xBufferSizeBytes > 0);
   } else {
     ucFlags = 0;
-    configASSERT(xBufferSizeBytes > 0);
   }
-  configASSERT(xTriggerLevelBytes <= xBufferSizeBytes);
 
   if (xTriggerLevelBytes == (size_t)0) {
     xTriggerLevelBytes = (size_t)1;
@@ -263,29 +259,17 @@ StreamBufferHandle_t xStreamBufferGenericCreateStatic(
   StreamBufferHandle_t Ret;
   uint8_t ucFlags;
 
-  configASSERT(pucStreamBufferStorageArea);
-  configASSERT(pStaticStreamBuffer);
-  configASSERT(xTriggerLevelBytes <= xBufferSizeBytes);
-
   if (xTriggerLevelBytes == (size_t)0) {
     xTriggerLevelBytes = (size_t)1;
   }
 
   if (xStreamBufferType == sbTYPE_MESSAGE_BUFFER) {
     ucFlags = sbFLAGS_IS_MESSAGE_BUFFER | sbFLAGS_IS_STATICALLY_ALLOCATED;
-    configASSERT(xBufferSizeBytes > sbBYTES_TO_STORE_MESSAGE_LENGTH);
   } else if (xStreamBufferType == sbTYPE_STREAM_BATCHING_BUFFER) {
     ucFlags = sbFLAGS_IS_BATCHING_BUFFER | sbFLAGS_IS_STATICALLY_ALLOCATED;
-    configASSERT(xBufferSizeBytes > 0);
   } else {
     ucFlags = sbFLAGS_IS_STATICALLY_ALLOCATED;
   }
-#if (configASSERT_DEFINED == 1)
-  {
-    volatile size_t xSize = sizeof(StaticStreamBuffer_t);
-    configASSERT(xSize == sizeof(StreamBuffer_t));
-  }
-#endif
   if ((pucStreamBufferStorageArea != NULL) && (pStaticStreamBuffer != NULL)) {
     InitialiseNewStreamBuffer(StreamBuffer, pucStreamBufferStorageArea,
                               xBufferSizeBytes, xTriggerLevelBytes, ucFlags,
@@ -309,9 +293,6 @@ BaseType_t xStreamBufferGetStaticBuffers(
   BaseType_t Ret;
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
 
-  configASSERT(StreamBuffer);
-  configASSERT(ppucStreamBufferStorageArea);
-  configASSERT(ppStaticStreamBuffer);
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED) != (uint8_t)0) {
     *ppucStreamBufferStorageArea = StreamBuffer->pucBuffer;
 
@@ -327,14 +308,12 @@ BaseType_t xStreamBufferGetStaticBuffers(
 
 void vStreamBufferDelete(StreamBufferHandle_t xStreamBuffer) {
   StreamBuffer_t* StreamBuffer = xStreamBuffer;
-  configASSERT(StreamBuffer);
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED) ==
       (uint8_t) false) {
 #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
     { vPortFree((void*)StreamBuffer); }
 #else
     {
-      configASSERT(xStreamBuffer == (StreamBufferHandle_t)~0);
     }
 #endif
   } else {
@@ -346,7 +325,6 @@ BaseType_t xStreamBufferReset(StreamBufferHandle_t xStreamBuffer) {
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   BaseType_t Ret = false;
   StreamBufferCallbackFunction_t SendCallback = NULL, ReceiveCallback = NULL;
-  configASSERT(StreamBuffer);
 
   ENTER_CRITICAL();
   {
@@ -374,7 +352,6 @@ BaseType_t xStreamBufferResetFromISR(StreamBufferHandle_t xStreamBuffer) {
   BaseType_t Ret = false;
   StreamBufferCallbackFunction_t SendCallback = NULL, ReceiveCallback = NULL;
   UBaseType_t uxSavedInterruptStatus;
-  configASSERT(StreamBuffer);
 
   uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
   {
@@ -401,7 +378,6 @@ BaseType_t xStreamBufferSetTriggerLevel(StreamBufferHandle_t xStreamBuffer,
                                         size_t xTriggerLevel) {
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   BaseType_t Ret;
-  configASSERT(StreamBuffer);
 
   if (xTriggerLevel == (size_t)0) {
     xTriggerLevel = (size_t)1;
@@ -420,7 +396,6 @@ size_t xStreamBufferSpacesAvailable(StreamBufferHandle_t xStreamBuffer) {
   const StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   size_t xSpace;
   size_t xOriginalTail;
-  configASSERT(StreamBuffer);
 
   do {
     xOriginalTail = StreamBuffer->xTail;
@@ -437,7 +412,6 @@ size_t xStreamBufferSpacesAvailable(StreamBufferHandle_t xStreamBuffer) {
 size_t xStreamBufferBytesAvailable(StreamBufferHandle_t xStreamBuffer) {
   const StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   size_t Ret;
-  configASSERT(StreamBuffer);
   Ret = BytesInBuffer(StreamBuffer);
   return Ret;
 }
@@ -450,15 +424,11 @@ size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer,
   size_t xRequiredSpace = xDataLengthBytes;
   TimeOut_t xTimeOut;
   size_t xMaxReportedSpace = 0;
-  configASSERT(pvTxData);
-  configASSERT(StreamBuffer);
 
   xMaxReportedSpace = StreamBuffer->xLength - (size_t)1;
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xRequiredSpace += sbBYTES_TO_STORE_MESSAGE_LENGTH;
-
-    configASSERT(xRequiredSpace > xDataLengthBytes);
 
     if (xRequiredSpace > xMaxReportedSpace) {
       xTicksToWait = (TickType_t)0;
@@ -478,7 +448,6 @@ size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer,
           (void)TaskNotifyStateClearIndexed(NULL,
                                             StreamBuffer->uxNotificationIndex);
 
-          configASSERT(StreamBuffer->TaskWaitingToSend == NULL);
           StreamBuffer->TaskWaitingToSend = GetCurrentTaskHandle();
         } else {
           EXIT_CRITICAL();
@@ -510,8 +479,6 @@ size_t xStreamBufferSendFromISR(StreamBufferHandle_t xStreamBuffer,
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   size_t Ret, xSpace;
   size_t xRequiredSpace = xDataLengthBytes;
-  configASSERT(pvTxData);
-  configASSERT(StreamBuffer);
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xRequiredSpace += sbBYTES_TO_STORE_MESSAGE_LENGTH;
@@ -536,7 +503,6 @@ static size_t WriteMessageToBuffer(StreamBuffer_t* const StreamBuffer,
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xMessageLength = (configMESSAGE_BUFFER_LENGTH_TYPE)xDataLengthBytes;
 
-    configASSERT((size_t)xMessageLength == xDataLengthBytes);
     if (xSpace >= xRequiredSpace) {
       xNextHead =
           WriteBytesToBuffer(StreamBuffer, (const uint8_t*)&(xMessageLength),
@@ -559,8 +525,6 @@ size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void* pvRxData,
                             TickType_t xTicksToWait) {
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   size_t xReceivedLength = 0, xBytesAvailable, xBytesToStoreMessageLength;
-  configASSERT(pvRxData);
-  configASSERT(StreamBuffer);
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xBytesToStoreMessageLength = sbBYTES_TO_STORE_MESSAGE_LENGTH;
@@ -579,7 +543,6 @@ size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void* pvRxData,
         (void)TaskNotifyStateClearIndexed(NULL,
                                           StreamBuffer->uxNotificationIndex);
 
-        configASSERT(StreamBuffer->TaskWaitingToReceive == NULL);
         StreamBuffer->TaskWaitingToReceive = GetCurrentTaskHandle();
       }
     }
@@ -610,7 +573,6 @@ size_t xStreamBufferNextMessageLengthBytes(StreamBufferHandle_t xStreamBuffer) {
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   size_t Ret, xBytesAvailable;
   configMESSAGE_BUFFER_LENGTH_TYPE xTempReturn;
-  configASSERT(StreamBuffer);
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xBytesAvailable = BytesInBuffer(StreamBuffer);
@@ -620,7 +582,6 @@ size_t xStreamBufferNextMessageLengthBytes(StreamBufferHandle_t xStreamBuffer) {
                                 StreamBuffer->xTail);
       Ret = (size_t)xTempReturn;
     } else {
-      configASSERT(xBytesAvailable == 0);
       Ret = 0;
     }
   } else {
@@ -634,8 +595,6 @@ size_t xStreamBufferReceiveFromISR(StreamBufferHandle_t xStreamBuffer,
                                    BaseType_t* const HigherPriorityTaskWoken) {
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   size_t xReceivedLength = 0, xBytesAvailable, xBytesToStoreMessageLength;
-  configASSERT(pvRxData);
-  configASSERT(StreamBuffer);
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xBytesToStoreMessageLength = sbBYTES_TO_STORE_MESSAGE_LENGTH;
@@ -688,7 +647,6 @@ BaseType_t xStreamBufferIsEmpty(StreamBufferHandle_t xStreamBuffer) {
   const StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   BaseType_t Ret;
   size_t xTail;
-  configASSERT(StreamBuffer);
 
   xTail = StreamBuffer->xTail;
   if (StreamBuffer->xHead == xTail) {
@@ -703,7 +661,6 @@ BaseType_t xStreamBufferIsFull(StreamBufferHandle_t xStreamBuffer) {
   BaseType_t Ret;
   size_t xBytesToStoreMessageLength;
   const StreamBuffer_t* const StreamBuffer = xStreamBuffer;
-  configASSERT(StreamBuffer);
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xBytesToStoreMessageLength = sbBYTES_TO_STORE_MESSAGE_LENGTH;
@@ -725,7 +682,6 @@ BaseType_t xStreamBufferSendCompletedFromISR(
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   BaseType_t Ret;
   UBaseType_t uxSavedInterruptStatus;
-  configASSERT(StreamBuffer);
 
   uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
   {
@@ -749,7 +705,6 @@ BaseType_t xStreamBufferReceiveCompletedFromISR(
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
   BaseType_t Ret;
   UBaseType_t uxSavedInterruptStatus;
-  configASSERT(StreamBuffer);
 
   uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
   {
@@ -772,16 +727,13 @@ static size_t WriteBytesToBuffer(StreamBuffer_t* const StreamBuffer,
                                  const uint8_t* pucData, size_t xCount,
                                  size_t xHead) {
   size_t xFirstLength;
-  configASSERT(xCount > (size_t)0);
 
   xFirstLength = configMIN(StreamBuffer->xLength - xHead, xCount);
 
-  configASSERT((xHead + xFirstLength) <= StreamBuffer->xLength);
   (void)memcpy((void*)(&(StreamBuffer->pucBuffer[xHead])), (const void*)pucData,
                xFirstLength);
 
   if (xCount > xFirstLength) {
-    configASSERT((xCount - xFirstLength) <= StreamBuffer->xLength);
     (void)memcpy((void*)StreamBuffer->pucBuffer,
                  (const void*)&(pucData[xFirstLength]), xCount - xFirstLength);
   }
@@ -796,12 +748,9 @@ static size_t ReadBytesFromBuffer(StreamBuffer_t* StreamBuffer,
                                   uint8_t* pucData, size_t xCount,
                                   size_t xTail) {
   size_t xFirstLength;
-  configASSERT(xCount != (size_t)0);
 
   xFirstLength = configMIN(StreamBuffer->xLength - xTail, xCount);
 
-  configASSERT(xFirstLength <= xCount);
-  configASSERT((xTail + xFirstLength) <= StreamBuffer->xLength);
   (void)memcpy((void*)pucData, (const void*)&(StreamBuffer->pucBuffer[xTail]),
                xFirstLength);
 
@@ -832,13 +781,6 @@ static void InitialiseNewStreamBuffer(
     size_t xBufferSizeBytes, size_t xTriggerLevelBytes, uint8_t ucFlags,
     StreamBufferCallbackFunction_t SendCompletedCallback,
     StreamBufferCallbackFunction_t ReceiveCompletedCallback) {
-#if (configASSERT_DEFINED == 1)
-  {
-#define STREAM_BUFFER_BUFFER_WRITE_VALUE (0x55)
-    configASSERT(memset(pucBuffer, (int)STREAM_BUFFER_BUFFER_WRITE_VALUE,
-                        xBufferSizeBytes) == pucBuffer);
-  }
-#endif
   (void)memset((void*)StreamBuffer, 0x00, sizeof(StreamBuffer_t));
   StreamBuffer->pucBuffer = pucBuffer;
   StreamBuffer->xLength = xBufferSizeBytes;
@@ -861,18 +803,12 @@ static void InitialiseNewStreamBuffer(
 UBaseType_t uxStreamBufferGetStreamBufferNotificationIndex(
     StreamBufferHandle_t xStreamBuffer) {
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
-  configASSERT(StreamBuffer);
   return StreamBuffer->uxNotificationIndex;
 }
 
 void vStreamBufferSetStreamBufferNotificationIndex(
     StreamBufferHandle_t xStreamBuffer, UBaseType_t uxNotificationIndex) {
   StreamBuffer_t* const StreamBuffer = xStreamBuffer;
-  configASSERT(StreamBuffer);
 
-  configASSERT(StreamBuffer->TaskWaitingToReceive == NULL);
-  configASSERT(StreamBuffer->TaskWaitingToSend == NULL);
-
-  configASSERT(uxNotificationIndex < configTASK_NOTIFICATION_ARRAY_ENTRIES);
   StreamBuffer->uxNotificationIndex = uxNotificationIndex;
 }

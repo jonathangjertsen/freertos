@@ -46,8 +46,8 @@
 #define EVENT_BITS_CONTROL_BYTES ((uint64_t)0xff00000000000000U)
 #endif
 
-struct EventGroupDef_t;
-typedef struct EventGroupDef_t* EventGroupHandle_t;
+struct EventGroup_t;
+typedef struct EventGroup_t* EventGroupHandle_t;
 
 typedef TickType_t EventBits_t;
 

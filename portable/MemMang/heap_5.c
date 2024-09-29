@@ -117,11 +117,6 @@
  * Setting configVALIDATE_HEAP_BLOCK_POINTER to 1 enables customized heap block pointers
  * protection on heap_5. */
     #ifndef configVALIDATE_HEAP_BLOCK_POINTER
-        #define heapVALIDATE_BLOCK_POINTER( Block )                           \
-            configASSERT( ( pucHeapHighAddress != NULL ) &&                     \
-                          ( pucHeapLowAddress != NULL ) &&                      \
-                          ( ( uint8_t * ) ( Block ) >= pucHeapLowAddress ) && \
-                          ( ( uint8_t * ) ( Block ) < pucHeapHighAddress ) )
     #else /* ifndef configVALIDATE_HEAP_BLOCK_POINTER */
         #define heapVALIDATE_BLOCK_POINTER( Block )                           \
             configVALIDATE_HEAP_BLOCK_POINTER( Block )
@@ -186,8 +181,7 @@ void * pvPortMalloc( size_t xWantedSize )
     size_t xAllocatedBlockSize = 0;
     /* The heap must be initialised before the first call to
      * pvPortMalloc(). */
-    configASSERT( End );
-    if( xWantedSize > 0 )
+        if( xWantedSize > 0 )
     {
         /* The wanted size must be increased so it can contain a BlockLink_t
          * structure in addition to the requested amount of bytes. */
@@ -250,16 +244,14 @@ void * pvPortMalloc( size_t xWantedSize )
                     PreviousBlock->NextFreeBlock = Block->NextFreeBlock;
                     /* If the block is larger than required it can be split into
                      * two. */
-                    configASSERT( heapSUBTRACT_WILL_UNDERFLOW( Block->xBlockSize, xWantedSize ) == 0 );
-                    if( ( Block->xBlockSize - xWantedSize ) > heapMINIMUM_BLOCK_SIZE )
+                                        if( ( Block->xBlockSize - xWantedSize ) > heapMINIMUM_BLOCK_SIZE )
                     {
                         /* This block is to be split into two.  Create a new
                          * block following the number of bytes requested. The void
                          * cast is used to prevent byte alignment warnings from the
                          * compiler. */
                         NewBlockLink = ( void * ) ( ( ( uint8_t * ) Block ) + xWantedSize );
-                        configASSERT( ( ( ( size_t ) NewBlockLink ) & portBYTE_ALIGNMENT_MASK ) == 0 );
-                        /* Calculate the sizes of two blocks split from the
+                                                /* Calculate the sizes of two blocks split from the
                          * single block. */
                         NewBlockLink->xBlockSize = Block->xBlockSize - xWantedSize;
                         Block->xBlockSize = xWantedSize;
@@ -296,8 +288,7 @@ void * pvPortMalloc( size_t xWantedSize )
         }
     }
     #endif /* if ( configUSE_MALLOC_FAILED_HOOK == 1 ) */
-    configASSERT( ( ( ( size_t ) pvReturn ) & ( size_t ) portBYTE_ALIGNMENT_MASK ) == 0 );
-    return pvReturn;
+        return pvReturn;
 }
 
 void vPortFree( void * pv )
@@ -312,9 +303,7 @@ void vPortFree( void * pv )
         /* This casting is to keep the compiler from issuing warnings. */
         Link = ( void * ) puc;
         heapVALIDATE_BLOCK_POINTER( Link );
-        configASSERT( heapBLOCK_IS_ALLOCATED( Link ) != 0 );
-        configASSERT( Link->NextFreeBlock == heapPROTECT_BLOCK_POINTER( NULL ) );
-        if( heapBLOCK_IS_ALLOCATED( Link ) != 0 )
+                        if( heapBLOCK_IS_ALLOCATED( Link ) != 0 )
         {
             if( Link->NextFreeBlock == heapPROTECT_BLOCK_POINTER( NULL ) )
             {
@@ -433,8 +422,7 @@ void vPortDefineHeapRegions( const HeapRegion_t * const HeapRegions ) /*  */
     portPOINTER_SIZE_TYPE xAddress;
     const HeapRegion_t * HeapRegion;
     /* Can only call once! */
-    configASSERT( End == NULL );
-    #if ( configENABLE_HEAP_PROTECTOR == 1 )
+        #if ( configENABLE_HEAP_PROTECTOR == 1 )
     {
         ApplicationGetRandomHeapCanary( &( xHeapCanary ) );
     }
@@ -465,10 +453,8 @@ void vPortDefineHeapRegions( const HeapRegion_t * const HeapRegions ) /*  */
         {
             /* Should only get here if one region has already been added to the
              * heap. */
-            configASSERT( End != heapPROTECT_BLOCK_POINTER( NULL ) );
-            /* Check blocks are passed in with increasing start addresses. */
-            configASSERT( ( size_t ) xAddress > ( size_t ) End );
-        }
+                        /* Check blocks are passed in with increasing start addresses. */
+                    }
         #if ( configENABLE_HEAP_PROTECTOR == 1 )
         {
             if( ( pucHeapLowAddress == NULL ) ||
@@ -518,8 +504,7 @@ void vPortDefineHeapRegions( const HeapRegion_t * const HeapRegions ) /*  */
     xMinimumEverFreeBytesRemaining = xTotalHeapSize;
     xFreeBytesRemaining = xTotalHeapSize;
     /* Check something was actually defined before it is accessed. */
-    configASSERT( xTotalHeapSize );
-}
+    }
 
 void vPortGetHeapStats( HeapStats_t * HeapStats )
 {

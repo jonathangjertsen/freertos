@@ -39,12 +39,6 @@
 #define configUSE_QUEUE_SETS 1
 #define INCLUDE_TaskDelayUntil 1
 
-void freertos_config_assert_handler(const char* func, size_t line, const char *msg);
-#define configASSERT( x ) \
-    if( ( x ) == 0 ) { \
-        freertos_config_assert_handler(__FUNCTION__, __LINE__, "Assertion failed: " #x); \
-    }
-
 #define INCLUDE_TaskDelete 1
 #define INCLUDE_TaskGetSchedulerState 1
 

@@ -124,8 +124,7 @@ void vPortFree( void * pv )
      * https://www.FreeRTOS.org for more information. */
     ( void ) pv;
     /* Force an assert as it is invalid to call this function. */
-    configASSERT( pv == NULL );
-}
+    }
 
 void vPortInitialiseBlocks( void )
 {

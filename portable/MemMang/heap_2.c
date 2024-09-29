@@ -252,9 +252,7 @@ void vPortFree( void * pv )
         /* This unexpected casting is to keep some compilers from issuing
          * byte alignment warnings. */
         Link = ( void * ) puc;
-        configASSERT( heapBLOCK_IS_ALLOCATED( Link ) != 0 );
-        configASSERT( Link->NextFreeBlock == NULL );
-        if( heapBLOCK_IS_ALLOCATED( Link ) != 0 )
+                        if( heapBLOCK_IS_ALLOCATED( Link ) != 0 )
         {
             if( Link->NextFreeBlock == NULL )
             {
