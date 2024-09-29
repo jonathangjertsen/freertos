@@ -28,29 +28,12 @@
 /* Standard includes. */
 #include <string.h>
 #include <stdbool.h>
-/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
- * all the API functions to use the MPU wrappers.  That should only be done when
- * task.h is included from an application file. */
-#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "stream_buffer.h"
-/* The MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined
- * for the header files above, but not in this file, in order to generate the
- * correct privileged Vs unprivileged linkage and placement. */
-#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
-/* This entire source file will be skipped if the application is not configured
- * to include stream buffer functionality. This #if is closed at the very bottom
- * of this file. If you want to include stream buffers then ensure
- * configUSE_STREAM_BUFFERS is set to 1 in FreeRTOSConfig.h. */
-#if ( configUSE_STREAM_BUFFERS == 1 )
-    #if ( configUSE_TASK_NOTIFICATIONS != 1 )
-        #error configUSE_TASK_NOTIFICATIONS must be set to 1 to build stream_buffer.c
-    #endif
-    #if ( INCLUDE_xTaskGetCurrentTaskHandle != 1 )
-        #error INCLUDE_xTaskGetCurrentTaskHandle must be set to 1 to build stream_buffer.c
-    #endif
+
 /* If the user has not provided application specific Rx notification macros,
  * or #defined the notification macros away, then provide default implementations
  * that uses task notifications. */
@@ -378,17 +361,17 @@ static void InitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
                                                            size_t xTriggerLevelBytes,
                                                            BaseType_t xStreamBufferType,
                                                            uint8_t * const pucStreamBufferStorageArea,
-                                                           StaticStreamBuffer_t * const pxStaticStreamBuffer,
+                                                           StaticStreamBuffer_t * const pStaticStreamBuffer,
                                                            StreamBufferCallbackFunction_t pxSendCompletedCallback,
                                                            StreamBufferCallbackFunction_t pxReceiveCompletedCallback )
     {
 
-        StreamBuffer_t * const pxStreamBuffer = ( StreamBuffer_t * ) pxStaticStreamBuffer;
+        StreamBuffer_t * const pxStreamBuffer = ( StreamBuffer_t * ) pStaticStreamBuffer;
         StreamBufferHandle_t xReturn;
         uint8_t ucFlags;
 
         configASSERT( pucStreamBufferStorageArea );
-        configASSERT( pxStaticStreamBuffer );
+        configASSERT( pStaticStreamBuffer );
         configASSERT( xTriggerLevelBytes <= xBufferSizeBytes );
         /* A trigger level of 0 would cause a waiting task to unblock even when
          * the buffer was empty. */
@@ -426,7 +409,7 @@ static void InitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
             configASSERT( xSize == sizeof( StreamBuffer_t ) );
         }
         #endif /* configASSERT_DEFINED */
-        if( ( pucStreamBufferStorageArea != NULL ) && ( pxStaticStreamBuffer != NULL ) )
+        if( ( pucStreamBufferStorageArea != NULL ) && ( pStaticStreamBuffer != NULL ) )
         {
             InitialiseNewStreamBuffer( pxStreamBuffer,
                                           pucStreamBufferStorageArea,
@@ -440,7 +423,7 @@ static void InitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
             pxStreamBuffer->ucFlags |= sbFLAGS_IS_STATICALLY_ALLOCATED;
 
 
-            xReturn = ( StreamBufferHandle_t ) pxStaticStreamBuffer;
+            xReturn = ( StreamBufferHandle_t ) pStaticStreamBuffer;
         }
         else
         {
@@ -454,19 +437,19 @@ static void InitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
     #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     BaseType_t xStreamBufferGetStaticBuffers( StreamBufferHandle_t xStreamBuffer,
                                               uint8_t ** ppucStreamBufferStorageArea,
-                                              StaticStreamBuffer_t ** ppxStaticStreamBuffer )
+                                              StaticStreamBuffer_t ** ppStaticStreamBuffer )
     {
         BaseType_t xReturn;
         StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
 
         configASSERT( pxStreamBuffer );
         configASSERT( ppucStreamBufferStorageArea );
-        configASSERT( ppxStaticStreamBuffer );
+        configASSERT( ppStaticStreamBuffer );
         if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED ) != ( uint8_t ) 0 )
         {
             *ppucStreamBufferStorageArea = pxStreamBuffer->pucBuffer;
 
-            *ppxStaticStreamBuffer = ( StaticStreamBuffer_t * ) pxStreamBuffer;
+            *ppStaticStreamBuffer = ( StaticStreamBuffer_t * ) pxStreamBuffer;
             xReturn = true;
         }
         else
@@ -1232,4 +1215,3 @@ void vStreamBufferSetStreamBufferNotificationIndex( StreamBufferHandle_t xStream
     configASSERT( uxNotificationIndex < configTASK_NOTIFICATION_ARRAY_ENTRIES );
     pxStreamBuffer->uxNotificationIndex = uxNotificationIndex;
 }
-#endif /* configUSE_STREAM_BUFFERS == 1 */

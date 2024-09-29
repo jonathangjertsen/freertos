@@ -217,7 +217,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * \ingroup Semaphores
  */
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
-    #define xSemaphoreCreateBinaryStatic( pxStaticSemaphore )    xQueueGenericCreateStatic( ( UBaseType_t ) 1, semSEMAPHORE_QUEUE_ITEM_LENGTH, NULL, ( pxStaticSemaphore ), queueQUEUE_TYPE_BINARY_SEMAPHORE )
+    #define xSemaphoreCreateBinaryStatic( pStaticSemaphore )    xQueueGenericCreateStatic( ( UBaseType_t ) 1, semSEMAPHORE_QUEUE_ITEM_LENGTH, NULL, ( pStaticSemaphore ), queueQUEUE_TYPE_BINARY_SEMAPHORE )
 #endif /* configSUPPORT_STATIC_ALLOCATION */
 /**
  * semphr. h
@@ -673,8 +673,8 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * using xSemaphoreCreateMutex() then the required memory is automatically
  * dynamically allocated inside the xSemaphoreCreateMutex() function.  (see
  * https://www.FreeRTOS.org/a00111.html).  If a mutex is created using
- * xSemaphoreCreateMutexStatic() then the application writer must provided the
- * memory.  xSemaphoreCreateMutexStatic() therefore allows a mutex to be created
+ * xSemaphoreCreateMuteStatic() then the application writer must provided the
+ * memory.  xSemaphoreCreateMuteStatic() therefore allows a mutex to be created
  * without using any dynamic memory allocation.
  *
  * Mutexes created using this function can be accessed using the xSemaphoreTake()
@@ -722,7 +722,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
 /**
  * semphr. h
  * @code{c}
- * SemaphoreHandle_t xSemaphoreCreateMutexStatic( StaticSemaphore_t *pxMutexBuffer );
+ * SemaphoreHandle_t xSemaphoreCreateMuteStatic( StaticSemaphore_t *pxMutexBuffer );
  * @endcode
  *
  * Creates a new mutex type semaphore instance, and returns a handle by which
@@ -733,8 +733,8 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * using xSemaphoreCreateMutex() then the required memory is automatically
  * dynamically allocated inside the xSemaphoreCreateMutex() function.  (see
  * https://www.FreeRTOS.org/a00111.html).  If a mutex is created using
- * xSemaphoreCreateMutexStatic() then the application writer must provided the
- * memory.  xSemaphoreCreateMutexStatic() therefore allows a mutex to be created
+ * xSemaphoreCreateMuteStatic() then the application writer must provided the
+ * memory.  xSemaphoreCreateMuteStatic() therefore allows a mutex to be created
  * without using any dynamic memory allocation.
  *
  * Mutexes created using this function can be accessed using the xSemaphoreTake()
@@ -767,19 +767,19 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * void vATask( void * pvParameters )
  * {
  *  // A mutex cannot be used before it has been created.  xMutexBuffer is
- *  // into xSemaphoreCreateMutexStatic() so no dynamic memory allocation is
+ *  // into xSemaphoreCreateMuteStatic() so no dynamic memory allocation is
  *  // attempted.
- *  xSemaphore = xSemaphoreCreateMutexStatic( &xMutexBuffer );
+ *  xSemaphore = xSemaphoreCreateMuteStatic( &xMutexBuffer );
  *
  *  // As no dynamic memory allocation was performed, xSemaphore cannot be NULL,
  *  // so there is no need to check it.
  * }
  * @endcode
- * \defgroup xSemaphoreCreateMutexStatic xSemaphoreCreateMutexStatic
+ * \defgroup xSemaphoreCreateMuteStatic xSemaphoreCreateMuteStatic
  * \ingroup Semaphores
  */
 #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configUSE_MUTEXES == 1 ) )
-    #define xSemaphoreCreateMutexStatic( pxMutexBuffer )    xQueueCreateMutexStatic( queueQUEUE_TYPE_MUTEX, ( pxMutexBuffer ) )
+    #define xSemaphoreCreateMuteStatic( pxMutexBuffer )    xQueueCreateMuteStatic( queueQUEUE_TYPE_MUTEX, ( pxMutexBuffer ) )
 #endif
 
 /**
@@ -797,9 +797,9 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * automatically dynamically allocated inside the
  * xSemaphoreCreateRecursiveMutex() function.  (see
  * https://www.FreeRTOS.org/a00111.html).  If a recursive mutex is created using
- * xSemaphoreCreateRecursiveMutexStatic() then the application writer must
+ * xSemaphoreCreateRecursiveMuteStatic() then the application writer must
  * provide the memory that will get used by the mutex.
- * xSemaphoreCreateRecursiveMutexStatic() therefore allows a recursive mutex to
+ * xSemaphoreCreateRecursiveMuteStatic() therefore allows a recursive mutex to
  * be created without using any dynamic memory allocation.
  *
  * Mutexes created using this macro can be accessed using the
@@ -853,7 +853,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
 /**
  * semphr. h
  * @code{c}
- * SemaphoreHandle_t xSemaphoreCreateRecursiveMutexStatic( StaticSemaphore_t *pxMutexBuffer );
+ * SemaphoreHandle_t xSemaphoreCreateRecursiveMuteStatic( StaticSemaphore_t *pxMutexBuffer );
  * @endcode
  *
  * Creates a new recursive mutex type semaphore instance, and returns a handle
@@ -865,9 +865,9 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * automatically dynamically allocated inside the
  * xSemaphoreCreateRecursiveMutex() function.  (see
  * https://www.FreeRTOS.org/a00111.html).  If a recursive mutex is created using
- * xSemaphoreCreateRecursiveMutexStatic() then the application writer must
+ * xSemaphoreCreateRecursiveMuteStatic() then the application writer must
  * provide the memory that will get used by the mutex.
- * xSemaphoreCreateRecursiveMutexStatic() therefore allows a recursive mutex to
+ * xSemaphoreCreateRecursiveMuteStatic() therefore allows a recursive mutex to
  * be created without using any dynamic memory allocation.
  *
  * Mutexes created using this macro can be accessed using the
@@ -908,21 +908,21 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * void vATask( void * pvParameters )
  * {
  *  // A recursive semaphore cannot be used before it is created.  Here a
- *  // recursive mutex is created using xSemaphoreCreateRecursiveMutexStatic().
+ *  // recursive mutex is created using xSemaphoreCreateRecursiveMuteStatic().
  *  // The address of xMutexBuffer is passed into the function, and will hold
  *  // the mutexes data structures - so no dynamic memory allocation will be
  *  // attempted.
- *  xSemaphore = xSemaphoreCreateRecursiveMutexStatic( &xMutexBuffer );
+ *  xSemaphore = xSemaphoreCreateRecursiveMuteStatic( &xMutexBuffer );
  *
  *  // As no dynamic memory allocation was performed, xSemaphore cannot be NULL,
  *  // so there is no need to check it.
  * }
  * @endcode
- * \defgroup xSemaphoreCreateRecursiveMutexStatic xSemaphoreCreateRecursiveMutexStatic
+ * \defgroup xSemaphoreCreateRecursiveMuteStatic xSemaphoreCreateRecursiveMuteStatic
  * \ingroup Semaphores
  */
 #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configUSE_RECURSIVE_MUTEXES == 1 ) )
-    #define xSemaphoreCreateRecursiveMutexStatic( pxStaticSemaphore )    xQueueCreateMutexStatic( queueQUEUE_TYPE_RECURSIVE_MUTEX, ( pxStaticSemaphore ) )
+    #define xSemaphoreCreateRecursiveMuteStatic( pStaticSemaphore )    xQueueCreateMuteStatic( queueQUEUE_TYPE_RECURSIVE_MUTEX, ( pStaticSemaphore ) )
 #endif /* configSUPPORT_STATIC_ALLOCATION */
 /**
  * semphr. h

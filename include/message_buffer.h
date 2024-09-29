@@ -161,7 +161,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * @code{c}
  * MessageBufferHandle_t xMessageBufferCreateStatic( size_t xBufferSizeBytes,
  *                                                   uint8_t *pucMessageBufferStorageArea,
- *                                                   StaticMessageBuffer_t *pxStaticMessageBuffer );
+ *                                                   StaticMessageBuffer_t *pStaticMessageBuffer );
  * @endcode
  * Creates a new message buffer using statically allocated memory.  See
  * xMessageBufferCreate() for a version that uses dynamically allocated memory.
@@ -181,7 +181,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * least xBufferSizeBytes big.  This is the array to which messages are
  * copied when they are written to the message buffer.
  *
- * @param pxStaticMessageBuffer Must point to a variable of type
+ * @param pStaticMessageBuffer Must point to a variable of type
  * StaticMessageBuffer_t, which will be used to hold the message buffer's data
  * structure.
  *
@@ -197,7 +197,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  *
  * @return If the message buffer is created successfully then a handle to the
  * created message buffer is returned. If either pucMessageBufferStorageArea or
- * pxStaticmessageBuffer are NULL then NULL is returned.
+ * pStaticmessageBuffer are NULL then NULL is returned.
  *
  * Example use:
  * @code{c}
@@ -221,7 +221,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  *                                               ucStorageBuffer,
  *                                               &xMessageBufferStruct );
  *
- *  // As neither the pucMessageBufferStorageArea or pxStaticMessageBuffer
+ *  // As neither the pucMessageBufferStorageArea or pStaticMessageBuffer
  *  // parameters were NULL, xMessageBuffer will not be NULL, and can be used to
  *  // reference the created message buffer in other message buffer API calls.
  *
@@ -232,11 +232,11 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * \defgroup xMessageBufferCreateStatic xMessageBufferCreateStatic
  * \ingroup MessageBufferManagement
  */
-#define xMessageBufferCreateStatic( xBufferSizeBytes, pucMessageBufferStorageArea, pxStaticMessageBuffer ) \
-    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), 0, sbTYPE_MESSAGE_BUFFER, ( pucMessageBufferStorageArea ), ( pxStaticMessageBuffer ), NULL, NULL )
+#define xMessageBufferCreateStatic( xBufferSizeBytes, pucMessageBufferStorageArea, pStaticMessageBuffer ) \
+    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), 0, sbTYPE_MESSAGE_BUFFER, ( pucMessageBufferStorageArea ), ( pStaticMessageBuffer ), NULL, NULL )
 #if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
-    #define xMessageBufferCreateStaticWithCallback( xBufferSizeBytes, pucMessageBufferStorageArea, pxStaticMessageBuffer, pxSendCompletedCallback, pxReceiveCompletedCallback ) \
-    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), 0, sbTYPE_MESSAGE_BUFFER, ( pucMessageBufferStorageArea ), ( pxStaticMessageBuffer ), ( pxSendCompletedCallback ), ( pxReceiveCompletedCallback ) )
+    #define xMessageBufferCreateStaticWithCallback( xBufferSizeBytes, pucMessageBufferStorageArea, pStaticMessageBuffer, pxSendCompletedCallback, pxReceiveCompletedCallback ) \
+    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), 0, sbTYPE_MESSAGE_BUFFER, ( pucMessageBufferStorageArea ), ( pStaticMessageBuffer ), ( pxSendCompletedCallback ), ( pxReceiveCompletedCallback ) )
 #endif
 /**
  * message_buffer.h
@@ -244,7 +244,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * @code{c}
  * BaseType_t xMessageBufferGetStaticBuffers( MessageBufferHandle_t xMessageBuffer,
  *                                            uint8_t ** ppucMessageBufferStorageArea,
- *                                            StaticMessageBuffer_t ** ppxStaticMessageBuffer );
+ *                                            StaticMessageBuffer_t ** ppStaticMessageBuffer );
  * @endcode
  *
  * Retrieve pointers to a statically created message buffer's data structure
@@ -259,7 +259,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * @param ppucMessageBufferStorageArea Used to return a pointer to the
  * message buffer's storage area buffer.
  *
- * @param ppxStaticMessageBuffer Used to return a pointer to the message
+ * @param ppStaticMessageBuffer Used to return a pointer to the message
  * buffer's data structure buffer.
  *
  * @return true if buffers were retrieved, false otherwise..
@@ -268,8 +268,8 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * \ingroup MessageBufferManagement
  */
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
-    #define xMessageBufferGetStaticBuffers( xMessageBuffer, ppucMessageBufferStorageArea, ppxStaticMessageBuffer ) \
-    xStreamBufferGetStaticBuffers( ( xMessageBuffer ), ( ppucMessageBufferStorageArea ), ( ppxStaticMessageBuffer ) )
+    #define xMessageBufferGetStaticBuffers( xMessageBuffer, ppucMessageBufferStorageArea, ppStaticMessageBuffer ) \
+    xStreamBufferGetStaticBuffers( ( xMessageBuffer ), ( ppucMessageBufferStorageArea ), ( ppStaticMessageBuffer ) )
 #endif /* configSUPPORT_STATIC_ALLOCATION */
 /**
  * message_buffer.h

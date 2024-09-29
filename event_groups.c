@@ -28,30 +28,19 @@
 /* Standard includes. */
 #include <stdlib.h>
 #include <stdbool.h>
-/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
- * all the API functions to use the MPU wrappers. That should only be done when
- * task.h is included from an application file. */
-#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "timers.h"
 #include "event_groups.h"
-/* The MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined
- * for the header files above, but not in this file, in order to generate the
- * correct privileged Vs unprivileged linkage and placement. */
-#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
-/* This entire source file will be skipped if the application is not configured
- * to include event groups functionality. This #if is closed at the very bottom
- * of this file. If you want to include event groups then ensure
- * configUSE_EVENT_GROUPS is set to 1 in FreeRTOSConfig.h. */
-#if ( configUSE_EVENT_GROUPS == 1 )
+
 typedef struct EventGroupDef_t
 {
     EventBits_t uxEventBits;
     List_t xTasksWaitingForBits; /**< List of tasks waiting for a bit to be set. */
     #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
-        uint8_t ucStaticallyAllocated; /**< Set to true if the event group is statically allocated to ensure no attempt is made to free the memory. */
+        uint8_t StaticallyAllocated; /**< Set to true if the event group is statically allocated to ensure no attempt is made to free the memory. */
     #endif
 } EventGroup_t;
 
@@ -92,7 +81,7 @@ static BaseType_t TestWaitCondition( const EventBits_t uxCurrentEventBits,
                 /* Both static and dynamic allocation can be used, so note that
                     * this event group was created statically in case the event group
                     * is later deleted. */
-                pxEventBits->ucStaticallyAllocated = true;
+                pxEventBits->StaticallyAllocated = true;
             }
             #endif /* configSUPPORT_DYNAMIC_ALLOCATION */
         }
@@ -114,7 +103,7 @@ static BaseType_t TestWaitCondition( const EventBits_t uxCurrentEventBits,
                 /* Both static and dynamic allocation can be used, so note this
                     * event group was allocated statically in case the event group is
                     * later deleted. */
-                pxEventBits->ucStaticallyAllocated = false;
+                pxEventBits->StaticallyAllocated = false;
             }
             #endif /* configSUPPORT_STATIC_ALLOCATION */
         }
@@ -440,7 +429,7 @@ void vEventGroupDelete( EventGroupHandle_t xEventGroup )
     {
         /* The event group could have been allocated statically or
             * dynamically, so check before attempting to free the memory. */
-        if( pxEventBits->ucStaticallyAllocated == ( uint8_t ) false )
+        if( pxEventBits->StaticallyAllocated == ( uint8_t ) false )
         {
             vPortFree( pxEventBits );
         }
@@ -459,7 +448,7 @@ void vEventGroupDelete( EventGroupHandle_t xEventGroup )
         #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
         {
             /* Check if the event group was statically allocated. */
-            if( pxEventBits->ucStaticallyAllocated == ( uint8_t ) true )
+            if( pxEventBits->StaticallyAllocated == ( uint8_t ) true )
             {
                 *ppxEventGroupBuffer = ( StaticEventGroup_t * ) pxEventBits;
                 xReturn = true;
@@ -521,4 +510,3 @@ static BaseType_t TestWaitCondition( const EventBits_t uxCurrentEventBits,
     }
     return xWaitConditionMet;
 }
-#endif /* configUSE_EVENT_GROUPS == 1 */

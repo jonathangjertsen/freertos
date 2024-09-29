@@ -228,7 +228,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * @code{c}
  * BaseType_t xQueueGetStaticBuffers( QueueHandle_t xQueue,
  *                                    uint8_t ** ppucQueueStorage,
- *                                    StaticQueue_t ** ppxStaticQueue );
+ *                                    StaticQueue_t ** ppStaticQueue );
  * @endcode
  *
  * Retrieve pointers to a statically created queue's data structure buffer
@@ -240,7 +240,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * @param ppucQueueStorage Used to return a pointer to the queue's storage
  * area buffer.
  *
- * @param ppxStaticQueue Used to return a pointer to the queue's data
+ * @param ppStaticQueue Used to return a pointer to the queue's data
  * structure buffer.
  *
  * @return true if buffers were retrieved, false otherwise.
@@ -249,7 +249,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * \ingroup QueueManagement
  */
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
-    #define xQueueGetStaticBuffers( xQueue, ppucQueueStorage, ppxStaticQueue )    xQueueGenericGetStaticBuffers( ( xQueue ), ( ppucQueueStorage ), ( ppxStaticQueue ) )
+    #define xQueueGetStaticBuffers( xQueue, ppucQueueStorage, ppStaticQueue )    xQueueGenericGetStaticBuffers( ( xQueue ), ( ppucQueueStorage ), ( ppStaticQueue ) )
 #endif /* configSUPPORT_STATIC_ALLOCATION */
 /**
  * queue. h
@@ -1463,8 +1463,8 @@ UBaseType_t uxQueueMessagesWaitingFromISR( const QueueHandle_t xQueue ) ;
  */
 QueueHandle_t xQueueCreateMutex( const uint8_t ucQueueType ) ;
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
-    QueueHandle_t xQueueCreateMutexStatic( const uint8_t ucQueueType,
-                                           StaticQueue_t * pxStaticQueue ) ;
+    QueueHandle_t xQueueCreateMuteStatic( const uint8_t ucQueueType,
+                                           StaticQueue_t * pStaticQueue ) ;
 #endif
 #if ( configUSE_COUNTING_SEMAPHORES == 1 )
     QueueHandle_t xQueueCreateCountingSemaphore( const UBaseType_t uxMaxCount,
@@ -1473,7 +1473,7 @@ QueueHandle_t xQueueCreateMutex( const uint8_t ucQueueType ) ;
 #if ( ( configUSE_COUNTING_SEMAPHORES == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
     QueueHandle_t xQueueCreateCountingSemaphoreStatic( const UBaseType_t uxMaxCount,
                                                        const UBaseType_t uxInitialCount,
-                                                       StaticQueue_t * pxStaticQueue ) ;
+                                                       StaticQueue_t * pStaticQueue ) ;
 #endif
 BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                                 TickType_t xTicksToWait ) ;
@@ -1569,7 +1569,7 @@ BaseType_t xQueueGiveMutexRecursive( QueueHandle_t xMutex ) ;
     QueueHandle_t xQueueGenericCreateStatic( const UBaseType_t uxQueueLength,
                                              const UBaseType_t uxItemSize,
                                              uint8_t * pucQueueStorage,
-                                             StaticQueue_t * pxStaticQueue,
+                                             StaticQueue_t * pStaticQueue,
                                              const uint8_t ucQueueType ) ;
 #endif
 /*
@@ -1581,7 +1581,7 @@ BaseType_t xQueueGiveMutexRecursive( QueueHandle_t xMutex ) ;
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     BaseType_t xQueueGenericGetStaticBuffers( QueueHandle_t xQueue,
                                               uint8_t ** ppucQueueStorage,
-                                              StaticQueue_t ** ppxStaticQueue ) ;
+                                              StaticQueue_t ** ppStaticQueue ) ;
 #endif
 /*
  * Queue sets provide a mechanism to allow a task to block (pend) on a read

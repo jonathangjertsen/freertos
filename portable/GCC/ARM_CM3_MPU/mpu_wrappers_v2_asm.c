@@ -1158,8 +1158,8 @@
     #endif /* if ( configQUEUE_REGISTRY_SIZE > 0 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        void * MPU_pvTimerGetTimerID( const TimerHandle_t xTimer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        void * MPU_pvTimerGetTimerID( const TimerHandle_t xTimer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        void * MPU_pvTimerGetTimerID( const TimerHandle_t Timer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        void * MPU_pvTimerGetTimerID( const TimerHandle_t Timer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
@@ -1182,106 +1182,106 @@
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        void MPU_vTimerSetTimerID( TimerHandle_t xTimer,
+        void MPU_SetTimerID( TimerHandle_t Timer,
                                    void * pvNewID ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        void MPU_vTimerSetTimerID( TimerHandle_t xTimer,
+        void MPU_SetTimerID( TimerHandle_t Timer,
                                    void * pvNewID ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
                 " .syntax unified                                       \n"
-                " .extern MPU_vTimerSetTimerIDImpl                      \n"
+                " .extern MPU_SetTimerIDImpl                      \n"
                 "                                                       \n"
                 " push {r0}                                             \n"
                 " mrs r0, control                                       \n"
                 " tst r0, #1                                            \n"
                 " pop {r0}                                              \n"
-                " bne MPU_vTimerSetTimerID_Unpriv                       \n"
-                " MPU_vTimerSetTimerID_Priv:                            \n"
-                "     b MPU_vTimerSetTimerIDImpl                        \n"
-                " MPU_vTimerSetTimerID_Unpriv:                          \n"
+                " bne MPU_SetTimerID_Unpriv                       \n"
+                " MPU_SetTimerID_Priv:                            \n"
+                "     b MPU_SetTimerIDImpl                        \n"
+                " MPU_SetTimerID_Unpriv:                          \n"
                 "     svc %0                                            \n"
                 "                                                       \n"
-                : : "i" ( SYSTEM_CALL_vTimerSetTimerID ) : "memory"
+                : : "i" ( SYSTEM_CALL_SetTimerID ) : "memory"
             );
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        BaseType_t MPU_xTimerIsTimerActive( TimerHandle_t xTimer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        BaseType_t MPU_xTimerIsTimerActive( TimerHandle_t xTimer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        BaseType_t MPU_TimerIsTimerActive( TimerHandle_t Timer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        BaseType_t MPU_TimerIsTimerActive( TimerHandle_t Timer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
                 " .syntax unified                                       \n"
-                " .extern MPU_xTimerIsTimerActiveImpl                   \n"
+                " .extern MPU_TimerIsTimerActiveImpl                   \n"
                 "                                                       \n"
                 " push {r0}                                             \n"
                 " mrs r0, control                                       \n"
                 " tst r0, #1                                            \n"
                 " pop {r0}                                              \n"
-                " bne MPU_xTimerIsTimerActive_Unpriv                    \n"
-                " MPU_xTimerIsTimerActive_Priv:                         \n"
-                "     b MPU_xTimerIsTimerActiveImpl                     \n"
-                " MPU_xTimerIsTimerActive_Unpriv:                       \n"
+                " bne MPU_TimerIsTimerActive_Unpriv                    \n"
+                " MPU_TimerIsTimerActive_Priv:                         \n"
+                "     b MPU_TimerIsTimerActiveImpl                     \n"
+                " MPU_TimerIsTimerActive_Unpriv:                       \n"
                 "     svc %0                                            \n"
                 "                                                       \n"
-                : : "i" ( SYSTEM_CALL_xTimerIsTimerActive ) : "memory"
+                : : "i" ( SYSTEM_CALL_TimerIsTimerActive ) : "memory"
             );
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        TaskHandle_t MPU_xTimerGetTimerDaemonTaskHandle( void ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        TaskHandle_t MPU_xTimerGetTimerDaemonTaskHandle( void ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        TaskHandle_t MPU_TimerGetTimerDaemonTaskHandle( void ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        TaskHandle_t MPU_TimerGetTimerDaemonTaskHandle( void ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
                 " .syntax unified                                       \n"
-                " .extern MPU_xTimerGetTimerDaemonTaskHandleImpl        \n"
+                " .extern MPU_TimerGetTimerDaemonTaskHandleImpl        \n"
                 "                                                       \n"
                 " push {r0}                                             \n"
                 " mrs r0, control                                       \n"
                 " tst r0, #1                                            \n"
                 " pop {r0}                                              \n"
-                " bne MPU_xTimerGetTimerDaemonTaskHandle_Unpriv         \n"
-                " MPU_xTimerGetTimerDaemonTaskHandle_Priv:              \n"
-                "     b MPU_xTimerGetTimerDaemonTaskHandleImpl          \n"
-                " MPU_xTimerGetTimerDaemonTaskHandle_Unpriv:            \n"
+                " bne MPU_TimerGetTimerDaemonTaskHandle_Unpriv         \n"
+                " MPU_TimerGetTimerDaemonTaskHandle_Priv:              \n"
+                "     b MPU_TimerGetTimerDaemonTaskHandleImpl          \n"
+                " MPU_TimerGetTimerDaemonTaskHandle_Unpriv:            \n"
                 "     svc %0                                            \n"
                 "                                                       \n"
-                : : "i" ( SYSTEM_CALL_xTimerGetTimerDaemonTaskHandle ) : "memory"
+                : : "i" ( SYSTEM_CALL_TimerGetTimerDaemonTaskHandle ) : "memory"
             );
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        BaseType_t MPU_xTimerGenericCommandFromTaskEntry( const xTimerGenericCommandFromTaskParams_t * pxParams ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        BaseType_t MPU_xTimerGenericCommandFromTaskEntry( const xTimerGenericCommandFromTaskParams_t * pxParams ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        BaseType_t MPU_TimerGenericCommandFromTaskEntry( const TimerGenericCommandFromTaskParams_t * pxParams ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        BaseType_t MPU_TimerGenericCommandFromTaskEntry( const TimerGenericCommandFromTaskParams_t * pxParams ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
                 " .syntax unified                                       \n"
-                " .extern MPU_xTimerGenericCommandFromTaskImpl          \n"
+                " .extern MPU_TimerGenericCommandFromTaskImpl          \n"
                 "                                                       \n"
                 " push {r0}                                             \n"
                 " mrs r0, control                                       \n"
                 " tst r0, #1                                            \n"
                 " pop {r0}                                              \n"
-                " bne MPU_xTimerGenericCommandFromTask_Unpriv           \n"
-                " MPU_xTimerGenericCommandFromTask_Priv:                \n"
-                "     b MPU_xTimerGenericCommandFromTaskImpl            \n"
-                " MPU_xTimerGenericCommandFromTask_Unpriv:              \n"
+                " bne MPU_TimerGenericCommandFromTask_Unpriv           \n"
+                " MPU_TimerGenericCommandFromTask_Priv:                \n"
+                "     b MPU_TimerGenericCommandFromTaskImpl            \n"
+                " MPU_TimerGenericCommandFromTask_Unpriv:              \n"
                 "     svc %0                                            \n"
                 "                                                       \n"
-                : : "i" ( SYSTEM_CALL_xTimerGenericCommandFromTask ) : "memory"
+                : : "i" ( SYSTEM_CALL_TimerGenericCommandFromTask ) : "memory"
             );
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        const char * MPU_pcTimerGetName( TimerHandle_t xTimer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        const char * MPU_pcTimerGetName( TimerHandle_t xTimer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        const char * MPU_pcTimerGetName( TimerHandle_t Timer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        const char * MPU_pcTimerGetName( TimerHandle_t Timer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
@@ -1304,9 +1304,9 @@
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        void MPU_vTimerSetReloadMode( TimerHandle_t xTimer,
+        void MPU_vTimerSetReloadMode( TimerHandle_t Timer,
                                       const BaseType_t uxAutoReload ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        void MPU_vTimerSetReloadMode( TimerHandle_t xTimer,
+        void MPU_vTimerSetReloadMode( TimerHandle_t Timer,
                                       const BaseType_t uxAutoReload ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
@@ -1330,97 +1330,97 @@
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        BaseType_t MPU_xTimerGetReloadMode( TimerHandle_t xTimer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        BaseType_t MPU_xTimerGetReloadMode( TimerHandle_t xTimer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        BaseType_t MPU_TimerGetReloadMode( TimerHandle_t Timer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        BaseType_t MPU_TimerGetReloadMode( TimerHandle_t Timer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
                 " .syntax unified                                       \n"
-                " .extern MPU_xTimerGetReloadModeImpl                   \n"
+                " .extern MPU_TimerGetReloadModeImpl                   \n"
                 "                                                       \n"
                 " push {r0}                                             \n"
                 " mrs r0, control                                       \n"
                 " tst r0, #1                                            \n"
                 " pop {r0}                                              \n"
-                " bne MPU_xTimerGetReloadMode_Unpriv                    \n"
-                " MPU_xTimerGetReloadMode_Priv:                         \n"
-                "     b MPU_xTimerGetReloadModeImpl                     \n"
-                " MPU_xTimerGetReloadMode_Unpriv:                       \n"
+                " bne MPU_TimerGetReloadMode_Unpriv                    \n"
+                " MPU_TimerGetReloadMode_Priv:                         \n"
+                "     b MPU_TimerGetReloadModeImpl                     \n"
+                " MPU_TimerGetReloadMode_Unpriv:                       \n"
                 "     svc %0                                            \n"
                 "                                                       \n"
-                : : "i" ( SYSTEM_CALL_xTimerGetReloadMode ) : "memory"
+                : : "i" ( SYSTEM_CALL_TimerGetReloadMode ) : "memory"
             );
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        UBaseType_t MPU_uxTimerGetReloadMode( TimerHandle_t xTimer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        UBaseType_t MPU_uxTimerGetReloadMode( TimerHandle_t xTimer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        UBaseType_t MPU_uTimerGetReloadMode( TimerHandle_t Timer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        UBaseType_t MPU_uTimerGetReloadMode( TimerHandle_t Timer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
                 " .syntax unified                                       \n"
-                " .extern MPU_uxTimerGetReloadModeImpl                  \n"
+                " .extern MPU_uTimerGetReloadModeImpl                  \n"
                 "                                                       \n"
                 " push {r0}                                             \n"
                 " mrs r0, control                                       \n"
                 " tst r0, #1                                            \n"
                 " pop {r0}                                              \n"
-                " bne MPU_uxTimerGetReloadMode_Unpriv                   \n"
-                " MPU_uxTimerGetReloadMode_Priv:                        \n"
-                "     b MPU_uxTimerGetReloadModeImpl                    \n"
-                " MPU_uxTimerGetReloadMode_Unpriv:                      \n"
+                " bne MPU_uTimerGetReloadMode_Unpriv                   \n"
+                " MPU_uTimerGetReloadMode_Priv:                        \n"
+                "     b MPU_uTimerGetReloadModeImpl                    \n"
+                " MPU_uTimerGetReloadMode_Unpriv:                      \n"
                 "     svc %0                                            \n"
                 "                                                       \n"
-                : : "i" ( SYSTEM_CALL_uxTimerGetReloadMode ) : "memory"
+                : : "i" ( SYSTEM_CALL_uTimerGetReloadMode ) : "memory"
             );
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        TickType_t MPU_xTimerGetPeriod( TimerHandle_t xTimer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        TickType_t MPU_xTimerGetPeriod( TimerHandle_t xTimer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        TickType_t MPU_TimerGetPeriod( TimerHandle_t Timer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        TickType_t MPU_TimerGetPeriod( TimerHandle_t Timer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
                 " .syntax unified                                       \n"
-                " .extern MPU_xTimerGetPeriodImpl                       \n"
+                " .extern MPU_TimerGetPeriodImpl                       \n"
                 "                                                       \n"
                 " push {r0}                                             \n"
                 " mrs r0, control                                       \n"
                 " tst r0, #1                                            \n"
                 " pop {r0}                                              \n"
-                " bne MPU_xTimerGetPeriod_Unpriv                        \n"
-                " MPU_xTimerGetPeriod_Priv:                             \n"
-                "     b MPU_xTimerGetPeriodImpl                         \n"
-                " MPU_xTimerGetPeriod_Unpriv:                           \n"
+                " bne MPU_TimerGetPeriod_Unpriv                        \n"
+                " MPU_TimerGetPeriod_Priv:                             \n"
+                "     b MPU_TimerGetPeriodImpl                         \n"
+                " MPU_TimerGetPeriod_Unpriv:                           \n"
                 "     svc %0                                            \n"
                 "                                                       \n"
-                : : "i" ( SYSTEM_CALL_xTimerGetPeriod ) : "memory"
+                : : "i" ( SYSTEM_CALL_TimerGetPeriod ) : "memory"
             );
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        TickType_t MPU_xTimerGetExpiryTime( TimerHandle_t xTimer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
-        TickType_t MPU_xTimerGetExpiryTime( TimerHandle_t xTimer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
+        TickType_t MPU_TimerGetExpiryTime( TimerHandle_t Timer ) __attribute__( ( naked ) ) FREERTOS_SYSTEM_CALL;
+        TickType_t MPU_TimerGetExpiryTime( TimerHandle_t Timer ) /* __attribute__ (( naked )) FREERTOS_SYSTEM_CALL */
         {
             __asm volatile
             (
                 " .syntax unified                                       \n"
-                " .extern MPU_xTimerGetExpiryTimeImpl                   \n"
+                " .extern MPU_TimerGetExpiryTimeImpl                   \n"
                 "                                                       \n"
                 " push {r0}                                             \n"
                 " mrs r0, control                                       \n"
                 " tst r0, #1                                            \n"
                 " pop {r0}                                              \n"
-                " bne MPU_xTimerGetExpiryTime_Unpriv                    \n"
-                " MPU_xTimerGetExpiryTime_Priv:                         \n"
-                "     b MPU_xTimerGetExpiryTimeImpl                     \n"
-                " MPU_xTimerGetExpiryTime_Unpriv:                       \n"
+                " bne MPU_TimerGetExpiryTime_Unpriv                    \n"
+                " MPU_TimerGetExpiryTime_Priv:                         \n"
+                "     b MPU_TimerGetExpiryTimeImpl                     \n"
+                " MPU_TimerGetExpiryTime_Unpriv:                       \n"
                 "     svc %0                                            \n"
                 "                                                       \n"
-                : : "i" ( SYSTEM_CALL_xTimerGetExpiryTime ) : "memory"
+                : : "i" ( SYSTEM_CALL_TimerGetExpiryTime ) : "memory"
             );
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */

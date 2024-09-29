@@ -51,14 +51,14 @@ typedef struct xTaskGenericNotifyWaitParams
     uint32_t * pulNotificationValue;
     TickType_t xTicksToWait;
 } xTaskGenericNotifyWaitParams_t;
-typedef struct xTimerGenericCommandFromTaskParams
+typedef struct TimerGenericCommandFromTaskParams
 {
-    TimerHandle_t xTimer;
+    TimerHandle_t Timer;
     BaseType_t xCommandID;
     TickType_t xOptionalValue;
     BaseType_t * pxHigherPriorityTaskWoken;
     TickType_t xTicksToWait;
-} xTimerGenericCommandFromTaskParams_t;
+} TimerGenericCommandFromTaskParams_t;
 typedef struct xEventGroupWaitBitsParams
 {
     EventGroupHandle_t xEventGroup;
@@ -207,20 +207,20 @@ uint8_t MPU_ucQueueGetQueueType( QueueHandle_t xQueue ) FREERTOS_SYSTEM_CALL;
  * with all the APIs. */
 void MPU_vQueueDelete( QueueHandle_t xQueue ) ;
 QueueHandle_t MPU_xQueueCreateMutex( const uint8_t ucQueueType ) ;
-QueueHandle_t MPU_xQueueCreateMutexStatic( const uint8_t ucQueueType,
-                                           StaticQueue_t * pxStaticQueue ) ;
+QueueHandle_t MPU_xQueueCreateMuteStatic( const uint8_t ucQueueType,
+                                           StaticQueue_t * pStaticQueue ) ;
 QueueHandle_t MPU_xQueueCreateCountingSemaphore( const UBaseType_t uxMaxCount,
                                                  const UBaseType_t uxInitialCount ) ;
 QueueHandle_t MPU_xQueueCreateCountingSemaphoreStatic( const UBaseType_t uxMaxCount,
                                                        const UBaseType_t uxInitialCount,
-                                                       StaticQueue_t * pxStaticQueue ) ;
+                                                       StaticQueue_t * pStaticQueue ) ;
 QueueHandle_t MPU_xQueueGenericCreate( const UBaseType_t uxQueueLength,
                                        const UBaseType_t uxItemSize,
                                        const uint8_t ucQueueType ) ;
 QueueHandle_t MPU_xQueueGenericCreateStatic( const UBaseType_t uxQueueLength,
                                              const UBaseType_t uxItemSize,
                                              uint8_t * pucQueueStorage,
-                                             StaticQueue_t * pxStaticQueue,
+                                             StaticQueue_t * pStaticQueue,
                                              const uint8_t ucQueueType ) ;
 QueueSetHandle_t MPU_xQueueCreateSet( const UBaseType_t uxEventQueueLength ) ;
 BaseType_t MPU_xQueueRemoveFromSet( QueueSetMemberHandle_t xQueueOrSemaphore,
@@ -229,7 +229,7 @@ BaseType_t MPU_xQueueGenericReset( QueueHandle_t xQueue,
                                    BaseType_t xNewQueue ) ;
 BaseType_t MPU_xQueueGenericGetStaticBuffers( QueueHandle_t xQueue,
                                               uint8_t ** ppucQueueStorage,
-                                              StaticQueue_t ** ppxStaticQueue ) ;
+                                              StaticQueue_t ** ppStaticQueue ) ;
 BaseType_t MPU_xQueueGenericSendFromISR( QueueHandle_t xQueue,
                                          const void * const pvItemToQueue,
                                          BaseType_t * const pxHigherPriorityTaskWoken,
@@ -247,41 +247,41 @@ UBaseType_t MPU_uxQueueMessagesWaitingFromISR( const QueueHandle_t xQueue ) ;
 TaskHandle_t MPU_xQueueGetMutexHolderFromISR( QueueHandle_t xSemaphore ) ;
 QueueSetMemberHandle_t MPU_xQueueSelectFromSetFromISR( QueueSetHandle_t xQueueSet ) ;
 /* MPU versions of timers.h API functions. */
-void * MPU_pvTimerGetTimerID( const TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
-void MPU_vTimerSetTimerID( TimerHandle_t xTimer,
+void * MPU_pvTimerGetTimerID( const TimerHandle_t Timer ) FREERTOS_SYSTEM_CALL;
+void MPU_SetTimerID( TimerHandle_t Timer,
                            void * pvNewID ) FREERTOS_SYSTEM_CALL;
-BaseType_t MPU_xTimerIsTimerActive( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
-TaskHandle_t MPU_xTimerGetTimerDaemonTaskHandle( void ) FREERTOS_SYSTEM_CALL;
-BaseType_t MPU_xTimerGenericCommandFromTask( TimerHandle_t xTimer,
+BaseType_t MPU_TimerIsTimerActive( TimerHandle_t Timer ) FREERTOS_SYSTEM_CALL;
+TaskHandle_t MPU_TimerGetTimerDaemonTaskHandle( void ) FREERTOS_SYSTEM_CALL;
+BaseType_t MPU_TimerGenericCommandFromTask( TimerHandle_t Timer,
                                              const BaseType_t xCommandID,
                                              const TickType_t xOptionalValue,
                                              BaseType_t * const pxHigherPriorityTaskWoken,
                                              const TickType_t xTicksToWait ) FREERTOS_SYSTEM_CALL;
-BaseType_t MPU_xTimerGenericCommandFromTaskEntry( const xTimerGenericCommandFromTaskParams_t * pxParams ) FREERTOS_SYSTEM_CALL;
-const char * MPU_pcTimerGetName( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
-void MPU_vTimerSetReloadMode( TimerHandle_t xTimer,
+BaseType_t MPU_TimerGenericCommandFromTaskEntry( const TimerGenericCommandFromTaskParams_t * pxParams ) FREERTOS_SYSTEM_CALL;
+const char * MPU_pcTimerGetName( TimerHandle_t Timer ) FREERTOS_SYSTEM_CALL;
+void MPU_vTimerSetReloadMode( TimerHandle_t Timer,
                               const BaseType_t uxAutoReload ) FREERTOS_SYSTEM_CALL;
-BaseType_t MPU_xTimerGetReloadMode( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
-UBaseType_t MPU_uxTimerGetReloadMode( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
-TickType_t MPU_xTimerGetPeriod( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
-TickType_t MPU_xTimerGetExpiryTime( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
+BaseType_t MPU_TimerGetReloadMode( TimerHandle_t Timer ) FREERTOS_SYSTEM_CALL;
+UBaseType_t MPU_uTimerGetReloadMode( TimerHandle_t Timer ) FREERTOS_SYSTEM_CALL;
+TickType_t MPU_TimerGetPeriod( TimerHandle_t Timer ) FREERTOS_SYSTEM_CALL;
+TickType_t MPU_TimerGetExpiryTime( TimerHandle_t Timer ) FREERTOS_SYSTEM_CALL;
 /* Privileged only wrappers for Timer APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
-TimerHandle_t MPU_xTimerCreate( const char * const pcTimerName,
-                                const TickType_t xTimerPeriodInTicks,
+TimerHandle_t MPU_TimerCreate( const char * const pcTimerName,
+                                const TickType_t TimerPeriodInTicks,
                                 const UBaseType_t uxAutoReload,
                                 void * const pvTimerID,
                                 TimerCallbackFunction_t pxCallbackFunction ) ;
-TimerHandle_t MPU_xTimerCreateStatic( const char * const pcTimerName,
-                                      const TickType_t xTimerPeriodInTicks,
+TimerHandle_t MPU_TimerCreateStatic( const char * const pcTimerName,
+                                      const TickType_t TimerPeriodInTicks,
                                       const UBaseType_t uxAutoReload,
                                       void * const pvTimerID,
                                       TimerCallbackFunction_t pxCallbackFunction,
-                                      StaticTimer_t * pxTimerBuffer ) ;
-BaseType_t MPU_xTimerGetStaticBuffer( TimerHandle_t xTimer,
-                                      StaticTimer_t ** ppxTimerBuffer ) ;
-BaseType_t MPU_xTimerGenericCommandFromISR( TimerHandle_t xTimer,
+                                      StaticTimer_t * pTimerBuffer ) ;
+BaseType_t MPU_TimerGetStaticBuffer( TimerHandle_t Timer,
+                                      StaticTimer_t ** ppTimerBuffer ) ;
+BaseType_t MPU_TimerGenericCommandFromISR( TimerHandle_t Timer,
                                             const BaseType_t xCommandID,
                                             const TickType_t xOptionalValue,
                                             BaseType_t * const pxHigherPriorityTaskWoken,
@@ -348,14 +348,14 @@ StreamBufferHandle_t MPU_xStreamBufferGenericCreateStatic( size_t xBufferSizeByt
                                                            size_t xTriggerLevelBytes,
                                                            BaseType_t xStreamBufferType,
                                                            uint8_t * const pucStreamBufferStorageArea,
-                                                           StaticStreamBuffer_t * const pxStaticStreamBuffer,
+                                                           StaticStreamBuffer_t * const pStaticStreamBuffer,
                                                            StreamBufferCallbackFunction_t pxSendCompletedCallback,
                                                            StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) ;
 void MPU_vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer ) ;
 BaseType_t MPU_xStreamBufferReset( StreamBufferHandle_t xStreamBuffer ) ;
 BaseType_t MPU_xStreamBufferGetStaticBuffers( StreamBufferHandle_t xStreamBuffers,
                                               uint8_t * ppucStreamBufferStorageArea,
-                                              StaticStreamBuffer_t * ppxStaticStreamBuffer ) ;
+                                              StaticStreamBuffer_t * ppStaticStreamBuffer ) ;
 size_t MPU_xStreamBufferSendFromISR( StreamBufferHandle_t xStreamBuffer,
                                      const void * pvTxData,
                                      size_t xDataLengthBytes,

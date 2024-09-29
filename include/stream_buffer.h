@@ -167,7 +167,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * StreamBufferHandle_t xStreamBufferCreateStatic( size_t xBufferSizeBytes,
  *                                                 size_t xTriggerLevelBytes,
  *                                                 uint8_t *pucStreamBufferStorageArea,
- *                                                 StaticStreamBuffer_t *pxStaticStreamBuffer );
+ *                                                 StaticStreamBuffer_t *pStaticStreamBuffer );
  * @endcode
  * Creates a new stream buffer using statically allocated memory.  See
  * xStreamBufferCreate() for a version that uses dynamically allocated memory.
@@ -198,7 +198,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * least xBufferSizeBytes big.  This is the array to which streams are
  * copied when they are written to the stream buffer.
  *
- * @param pxStaticStreamBuffer Must point to a variable of type
+ * @param pStaticStreamBuffer Must point to a variable of type
  * StaticStreamBuffer_t, which will be used to hold the stream buffer's data
  * structure.
  *
@@ -214,7 +214,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  *
  * @return If the stream buffer is created successfully then a handle to the
  * created stream buffer is returned. If either pucStreamBufferStorageArea or
- * pxStaticstreamBuffer are NULL then NULL is returned.
+ * pStaticstreamBuffer are NULL then NULL is returned.
  *
  * Example use:
  * @code{c}
@@ -240,7 +240,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  *                                             ucStorageBuffer,
  *                                             &xStreamBufferStruct );
  *
- *  // As neither the pucStreamBufferStorageArea or pxStaticStreamBuffer
+ *  // As neither the pucStreamBufferStorageArea or pStaticStreamBuffer
  *  // parameters were NULL, xStreamBuffer will not be NULL, and can be used to
  *  // reference the created stream buffer in other stream buffer API calls.
  *
@@ -251,11 +251,11 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * \defgroup xStreamBufferCreateStatic xStreamBufferCreateStatic
  * \ingroup StreamBufferManagement
  */
-#define xStreamBufferCreateStatic( xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, pxStaticStreamBuffer ) \
-    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), ( xTriggerLevelBytes ), sbTYPE_STREAM_BUFFER, ( pucStreamBufferStorageArea ), ( pxStaticStreamBuffer ), NULL, NULL )
+#define xStreamBufferCreateStatic( xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, pStaticStreamBuffer ) \
+    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), ( xTriggerLevelBytes ), sbTYPE_STREAM_BUFFER, ( pucStreamBufferStorageArea ), ( pStaticStreamBuffer ), NULL, NULL )
 #if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
-    #define xStreamBufferCreateStaticWithCallback( xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, pxStaticStreamBuffer, pxSendCompletedCallback, pxReceiveCompletedCallback ) \
-    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), ( xTriggerLevelBytes ), sbTYPE_STREAM_BUFFER, ( pucStreamBufferStorageArea ), ( pxStaticStreamBuffer ), ( pxSendCompletedCallback ), ( pxReceiveCompletedCallback ) )
+    #define xStreamBufferCreateStaticWithCallback( xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, pStaticStreamBuffer, pxSendCompletedCallback, pxReceiveCompletedCallback ) \
+    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), ( xTriggerLevelBytes ), sbTYPE_STREAM_BUFFER, ( pucStreamBufferStorageArea ), ( pStaticStreamBuffer ), ( pxSendCompletedCallback ), ( pxReceiveCompletedCallback ) )
 #endif
 /**
  * stream_buffer.h
@@ -347,7 +347,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * StreamBufferHandle_t xStreamBatchingBufferCreateStatic( size_t xBufferSizeBytes,
  *                                                         size_t xTriggerLevelBytes,
  *                                                         uint8_t *pucStreamBufferStorageArea,
- *                                                         StaticStreamBuffer_t *pxStaticStreamBuffer );
+ *                                                         StaticStreamBuffer_t *pStaticStreamBuffer );
  * @endcode
  * Creates a new stream batching buffer using statically allocated memory.  See
  * xStreamBatchingBufferCreate() for a version that uses dynamically allocated
@@ -377,7 +377,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * least xBufferSizeBytes big.  This is the array to which streams are
  * copied when they are written to the stream batching buffer.
  *
- * @param pxStaticStreamBuffer Must point to a variable of type
+ * @param pStaticStreamBuffer Must point to a variable of type
  * StaticStreamBuffer_t, which will be used to hold the stream batching buffer's
  * data structure.
  *
@@ -395,7 +395,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  *
  * @return If the stream batching buffer is created successfully then a handle
  * to the created stream batching buffer is returned. If either pucStreamBufferStorageArea
- * or pxStaticstreamBuffer are NULL then NULL is returned.
+ * or pStaticstreamBuffer are NULL then NULL is returned.
  *
  * Example use:
  * @code{c}
@@ -421,7 +421,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  *                                                             ucStorageBuffer,
  *                                                             &xStreamBufferStruct );
  *
- *  // As neither the pucStreamBufferStorageArea or pxStaticStreamBuffer
+ *  // As neither the pucStreamBufferStorageArea or pStaticStreamBuffer
  *  // parameters were NULL, xStreamBatchingBuffer will not be NULL, and can be
  *  // used to reference the created stream batching buffer in other stream
  *  // buffer API calls.
@@ -433,11 +433,11 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * \defgroup xStreamBatchingBufferCreateStatic xStreamBatchingBufferCreateStatic
  * \ingroup StreamBatchingBufferManagement
  */
-#define xStreamBatchingBufferCreateStatic( xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, pxStaticStreamBuffer ) \
-    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), ( xTriggerLevelBytes ), sbTYPE_STREAM_BATCHING_BUFFER, ( pucStreamBufferStorageArea ), ( pxStaticStreamBuffer ), NULL, NULL )
+#define xStreamBatchingBufferCreateStatic( xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, pStaticStreamBuffer ) \
+    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), ( xTriggerLevelBytes ), sbTYPE_STREAM_BATCHING_BUFFER, ( pucStreamBufferStorageArea ), ( pStaticStreamBuffer ), NULL, NULL )
 #if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
-    #define xStreamBatchingBufferCreateStaticWithCallback( xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, pxStaticStreamBuffer, pxSendCompletedCallback, pxReceiveCompletedCallback ) \
-    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), ( xTriggerLevelBytes ), sbTYPE_STREAM_BATCHING_BUFFER, ( pucStreamBufferStorageArea ), ( pxStaticStreamBuffer ), ( pxSendCompletedCallback ), ( pxReceiveCompletedCallback ) )
+    #define xStreamBatchingBufferCreateStaticWithCallback( xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, pStaticStreamBuffer, pxSendCompletedCallback, pxReceiveCompletedCallback ) \
+    xStreamBufferGenericCreateStatic( ( xBufferSizeBytes ), ( xTriggerLevelBytes ), sbTYPE_STREAM_BATCHING_BUFFER, ( pucStreamBufferStorageArea ), ( pStaticStreamBuffer ), ( pxSendCompletedCallback ), ( pxReceiveCompletedCallback ) )
 #endif
 /**
  * stream_buffer.h
@@ -445,7 +445,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * @code{c}
  * BaseType_t xStreamBufferGetStaticBuffers( StreamBufferHandle_t xStreamBuffer,
  *                                           uint8_t ** ppucStreamBufferStorageArea,
- *                                           StaticStreamBuffer_t ** ppxStaticStreamBuffer );
+ *                                           StaticStreamBuffer_t ** ppStaticStreamBuffer );
  * @endcode
  *
  * Retrieve pointers to a statically created stream buffer's data structure
@@ -460,7 +460,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * @param ppucStreamBufferStorageArea Used to return a pointer to the stream
  * buffer's storage area buffer.
  *
- * @param ppxStaticStreamBuffer Used to return a pointer to the stream
+ * @param ppStaticStreamBuffer Used to return a pointer to the stream
  * buffer's data structure buffer.
  *
  * @return true if buffers were retrieved, false otherwise.
@@ -471,7 +471,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     BaseType_t xStreamBufferGetStaticBuffers( StreamBufferHandle_t xStreamBuffer,
                                               uint8_t ** ppucStreamBufferStorageArea,
-                                              StaticStreamBuffer_t ** ppxStaticStreamBuffer ) ;
+                                              StaticStreamBuffer_t ** ppStaticStreamBuffer ) ;
 #endif /* configSUPPORT_STATIC_ALLOCATION */
 /**
  * stream_buffer.h
@@ -1219,7 +1219,7 @@ StreamBufferHandle_t xStreamBufferGenericCreate( size_t xBufferSizeBytes,
                                                            size_t xTriggerLevelBytes,
                                                            BaseType_t xStreamBufferType,
                                                            uint8_t * const pucStreamBufferStorageArea,
-                                                           StaticStreamBuffer_t * const pxStaticStreamBuffer,
+                                                           StaticStreamBuffer_t * const pStaticStreamBuffer,
                                                            StreamBufferCallbackFunction_t pxSendCompletedCallback,
                                                            StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) ;
 #endif

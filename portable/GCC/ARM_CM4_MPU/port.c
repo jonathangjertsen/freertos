@@ -145,7 +145,7 @@ static uint32_t GetMPURegionSizeSetting( uint32_t ulActualSizeInBytes ) ;
  * file is weak to allow application writers to change the timer used to
  * generate the tick interrupt.
  */
-void vPortSetupTimerInterrupt( void );
+void vPortSetuTimerInterrupt( void );
 /*
  * Standard FreeRTOS exception handlers.
  */
@@ -731,7 +731,7 @@ BaseType_t xPortStartScheduler( void )
          * handlers for SVCall and PendSV interrupts. We do not check the
          * installation of the SysTick handler because the application may
          * choose to drive the RTOS tick using a timer other than the SysTick
-         * timer by overriding the weak function vPortSetupTimerInterrupt().
+         * timer by overriding the weak function vPortSetuTimerInterrupt().
          *
          * Assertion failures here indicate incorrect installation of the
          * FreeRTOS handlers. For help installing the FreeRTOS handlers, see
@@ -825,7 +825,7 @@ BaseType_t xPortStartScheduler( void )
     SetupMPU();
     /* Start the timer that generates the tick ISR.  Interrupts are disabled
      * here already. */
-    vPortSetupTimerInterrupt();
+    vPortSetuTimerInterrupt();
     /* Initialise the critical nesting count ready for the first task. */
     uxCriticalNesting = 0;
     #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
@@ -1045,7 +1045,7 @@ void xPortSysTickHandler( void )
  * Setup the systick timer to generate the tick interrupts at the required
  * frequency.
  */
-__attribute__( ( weak ) ) void vPortSetupTimerInterrupt( void )
+__attribute__( ( weak ) ) void vPortSetuTimerInterrupt( void )
 {
     /* Stop and clear the SysTick. */
     portNVIC_SYSTICK_CTRL_REG = 0UL;

@@ -28,20 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
- * all the API functions to use the MPU wrappers.  That should only be done when
- * task.h is included from an application file. */
-#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-#if ( configUSE_CO_ROUTINES == 1 )
-    #include "croutine.h"
-#endif
-/* The MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined
- * for the header files above, but not in this file, in order to generate the
- * correct privileged Vs unprivileged linkage and placement. */
-#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
 /* Constants used with the cRxLock and cTxLock structure members. */
 #define queueUNLOCKED             ( ( int8_t ) -1 )
@@ -105,7 +94,7 @@ typedef struct QueueDefinition /* The old naming convention is used to prevent b
     volatile int8_t cRxLock;                /**< Stores the number of items received from the queue (removed from the queue) while the queue was locked.  Set to queueUNLOCKED when the queue is not locked. */
     volatile int8_t cTxLock;                /**< Stores the number of items transmitted to the queue (added to the queue) while the queue was locked.  Set to queueUNLOCKED when the queue is not locked. */
     #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
-        uint8_t ucStaticallyAllocated; /**< Set to true if the memory used by the queue was statically allocated to ensure no attempt is made to free the memory. */
+        uint8_t StaticallyAllocated; /**< Set to true if the memory used by the queue was statically allocated to ensure no attempt is made to free the memory. */
     #endif
     #if ( configUSE_QUEUE_SETS == 1 )
         struct QueueDefinition * pxQueueSetContainer;
@@ -308,15 +297,15 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
     QueueHandle_t xQueueGenericCreateStatic( const UBaseType_t uxQueueLength,
                                              const UBaseType_t uxItemSize,
                                              uint8_t * pucQueueStorage,
-                                             StaticQueue_t * pxStaticQueue,
+                                             StaticQueue_t * pStaticQueue,
                                              const uint8_t ucQueueType )
     {
         Queue_t * pxNewQueue = NULL;
         /* The StaticQueue_t structure and the queue storage area must be
          * supplied. */
-        configASSERT( pxStaticQueue );
+        configASSERT( pStaticQueue );
         if( ( uxQueueLength > ( UBaseType_t ) 0 ) &&
-            ( pxStaticQueue != NULL ) &&
+            ( pStaticQueue != NULL ) &&
             /* A queue storage area should be provided if the item size is not 0, and
              * should not be provided if the item size is 0. */
             ( !( ( pucQueueStorage != NULL ) && ( uxItemSize == 0U ) ) ) &&
@@ -336,13 +325,13 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
             /* The address of a statically allocated queue was passed in, use it.
              * The address of a statically allocated storage area was also passed in
              * but is already set. */
-            pxNewQueue = ( Queue_t * ) pxStaticQueue;
+            pxNewQueue = ( Queue_t * ) pStaticQueue;
             #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
             {
                 /* Queues can be allocated wither statically or dynamically, so
                  * note this queue was allocated statically in case the queue is
                  * later deleted. */
-                pxNewQueue->ucStaticallyAllocated = true;
+                pxNewQueue->StaticallyAllocated = true;
             }
             #endif /* configSUPPORT_DYNAMIC_ALLOCATION */
             InitialiseNewQueue( uxQueueLength, uxItemSize, pucQueueStorage, ucQueueType, pxNewQueue );
@@ -358,16 +347,16 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     BaseType_t xQueueGenericGetStaticBuffers( QueueHandle_t xQueue,
                                               uint8_t ** ppucQueueStorage,
-                                              StaticQueue_t ** ppxStaticQueue )
+                                              StaticQueue_t ** ppStaticQueue )
     {
         BaseType_t xReturn;
         Queue_t * const pxQueue = xQueue;
         configASSERT( pxQueue );
-        configASSERT( ppxStaticQueue );
+        configASSERT( ppStaticQueue );
         #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
         {
             /* Check if the queue was statically allocated. */
-            if( pxQueue->ucStaticallyAllocated == ( uint8_t ) true )
+            if( pxQueue->StaticallyAllocated == ( uint8_t ) true )
             {
                 if( ppucQueueStorage != NULL )
                 {
@@ -375,7 +364,7 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
                 }
 
 
-                *ppxStaticQueue = ( StaticQueue_t * ) pxQueue;
+                *ppStaticQueue = ( StaticQueue_t * ) pxQueue;
                 xReturn = true;
             }
             else
@@ -390,7 +379,7 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
             {
                 *ppucQueueStorage = ( uint8_t * ) pxQueue->pcHead;
             }
-            *ppxStaticQueue = ( StaticQueue_t * ) pxQueue;
+            *ppStaticQueue = ( StaticQueue_t * ) pxQueue;
             xReturn = true;
         }
         #endif /* configSUPPORT_DYNAMIC_ALLOCATION */
@@ -428,7 +417,7 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
                     /* Queues can be created either statically or dynamically, so
                      * note this task was created dynamically in case it is later
                      * deleted. */
-                    pxNewQueue->ucStaticallyAllocated = false;
+                    pxNewQueue->StaticallyAllocated = false;
                 }
                 #endif /* configSUPPORT_STATIC_ALLOCATION */
                 InitialiseNewQueue( uxQueueLength, uxItemSize, pucQueueStorage, ucQueueType, pxNewQueue );
@@ -507,15 +496,15 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
 #endif /* configUSE_MUTEXES */
 
 #if ( ( configUSE_MUTEXES == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
-    QueueHandle_t xQueueCreateMutexStatic( const uint8_t ucQueueType,
-                                           StaticQueue_t * pxStaticQueue )
+    QueueHandle_t xQueueCreateMuteStatic( const uint8_t ucQueueType,
+                                           StaticQueue_t * pStaticQueue )
     {
         QueueHandle_t xNewQueue;
         const UBaseType_t uxMutexLength = ( UBaseType_t ) 1, uxMutexSize = ( UBaseType_t ) 0;
         /* Prevent compiler warnings about unused parameters if
          * configUSE_TRACE_FACILITY does not equal 1. */
         ( void ) ucQueueType;
-        xNewQueue = xQueueGenericCreateStatic( uxMutexLength, uxMutexSize, NULL, pxStaticQueue, ucQueueType );
+        xNewQueue = xQueueGenericCreateStatic( uxMutexLength, uxMutexSize, NULL, pStaticQueue, ucQueueType );
         InitialiseMutex( ( Queue_t * ) xNewQueue );
         return xNewQueue;
     }
@@ -635,13 +624,13 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
 #if ( ( configUSE_COUNTING_SEMAPHORES == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
     QueueHandle_t xQueueCreateCountingSemaphoreStatic( const UBaseType_t uxMaxCount,
                                                        const UBaseType_t uxInitialCount,
-                                                       StaticQueue_t * pxStaticQueue )
+                                                       StaticQueue_t * pStaticQueue )
     {
         QueueHandle_t xHandle = NULL;
         if( ( uxMaxCount != 0U ) &&
             ( uxInitialCount <= uxMaxCount ) )
         {
-            xHandle = xQueueGenericCreateStatic( uxMaxCount, queueSEMAPHORE_QUEUE_ITEM_LENGTH, NULL, pxStaticQueue, queueQUEUE_TYPE_COUNTING_SEMAPHORE );
+            xHandle = xQueueGenericCreateStatic( uxMaxCount, queueSEMAPHORE_QUEUE_ITEM_LENGTH, NULL, pStaticQueue, queueQUEUE_TYPE_COUNTING_SEMAPHORE );
             if( xHandle != NULL )
             {
                 ( ( Queue_t * ) xHandle )->uxMessagesWaiting = uxInitialCount;
@@ -1564,7 +1553,7 @@ void vQueueDelete( QueueHandle_t xQueue )
     {
         /* The queue could have been allocated statically or dynamically, so
          * check before attempting to free the memory. */
-        if( pxQueue->ucStaticallyAllocated == ( uint8_t ) false )
+        if( pxQueue->StaticallyAllocated == ( uint8_t ) false )
         {
             vPortFree( pxQueue );
         }

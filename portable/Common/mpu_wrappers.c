@@ -917,7 +917,7 @@
         QueueHandle_t MPU_xQueueGenericCreateStatic( const UBaseType_t uxQueueLength,
                                                      const UBaseType_t uxItemSize,
                                                      uint8_t * pucQueueStorage,
-                                                     StaticQueue_t * pxStaticQueue,
+                                                     StaticQueue_t * pStaticQueue,
                                                      const uint8_t ucQueueType ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
@@ -925,14 +925,14 @@
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xQueueGenericCreateStatic( uxQueueLength, uxItemSize, pucQueueStorage, pxStaticQueue, ucQueueType );
+                xReturn = xQueueGenericCreateStatic( uxQueueLength, uxItemSize, pucQueueStorage, pStaticQueue, ucQueueType );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xQueueGenericCreateStatic( uxQueueLength, uxItemSize, pucQueueStorage, pxStaticQueue, ucQueueType );
+                xReturn = xQueueGenericCreateStatic( uxQueueLength, uxItemSize, pucQueueStorage, pStaticQueue, ucQueueType );
             }
             return xReturn;
         }
@@ -1123,22 +1123,22 @@
     #endif /* if ( ( configUSE_MUTEXES == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) ) */
 
     #if ( ( configUSE_MUTEXES == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
-        QueueHandle_t MPU_xQueueCreateMutexStatic( const uint8_t ucQueueType,
-                                                   StaticQueue_t * pxStaticQueue ) /* FREERTOS_SYSTEM_CALL */
+        QueueHandle_t MPU_xQueueCreateMuteStatic( const uint8_t ucQueueType,
+                                                   StaticQueue_t * pStaticQueue ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xQueueCreateMutexStatic( ucQueueType, pxStaticQueue );
+                xReturn = xQueueCreateMuteStatic( ucQueueType, pStaticQueue );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xQueueCreateMutexStatic( ucQueueType, pxStaticQueue );
+                xReturn = xQueueCreateMuteStatic( ucQueueType, pStaticQueue );
             }
             return xReturn;
         }
@@ -1169,21 +1169,21 @@
     #if ( ( configUSE_COUNTING_SEMAPHORES == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) )
         QueueHandle_t MPU_xQueueCreateCountingSemaphoreStatic( const UBaseType_t uxMaxCount,
                                                                const UBaseType_t uxInitialCount,
-                                                               StaticQueue_t * pxStaticQueue ) /* FREERTOS_SYSTEM_CALL */
+                                                               StaticQueue_t * pStaticQueue ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xQueueCreateCountingSemaphoreStatic( uxMaxCount, uxInitialCount, pxStaticQueue );
+                xReturn = xQueueCreateCountingSemaphoreStatic( uxMaxCount, uxInitialCount, pStaticQueue );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xQueueCreateCountingSemaphoreStatic( uxMaxCount, uxInitialCount, pxStaticQueue );
+                xReturn = xQueueCreateCountingSemaphoreStatic( uxMaxCount, uxInitialCount, pStaticQueue );
             }
             return xReturn;
         }
@@ -1397,194 +1397,194 @@
     }
 
     #if ( configUSE_TIMERS == 1 )
-        void * MPU_pvTimerGetTimerID( const TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
+        void * MPU_pvTimerGetTimerID( const TimerHandle_t Timer ) /* FREERTOS_SYSTEM_CALL */
         {
             void * pvReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                pvReturn = pvTimerGetTimerID( xTimer );
+                pvReturn = pvTimerGetTimerID( Timer );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                pvReturn = pvTimerGetTimerID( xTimer );
+                pvReturn = pvTimerGetTimerID( Timer );
             }
             return pvReturn;
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        void MPU_vTimerSetTimerID( TimerHandle_t xTimer,
+        void MPU_SetTimerID( TimerHandle_t Timer,
                                    void * pvNewID ) /* FREERTOS_SYSTEM_CALL */
         {
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                vTimerSetTimerID( xTimer, pvNewID );
+                SetTimerID( Timer, pvNewID );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                vTimerSetTimerID( xTimer, pvNewID );
+                SetTimerID( Timer, pvNewID );
             }
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        BaseType_t MPU_xTimerIsTimerActive( TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
+        BaseType_t MPU_TimerIsTimerActive( TimerHandle_t Timer ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xTimerIsTimerActive( xTimer );
+                xReturn = TimerIsTimerActive( Timer );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xTimerIsTimerActive( xTimer );
+                xReturn = TimerIsTimerActive( Timer );
             }
             return xReturn;
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        TaskHandle_t MPU_xTimerGetTimerDaemonTaskHandle( void ) /* FREERTOS_SYSTEM_CALL */
+        TaskHandle_t MPU_TimerGetTimerDaemonTaskHandle( void ) /* FREERTOS_SYSTEM_CALL */
         {
             TaskHandle_t xReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xTimerGetTimerDaemonTaskHandle();
+                xReturn = TimerGetTimerDaemonTaskHandle();
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xTimerGetTimerDaemonTaskHandle();
+                xReturn = TimerGetTimerDaemonTaskHandle();
             }
             return xReturn;
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        void MPU_vTimerSetReloadMode( TimerHandle_t xTimer,
+        void MPU_vTimerSetReloadMode( TimerHandle_t Timer,
                                       const BaseType_t uxAutoReload ) /* FREERTOS_SYSTEM_CALL */
         {
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                vTimerSetReloadMode( xTimer, uxAutoReload );
+                vTimerSetReloadMode( Timer, uxAutoReload );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                vTimerSetReloadMode( xTimer, uxAutoReload );
+                vTimerSetReloadMode( Timer, uxAutoReload );
             }
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        UBaseType_t MPU_uxTimerGetReloadMode( TimerHandle_t xTimer )
+        UBaseType_t MPU_uTimerGetReloadMode( TimerHandle_t Timer )
         {
             UBaseType_t uxReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                uxReturn = uxTimerGetReloadMode( xTimer );
+                uxReturn = uTimerGetReloadMode( Timer );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                uxReturn = uxTimerGetReloadMode( xTimer );
+                uxReturn = uTimerGetReloadMode( Timer );
             }
             return uxReturn;
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        const char * MPU_pcTimerGetName( TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
+        const char * MPU_pcTimerGetName( TimerHandle_t Timer ) /* FREERTOS_SYSTEM_CALL */
         {
             const char * pcReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                pcReturn = pcTimerGetName( xTimer );
+                pcReturn = pcTimerGetName( Timer );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                pcReturn = pcTimerGetName( xTimer );
+                pcReturn = pcTimerGetName( Timer );
             }
             return pcReturn;
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        TickType_t MPU_xTimerGetPeriod( TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
+        TickType_t MPU_TimerGetPeriod( TimerHandle_t Timer ) /* FREERTOS_SYSTEM_CALL */
         {
             TickType_t xReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xTimerGetPeriod( xTimer );
+                xReturn = TimerGetPeriod( Timer );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xTimerGetPeriod( xTimer );
+                xReturn = TimerGetPeriod( Timer );
             }
             return xReturn;
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        TickType_t MPU_xTimerGetExpiryTime( TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
+        TickType_t MPU_TimerGetExpiryTime( TimerHandle_t Timer ) /* FREERTOS_SYSTEM_CALL */
         {
             TickType_t xReturn;
             if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xTimerGetExpiryTime( xTimer );
+                xReturn = TimerGetExpiryTime( Timer );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xTimerGetExpiryTime( xTimer );
+                xReturn = TimerGetExpiryTime( Timer );
             }
             return xReturn;
         }
     #endif /* if ( configUSE_TIMERS == 1 ) */
 
     #if ( configUSE_TIMERS == 1 )
-        BaseType_t MPU_xTimerGenericCommandFromTask( TimerHandle_t xTimer,
+        BaseType_t MPU_TimerGenericCommandFromTask( TimerHandle_t Timer,
                                                      const BaseType_t xCommandID,
                                                      const TickType_t xOptionalValue,
                                                      BaseType_t * const pxHigherPriorityTaskWoken,
@@ -1595,14 +1595,14 @@
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xTimerGenericCommandFromTask( xTimer, xCommandID, xOptionalValue, pxHigherPriorityTaskWoken, xTicksToWait );
+                xReturn = TimerGenericCommandFromTask( Timer, xCommandID, xOptionalValue, pxHigherPriorityTaskWoken, xTicksToWait );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xTimerGenericCommandFromTask( xTimer, xCommandID, xOptionalValue, pxHigherPriorityTaskWoken, xTicksToWait );
+                xReturn = TimerGenericCommandFromTask( Timer, xCommandID, xOptionalValue, pxHigherPriorityTaskWoken, xTicksToWait );
             }
             return xReturn;
         }
@@ -2030,7 +2030,7 @@
                                                                    size_t xTriggerLevelBytes,
                                                                    BaseType_t xStreamBufferType,
                                                                    uint8_t * const pucStreamBufferStorageArea,
-                                                                   StaticStreamBuffer_t * const pxStaticStreamBuffer,
+                                                                   StaticStreamBuffer_t * const pStaticStreamBuffer,
                                                                    StreamBufferCallbackFunction_t pxSendCompletedCallback,
                                                                    StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) /* FREERTOS_SYSTEM_CALL */
         {
@@ -2052,7 +2052,7 @@
                                                                 xTriggerLevelBytes,
                                                                 xStreamBufferType,
                                                                 pucStreamBufferStorageArea,
-                                                                pxStaticStreamBuffer,
+                                                                pStaticStreamBuffer,
                                                                 NULL,
                                                                 NULL );
                     portMEMORY_BARRIER();
@@ -2065,7 +2065,7 @@
                                                                 xTriggerLevelBytes,
                                                                 xStreamBufferType,
                                                                 pucStreamBufferStorageArea,
-                                                                pxStaticStreamBuffer,
+                                                                pStaticStreamBuffer,
                                                                 NULL,
                                                                 NULL );
                 }

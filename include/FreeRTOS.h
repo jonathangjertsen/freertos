@@ -66,10 +66,6 @@
         #define configTICK_TYPE_WIDTH_IN_BITS    TICK_TYPE_WIDTH_32_BITS
     #endif
 #endif
-/* Set configUSE_MPU_WRAPPERS_V1 to 1 to use MPU wrappers v1. */
-#ifndef configUSE_MPU_WRAPPERS_V1
-    #define configUSE_MPU_WRAPPERS_V1    0
-#endif
 /* Set configENABLE_ACCESS_CONTROL_LIST to 1 to enable access control list support. */
 #ifndef configENABLE_ACCESS_CONTROL_LIST
     #define configENABLE_ACCESS_CONTROL_LIST    0
@@ -221,8 +217,8 @@
 #ifndef INCLUDE_xTaskResumeFromISR
     #define INCLUDE_xTaskResumeFromISR    1
 #endif
-#ifndef INCLUDE_xTimerPendFunctionCall
-    #define INCLUDE_xTimerPendFunctionCall    0
+#ifndef INCLUDE_TimerPendFunctionCall
+    #define INCLUDE_TimerPendFunctionCall    0
 #endif
 #ifndef INCLUDE_xTaskGetSchedulerState
     #define INCLUDE_xTaskGetSchedulerState    0
@@ -712,7 +708,7 @@
     #define xMemoryRegion                 MemoryRegion_t
     #define xTaskParameters               TaskParameters_t
     #define xTaskStatusType               TaskStatus_t
-    #define xTimerHandle                  TimerHandle_t
+    #define TimerHandle                  TimerHandle_t
     #define xCoRoutineHandle              CoRoutineHandle_t
     #define pdTASK_HOOK_CODE              TaskHookFunction_t
     #define portTICK_RATE_MS              portTICK_PERIOD_MS
@@ -819,35 +815,17 @@
 #define tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE                                                                                     \
     ( ( ( portUSING_MPU_WRAPPERS == 0 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) && ( configSUPPORT_STATIC_ALLOCATION == 1 ) ) || \
       ( ( portUSING_MPU_WRAPPERS == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) ) )
-/*
- * In line with software engineering best practice, FreeRTOS implements a strict
- * data hiding policy, so the real structures used by FreeRTOS to maintain the
- * state of tasks, queues, semaphores, etc. are not accessible to the application
- * code.  However, if the application writer wants to statically allocate such
- * an object then the size of the object needs to be known.  Dummy structures
- * that are guaranteed to have the same size and alignment requirements of the
- * real objects are used for this purpose.  The dummy list and list item
- * structures below are used for inclusion in such a dummy structure.
- */
+
 struct xSTATIC_LIST_ITEM
 {
-    #if ( configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES == 1 )
-        TickType_t xDummy1;
-    #endif
     TickType_t xDummy2;
     void * pvDummy3[ 4 ];
-    #if ( configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES == 1 )
-        TickType_t xDummy4;
-    #endif
 };
 typedef struct xSTATIC_LIST_ITEM StaticListItem_t;
 #if ( configUSE_MINI_LIST_ITEM == 1 )
     /* See the comments above the struct xSTATIC_LIST_ITEM definition. */
     struct xSTATIC_MINI_LIST_ITEM
     {
-        #if ( configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES == 1 )
-            TickType_t xDummy1;
-        #endif
         TickType_t xDummy2;
         void * pvDummy3[ 2 ];
     };
@@ -858,101 +836,26 @@ typedef struct xSTATIC_LIST_ITEM StaticListItem_t;
 /* See the comments above the struct xSTATIC_LIST_ITEM definition. */
 typedef struct xSTATIC_LIST
 {
-    #if ( configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES == 1 )
-        TickType_t xDummy1;
-    #endif
     UBaseType_t uxDummy2;
     void * pvDummy3;
     StaticMiniListItem_t xDummy4;
-    #if ( configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES == 1 )
-        TickType_t xDummy5;
-    #endif
 } StaticList_t;
-/*
- * In line with software engineering best practice, especially when supplying a
- * library that is likely to change in future versions, FreeRTOS implements a
- * strict data hiding policy.  This means the Task structure used internally by
- * FreeRTOS is not accessible to application code.  However, if the application
- * writer wants to statically allocate the memory required to create a task then
- * the size of the task object needs to be known.  The StaticTask_t structure
- * below is provided for this purpose.  Its sizes and alignment requirements are
- * guaranteed to match those of the genuine structure, no matter which
- * architecture is being used, and no matter how the values in FreeRTOSConfig.h
- * are set.  Its contents are somewhat obfuscated in the hope users will
- * recognise that it would be unwise to make direct use of the structure members.
- */
+
 typedef struct xSTATIC_TCB
 {
     void * pxDummy1;
-    #if ( portUSING_MPU_WRAPPERS == 1 )
-        xMPU_SETTINGS xDummy2;
-    #endif
-    #if ( configUSE_CORE_AFFINITY == 1 ) && ( configNUMBER_OF_CORES > 1 )
-        UBaseType_t uxDummy26;
-    #endif
     StaticListItem_t xDummy3[ 2 ];
     UBaseType_t uxDummy5;
     void * pxDummy6;
-    #if ( configNUMBER_OF_CORES > 1 )
-        BaseType_t xDummy23;
-        UBaseType_t uxDummy24;
-    #endif
     uint8_t ucDummy7[ configMAX_TASK_NAME_LEN ];
-    #if ( configUSE_TASK_PREEMPTION_DISABLE == 1 )
-        BaseType_t xDummy25;
-    #endif
-    #if ( ( portSTACK_GROWTH > 0 ) || ( configRECORD_STACK_HIGH_ADDRESS == 1 ) )
-        void * pxDummy8;
-    #endif
-    #if ( portCRITICAL_NESTING_IN_TCB == 1 )
-        UBaseType_t uxDummy9;
-    #endif
-    #if ( configUSE_TRACE_FACILITY == 1 )
-        UBaseType_t uxDummy10[ 2 ];
-    #endif
-    #if ( configUSE_MUTEXES == 1 )
-        UBaseType_t uxDummy12[ 2 ];
-    #endif
-    #if ( configUSE_APPLICATION_TASK_TAG == 1 )
-        void * pxDummy14;
-    #endif
-    #if ( configNUM_THREAD_LOCAL_STORAGE_POINTERS > 0 )
-        void * pvDummy15[ configNUM_THREAD_LOCAL_STORAGE_POINTERS ];
-    #endif
-    #if ( configGENERATE_RUN_TIME_STATS == 1 )
-        configRUN_TIME_COUNTER_TYPE ulDummy16;
-    #endif
-    #if ( configUSE_C_RUNTIME_TLS_SUPPORT == 1 )
-        configTLS_BLOCK_TYPE xDummy17;
-    #endif
-    #if ( configUSE_TASK_NOTIFICATIONS == 1 )
-        uint32_t ulDummy18[ configTASK_NOTIFICATION_ARRAY_ENTRIES ];
-        uint8_t ucDummy19[ configTASK_NOTIFICATION_ARRAY_ENTRIES ];
-    #endif
-    #if ( tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE != 0 )
-        uint8_t uxDummy20;
-    #endif
-    #if ( INCLUDE_xTaskAbortDelay == 1 )
-        uint8_t ucDummy21;
-    #endif
-    #if ( configUSE_POSIX_ERRNO == 1 )
-        int iDummy22;
-    #endif
+    UBaseType_t uxDummy9;
+    UBaseType_t uxDummy12[ 2 ];
+    uint32_t ulDummy18[ configTASK_NOTIFICATION_ARRAY_ENTRIES ];
+    uint8_t ucDummy19[ configTASK_NOTIFICATION_ARRAY_ENTRIES ];
+    uint8_t uxDummy20;
+    uint8_t ucDummy21;
 } StaticTask_t;
-/*
- * In line with software engineering best practice, especially when supplying a
- * library that is likely to change in future versions, FreeRTOS implements a
- * strict data hiding policy.  This means the Queue structure used internally by
- * FreeRTOS is not accessible to application code.  However, if the application
- * writer wants to statically allocate the memory required to create a queue
- * then the size of the queue object needs to be known.  The StaticQueue_t
- * structure below is provided for this purpose.  Its sizes and alignment
- * requirements are guaranteed to match those of the genuine structure, no
- * matter which architecture is being used, and no matter how the values in
- * FreeRTOSConfig.h are set.  Its contents are somewhat obfuscated in the hope
- * users will recognise that it would be unwise to make direct use of the
- * structure members.
- */
+
 typedef struct xSTATIC_QUEUE
 {
     void * pvDummy1[ 3 ];
@@ -964,57 +867,18 @@ typedef struct xSTATIC_QUEUE
     StaticList_t xDummy3[ 2 ];
     UBaseType_t uxDummy4[ 3 ];
     uint8_t ucDummy5[ 2 ];
-    #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
-        uint8_t ucDummy6;
-    #endif
-    #if ( configUSE_QUEUE_SETS == 1 )
-        void * pvDummy7;
-    #endif
-    #if ( configUSE_TRACE_FACILITY == 1 )
-        UBaseType_t uxDummy8;
-        uint8_t ucDummy9;
-    #endif
+    uint8_t ucDummy6;
+    void * pvDummy7;
 } StaticQueue_t;
 typedef StaticQueue_t StaticSemaphore_t;
-/*
- * In line with software engineering best practice, especially when supplying a
- * library that is likely to change in future versions, FreeRTOS implements a
- * strict data hiding policy.  This means the event group structure used
- * internally by FreeRTOS is not accessible to application code.  However, if
- * the application writer wants to statically allocate the memory required to
- * create an event group then the size of the event group object needs to be
- * know.  The StaticEventGroup_t structure below is provided for this purpose.
- * Its sizes and alignment requirements are guaranteed to match those of the
- * genuine structure, no matter which architecture is being used, and no matter
- * how the values in FreeRTOSConfig.h are set.  Its contents are somewhat
- * obfuscated in the hope users will recognise that it would be unwise to make
- * direct use of the structure members.
- */
+
 typedef struct xSTATIC_EVENT_GROUP
 {
     TickType_t xDummy1;
     StaticList_t xDummy2;
-    #if ( configUSE_TRACE_FACILITY == 1 )
-        UBaseType_t uxDummy3;
-    #endif
-    #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
-        uint8_t ucDummy4;
-    #endif
+    uint8_t ucDummy4;
 } StaticEventGroup_t;
-/*
- * In line with software engineering best practice, especially when supplying a
- * library that is likely to change in future versions, FreeRTOS implements a
- * strict data hiding policy.  This means the software timer structure used
- * internally by FreeRTOS is not accessible to application code.  However, if
- * the application writer wants to statically allocate the memory required to
- * create a software timer then the size of the queue object needs to be known.
- * The StaticTimer_t structure below is provided for this purpose.  Its sizes
- * and alignment requirements are guaranteed to match those of the genuine
- * structure, no matter which architecture is being used, and no matter how the
- * values in FreeRTOSConfig.h are set.  Its contents are somewhat obfuscated in
- * the hope users will recognise that it would be unwise to make direct use of
- * the structure members.
- */
+
 typedef struct xSTATIC_TIMER
 {
     void * pvDummy1;
@@ -1022,43 +886,19 @@ typedef struct xSTATIC_TIMER
     TickType_t xDummy3;
     void * pvDummy5;
     TaskFunction_t pvDummy6;
-    #if ( configUSE_TRACE_FACILITY == 1 )
-        UBaseType_t uxDummy7;
-    #endif
     uint8_t ucDummy8;
 } StaticTimer_t;
-/*
- * In line with software engineering best practice, especially when supplying a
- * library that is likely to change in future versions, FreeRTOS implements a
- * strict data hiding policy.  This means the stream buffer structure used
- * internally by FreeRTOS is not accessible to application code.  However, if
- * the application writer wants to statically allocate the memory required to
- * create a stream buffer then the size of the stream buffer object needs to be
- * known.  The StaticStreamBuffer_t structure below is provided for this
- * purpose.  Its size and alignment requirements are guaranteed to match those
- * of the genuine structure, no matter which architecture is being used, and
- * no matter how the values in FreeRTOSConfig.h are set.  Its contents are
- * somewhat obfuscated in the hope users will recognise that it would be unwise
- * to make direct use of the structure members.
- */
+
 typedef struct xSTATIC_STREAM_BUFFER
 {
     size_t uxDummy1[ 4 ];
     void * pvDummy2[ 3 ];
     uint8_t ucDummy3;
-    #if ( configUSE_TRACE_FACILITY == 1 )
-        UBaseType_t uxDummy4;
-    #endif
-    #if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
-        void * pvDummy5[ 2 ];
-    #endif
     UBaseType_t uxDummy6;
 } StaticStreamBuffer_t;
 /* Message buffers are built on stream buffers. */
 typedef StaticStreamBuffer_t StaticMessageBuffer_t;
-/* *INDENT-OFF* */
 #ifdef __cplusplus
     }
 #endif
-/* *INDENT-ON* */
 #endif /* INC_FREERTOS_H */

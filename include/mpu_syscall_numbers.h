@@ -30,7 +30,7 @@
 /* Numbers assigned to various system calls. */
 #define SYSTEM_CALL_xTaskGenericNotify                     0
 #define SYSTEM_CALL_xTaskGenericNotifyWait                 1
-#define SYSTEM_CALL_xTimerGenericCommandFromTask           2
+#define SYSTEM_CALL_TimerGenericCommandFromTask           2
 #define SYSTEM_CALL_xEventGroupWaitBits                    3
 #define SYSTEM_CALL_xTaskDelayUntil                        4
 #define SYSTEM_CALL_xTaskAbortDelay                        5
@@ -76,15 +76,15 @@
 #define SYSTEM_CALL_vQueueUnregisterQueue                  45
 #define SYSTEM_CALL_pcQueueGetName                         46
 #define SYSTEM_CALL_pvTimerGetTimerID                      47
-#define SYSTEM_CALL_vTimerSetTimerID                       48
-#define SYSTEM_CALL_xTimerIsTimerActive                    49
-#define SYSTEM_CALL_xTimerGetTimerDaemonTaskHandle         50
+#define SYSTEM_CALL_SetTimerID                       48
+#define SYSTEM_CALL_TimerIsTimerActive                    49
+#define SYSTEM_CALL_TimerGetTimerDaemonTaskHandle         50
 #define SYSTEM_CALL_pcTimerGetName                         51
 #define SYSTEM_CALL_vTimerSetReloadMode                    52
-#define SYSTEM_CALL_xTimerGetReloadMode                    53
-#define SYSTEM_CALL_uxTimerGetReloadMode                   54
-#define SYSTEM_CALL_xTimerGetPeriod                        55
-#define SYSTEM_CALL_xTimerGetExpiryTime                    56
+#define SYSTEM_CALL_TimerGetReloadMode                    53
+#define SYSTEM_CALL_uTimerGetReloadMode                   54
+#define SYSTEM_CALL_TimerGetPeriod                        55
+#define SYSTEM_CALL_TimerGetExpiryTime                    56
 #define SYSTEM_CALL_xEventGroupClearBits                   57
 #define SYSTEM_CALL_xEventGroupSetBits                     58
 #define SYSTEM_CALL_xEventGroupSync                        59

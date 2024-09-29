@@ -27,16 +27,8 @@
  */
 
 #include <stdlib.h>
-/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
- * all the API functions to use the MPU wrappers.  That should only be done when
- * task.h is included from an application file. */
-#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 #include "FreeRTOS.h"
 #include "list.h"
-/* The MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be
- * defined for the header files above, but not in this file, in order to
- * generate the correct privileged Vs unprivileged linkage and placement. */
-#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 /*-----------------------------------------------------------
 * PUBLIC LIST API documented in list.h
 *----------------------------------------------------------*/

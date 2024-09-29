@@ -4,6 +4,8 @@
         ".cpp": "C++",
         ".h": "C++",
         "string.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "task.h": "c",
+        "freertos.h": "c"
     }
 }

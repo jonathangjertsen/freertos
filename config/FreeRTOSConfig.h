@@ -27,7 +27,7 @@
 #define configUSE_COUNTING_SEMAPHORES 1
 #define configRUN_TIME_COUNTER_TYPE uint64_t
 #define configSUPPORT_STATIC_ALLOCATION 1
-#define INCLUDE_xTimerPendFunctionCall 1
+#define INCLUDE_TimerPendFunctionCall 1
 #define configUSE_TASK_PREEMPTION_DISABLE 0
 #define portCRITICAL_NESTING_IN_TCB 1
 #define INCLUDE_vTaskSuspend 1
