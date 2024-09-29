@@ -29,7 +29,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "FreeRTOS.h"
-#include "task.h"
+#include "task.hpp"
 #include "queue.h"
 
 /* Constants used with the cRxLock and cTxLock structure members. */
@@ -86,19 +86,15 @@ typedef struct QueueDefinition /* The old naming convention is used to prevent b
         QueuePointers_t xQueue;     /**< Data required exclusively when this structure is used as a queue. */
         SemaphoreData_t xSemaphore; /**< Data required exclusively when this structure is used as a semaphore. */
     } u;
-    List_t xTasksWaitingToSend;             /**< List of tasks that are blocked waiting to post onto this queue.  Stored in priority order. */
-    List_t xTasksWaitingToReceive;          /**< List of tasks that are blocked waiting to read from this queue.  Stored in priority order. */
+    List_t<TCB_t> xTasksWaitingToSend;             /**< List of tasks that are blocked waiting to post onto this queue.  Stored in priority order. */
+    List_t<TCB_t> xTasksWaitingToReceive;          /**< List of tasks that are blocked waiting to read from this queue.  Stored in priority order. */
     volatile UBaseType_t uxMessagesWaiting; /**< The number of items currently in the queue. */
     UBaseType_t uxLength;                   /**< The length of the queue defined as the number of items it will hold, not the number of bytes. */
     UBaseType_t uxItemSize;                 /**< The size of each items that the queue will hold. */
     volatile int8_t cRxLock;                /**< Stores the number of items received from the queue (removed from the queue) while the queue was locked.  Set to queueUNLOCKED when the queue is not locked. */
     volatile int8_t cTxLock;                /**< Stores the number of items transmitted to the queue (added to the queue) while the queue was locked.  Set to queueUNLOCKED when the queue is not locked. */
-    #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
-        uint8_t StaticallyAllocated; /**< Set to true if the memory used by the queue was statically allocated to ensure no attempt is made to free the memory. */
-    #endif
-    #if ( configUSE_QUEUE_SETS == 1 )
-        struct QueueDefinition * pxQueueSetContainer;
-    #endif
+    uint8_t StaticallyAllocated; /**< Set to true if the memory used by the queue was statically allocated to ensure no attempt is made to free the memory. */
+    struct QueueDefinition * pxQueueSetContainer;
 } xQUEUE;
 /* The old xQUEUE name is maintained above then typedefed to the new Queue_t
  * name below to enable the use of older kernel aware debuggers. */
@@ -1586,7 +1582,7 @@ static UBaseType_t GetHighestPriorityOfWaitToReceiveList( const Queue_t * const 
         * other tasks that are waiting for the same mutex.  For this purpose,
         * return the priority of the highest priority task that is waiting for the
         * mutex. */
-    if( CURRENT_LIST_LENGTH( &( pxQueue->xTasksWaitingToReceive ) ) > 0U )
+    if(CURRENT_LIST_LENGTH(&pxQueue->xTasksWaitingToReceive) > 0U )
     {
         uxHighestPriorityOfWaitingTasks = ( UBaseType_t ) ( ( UBaseType_t ) configMAX_PRIORITIES - ( UBaseType_t ) GET_ITEM_VALUE_OF_HEAD_ENTRY( &( pxQueue->xTasksWaitingToReceive ) ) );
     }

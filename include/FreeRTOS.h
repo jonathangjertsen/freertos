@@ -723,13 +723,7 @@
     #define pdTASK_CODE                   TaskFunction_t
     #define xListItem                     ListItem_t
     #define xList                         List_t
-/* For libraries that break the list data hiding, and access list structure
- * members directly (which is not supposed to be done). */
-    #define pxContainer                   pvContainer
 #endif /* configENABLE_BACKWARD_COMPATIBILITY */
-#if ( configUSE_ALTERNATIVE_API != 0 )
-    #error The alternative API was deprecated some time ago, and was removed in FreeRTOS V9.0 0
-#endif
 /* Set configUSE_TASK_FPU_SUPPORT to 0 to omit floating point support even
  * if floating point hardware is otherwise supported by the FreeRTOS port in use.
  * This constant is not supported by all FreeRTOS ports that include floating

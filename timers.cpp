@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "FreeRTOS.h"
-#include "task.h"
+#include "task.hpp"
 #include "queue.h"
 #include "timers.h"
 
@@ -46,19 +46,16 @@
 #define tmrSTATUS_IS_ACTIVE                  ( 0x01U )
 #define tmrSTATUS_IS_STATICALLY_ALLOCATED    ( 0x02U )
 #define tmrSTATUS_IS_AUTORELOAD              ( 0x04U )
-/* The definition of the timers themselves. */
-typedef struct tmrTimerControl                                               /* The old naming convention is used to prevent breaking kernel aware debuggers. */
+struct Timer_t                                               /* The old naming convention is used to prevent breaking kernel aware debuggers. */
 {
     const char * pcTimerName;                                                /**< Text name.  This is not used by the kernel, it is included simply to make debugging easier. */
-    ListItem_t TimerListItem;                                               /**< Standard linked list item as used by all kernel features for event management. */
+    ListItem_t<Timer_t> TimerListItem;                                               /**< Standard linked list item as used by all kernel features for event management. */
     TickType_t TimerPeriodInTicks;                                          /**< How quickly and often the timer expires. */
     void * pvTimerID;                                                        /**< An ID to identify the timer.  This allows the timer to be identified when the same callback is used for multiple timers. */
     portTIMER_CALLBACK_ATTRIBUTE TimerCallbackFunction_t pxCallbackFunction; /**< The function that will be called when the timer expires. */
     uint8_t ucStatus;                                                        /**< Holds bits to say if the timer was statically allocated or not, and if it is active or not. */
-} xTIMER;
-/* The old xTIMER name is maintained above then typedefed to the new Timer_t
-* name below to enable the use of older kernel aware debuggers. */
-typedef xTIMER Timer_t;
+};
+
 /* The definition of messages that can be sent and received on the timer queue.
 * Two types of message can be queued - messages that manipulate a software timer,
 * and messages that request the execution of a non-timer related callback.  The
@@ -98,10 +95,10 @@ typedef struct tmrTimerQueueMessage
 * ActiveTimerList1 and ActiveTimerList2 could be at function scope but that
 * breaks some kernel aware debuggers, and debuggers that reply on removing the
 * static qualifier. */
- static List_t ActiveTimerList1;
- static List_t ActiveTimerList2;
- static List_t * CurrentTimerList;
- static List_t * OverflowTimerList;
+ static List_t<Timer_t> ActiveTimerList1;
+ static List_t<Timer_t> ActiveTimerList2;
+ static List_t<Timer_t> *CurrentTimerList;
+ static List_t<Timer_t> *OverflowTimerList;
 /* A queue that is used to send commands to the timer service task. */
  static QueueHandle_t TimerQueue = NULL;
  static TaskHandle_t TimerTaskHandle = NULL;
@@ -492,7 +489,7 @@ static void ProcessExpiredTimer( const TickType_t NextExpireTime,
                                     const TickType_t TimeNow )
 {
 
-    Timer_t * const pTimer = ( Timer_t * ) GET_OWNER_OF_HEAD_ENTRY( CurrentTimerList );
+    Timer_t * const pTimer = GET_OWNER_OF_HEAD_ENTRY( CurrentTimerList );
     /* Remove the timer from the list of active timers.  A check has already
         * been performed to ensure the list is not empty. */
     ( void ) ListRemove( &( pTimer->TimerListItem ) );
@@ -678,7 +675,7 @@ static void ProcessReceivedCommands( void )
             /* The messages uses the TimerParameters member to work on a
                 * software timer. */
             pTimer = xMessage.u.TimerParameters.pTimer;
-            if( IS_CONTAINED_WITHIN( NULL, &( pTimer->TimerListItem ) ) == false )
+            if( IS_CONTAINED_WITHIN<Timer_t>( nullptr, &( pTimer->TimerListItem ) ) == false )
             {
                 /* The timer is in a list, remove it. */
                 ( void ) ListRemove( &( pTimer->TimerListItem ) );
@@ -768,7 +765,7 @@ static void ProcessReceivedCommands( void )
 static void SwitchTimerLists( void )
 {
     TickType_t NextExpireTime;
-    List_t * Temp;
+    List_t<Timer_t> * Temp;
     while( LIST_IS_EMPTY( CurrentTimerList ) == false ) {
         NextExpireTime = GET_ITEM_VALUE_OF_HEAD_ENTRY( CurrentTimerList );
         ProcessExpiredTimer( NextExpireTime, tmrMAX_TIME_BEFORE_OVERFLOW );
@@ -816,8 +813,7 @@ void * pvTimerGetTimerID( const TimerHandle_t Timer )
     return pvReturn;
 }
 
-void SetTimerID( TimerHandle_t Timer,
-                        void * pvNewID )
+void SetTimerID( TimerHandle_t Timer, void * pvNewID )
 {
     configASSERT( Timer );
     ENTER_CRITICAL();

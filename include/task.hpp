@@ -26,11 +26,8 @@
  *
  */
 
-#ifndef INC_TASK_H
-#define INC_TASK_H
-#ifndef INC_FREERTOS_H
-    #error "include FreeRTOS.h must appear in source files before include task.h"
-#endif
+#pragma once
+
 #include "list.hpp"
 
 /* *INDENT-ON* */
@@ -3376,9 +3373,9 @@ BaseType_t xTaskIncrementTick( void ) ;
  * portTICK_PERIOD_MS can be used to convert kernel ticks into a real time
  * period.
  */
-void vTaskPlaceOnEventList( List_t * const pxEventList,
+void vTaskPlaceOnEventList( List_t<TCB_t> * const pxEventList,
                             const TickType_t xTicksToWait ) ;
-void vTaskPlaceOnUnorderedEventList( List_t * pxEventList,
+void vTaskPlaceOnUnorderedEventList( List_t<TCB_t> * pxEventList,
                                      const TickType_t xItemValue,
                                      const TickType_t xTicksToWait ) ;
 /*
@@ -3392,35 +3389,12 @@ void vTaskPlaceOnUnorderedEventList( List_t * pxEventList,
  * indefinitely, whereas vTaskPlaceOnEventList() does.
  *
  */
-void vTaskPlaceOnEventListRestricted( List_t * const pxEventList,
+void vTaskPlaceOnEventListRestricted( List_t<TCB_t> * const pxEventList,
                                       TickType_t xTicksToWait,
                                       const BaseType_t xWaitIndefinitely ) ;
-/*
- * THIS FUNCTION MUST NOT BE USED FROM APPLICATION CODE.  IT IS AN
- * INTERFACE WHICH IS FOR THE EXCLUSIVE USE OF THE SCHEDULER.
- *
- * THIS FUNCTION MUST BE CALLED WITH INTERRUPTS DISABLED.
- *
- * Removes a task from both the specified event list and the list of blocked
- * tasks, and places it on a ready queue.
- *
- * xTaskRemoveFromEventList()/vTaskRemoveFromUnorderedEventList() will be called
- * if either an event occurs to unblock a task, or the block timeout period
- * expires.
- *
- * xTaskRemoveFromEventList() is used when the event list is in task priority
- * order.  It removes the list item from the head of the event list as that will
- * have the highest priority owning task of all the tasks on the event list.
- * vTaskRemoveFromUnorderedEventList() is used when the event list is not
- * ordered and the event list items hold something other than the owning tasks
- * priority.  In this case the event list item value is updated to the value
- * passed in the xItemValue parameter.
- *
- * @return true if the task being removed has a higher priority than the task
- * making the call, otherwise false.
- */
-BaseType_t xTaskRemoveFromEventList( const List_t * const pxEventList ) ;
-void vTaskRemoveFromUnorderedEventList( ListItem_t * pxEventListItem,
+
+BaseType_t xTaskRemoveFromEventList( const List_t<TCB_t> * const pxEventList ) ;
+void vTaskRemoveFromUnorderedEventList( ListItem_t<TCB_t> * pxEventListItem,
                                         const TickType_t xItemValue ) ;
 /*
  * THIS FUNCTION MUST NOT BE USED FROM APPLICATION CODE.  IT IS ONLY
@@ -3475,48 +3449,7 @@ BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder ) ;
  */
 void vTaskPriorityDisinheritAfterTimeout( TaskHandle_t const pxMutexHolder,
                                           UBaseType_t uxHighestPriorityWaitingTask ) ;
-/*
- * Get the uxTaskNumber assigned to the task referenced by the xTask parameter.
- */
-#if ( configUSE_TRACE_FACILITY == 1 )
-    UBaseType_t uxTaskGetTaskNumber( TaskHandle_t xTask ) ;
-#endif
-/*
- * Set the uxTaskNumber of the task referenced by the xTask parameter to
- * uxHandle.
- */
-#if ( configUSE_TRACE_FACILITY == 1 )
-    void vTaskSetTaskNumber( TaskHandle_t xTask,
-                             const UBaseType_t uxHandle ) ;
-#endif
-/*
- * Only available when configUSE_TICKLESS_IDLE is set to 1.
- * If tickless mode is being used, or a low power mode is implemented, then
- * the tick interrupt will not execute during idle periods.  When this is the
- * case, the tick count value maintained by the scheduler needs to be kept up
- * to date with the actual execution time by being skipped forward by a time
- * equal to the idle period.
- */
-#if ( configUSE_TICKLESS_IDLE != 0 )
-    void vTaskStepTick( TickType_t xTicksToJump ) ;
-#endif
-/*
- * Only available when configUSE_TICKLESS_IDLE is set to 1.
- * Provided for use within portSUPPRESS_TICKS_AND_SLEEP() to allow the port
- * specific sleep function to determine if it is ok to proceed with the sleep,
- * and if it is ok to proceed, if it is ok to sleep indefinitely.
- *
- * This function is necessary because portSUPPRESS_TICKS_AND_SLEEP() is only
- * called with the scheduler suspended, not from within a critical section.  It
- * is therefore possible for an interrupt to request a context switch between
- * portSUPPRESS_TICKS_AND_SLEEP() and the low power mode actually being
- * entered.  eTaskConfirmSleepModeStatus() should be called from a short
- * critical section between the timer being stopped and the sleep mode being
- * entered to ensure it is ok to proceed into the sleep mode.
- */
-#if ( configUSE_TICKLESS_IDLE != 0 )
-    eSleepModeStatus eTaskConfirmSleepModeStatus( void ) ;
-#endif
+
 /*
  * For internal use only.  Increment the mutex held count when a mutex is
  * taken and return the handle of the task that has taken the mutex.
@@ -3527,13 +3460,5 @@ TaskHandle_t pvTaskIncrementMutexHeldCount( void ) ;
  * section.
  */
 void vTaskInternalSetTimeOutState( TimeOut_t * const pxTimeOut ) ;
-/*
- * For internal use only. Same as portYIELD_WITHIN_API() in single core FreeRTOS.
- * For SMP this is not defined by the port.
- */
-#if ( configNUMBER_OF_CORES > 1 )
-    void vTaskYieldWithinAPI( void );
-#endif
 void vTaskEnterCritical( void );
 void vTaskExitCritical( void );
-#endif /* INC_TASK_H */

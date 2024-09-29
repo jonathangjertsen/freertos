@@ -31,14 +31,14 @@
 
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
-#include "task.h"
+#include "task.hpp"
 #include "timers.h"
 #include "event_groups.h"
 
 typedef struct EventGroupDef_t
 {
     EventBits_t uxEventBits;
-    List_t xTasksWaitingForBits; /**< List of tasks waiting for a bit to be set. */
+    List_t<TCB_t> xTasksWaitingForBits; /**< List of tasks waiting for a bit to be set. */
     #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
         uint8_t StaticallyAllocated; /**< Set to true if the event group is statically allocated to ensure no attempt is made to free the memory. */
     #endif
@@ -330,13 +330,10 @@ EventBits_t xEventGroupGetBitsFromISR( EventGroupHandle_t xEventGroup )
     EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
     return uxReturn;
 }
-EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
-                                const EventBits_t uxBitsToSet )
+EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToSet )
 {
-    ListItem_t * pxListItem;
-    ListItem_t * pxNext;
-    ListItem_t const * pxListEnd;
-    List_t const * pxList;
+    ListItem_t<TCB_t> * pxListItem;
+    ListItem_t<TCB_t> * pxNext;
     EventBits_t uxBitsToClear = 0, uxBitsWaitedFor, uxControlBits, uxReturnBits;
     EventGroup_t * pxEventBits = xEventGroup;
     BaseType_t xMatchFound = false;
@@ -344,8 +341,8 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
         * itself. */
     configASSERT( xEventGroup );
     configASSERT( ( uxBitsToSet & EVENT_BITS_CONTROL_BYTES ) == 0 );
-    pxList = &( pxEventBits->xTasksWaitingForBits );
-    pxListEnd = GET_END_MARKER( pxList );
+    List_t<TCB_t> * pxList = &( pxEventBits->xTasksWaitingForBits );
+    ListItem_t<TCB_t> const * pxListEnd = GET_END_MARKER( pxList );
     vTaskSuspendAll();
     {
         pxListItem = GET_HEAD_ENTRY( pxList );
@@ -405,16 +402,12 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
 void vEventGroupDelete( EventGroupHandle_t xEventGroup )
 {
     EventGroup_t * pxEventBits = xEventGroup;
-    const List_t * pxTasksWaitingForBits;
     configASSERT( pxEventBits );
-    pxTasksWaitingForBits = &( pxEventBits->xTasksWaitingForBits );
+    List_t<TCB_t> *pxTasksWaitingForBits = &( pxEventBits->xTasksWaitingForBits );
     vTaskSuspendAll();
     {
         while( CURRENT_LIST_LENGTH( pxTasksWaitingForBits ) > ( UBaseType_t ) 0 )
         {
-            /* Unblock the task, returning 0 as the event list is being deleted
-                * and cannot therefore have any bits set. */
-            configASSERT( pxTasksWaitingForBits->xListEnd.pxNext != ( const ListItem_t * ) &( pxTasksWaitingForBits->xListEnd ) );
             vTaskRemoveFromUnorderedEventList( pxTasksWaitingForBits->xListEnd.pxNext, eventUNBLOCKED_DUE_TO_BIT_SET );
         }
     }
@@ -445,26 +438,16 @@ void vEventGroupDelete( EventGroupHandle_t xEventGroup )
         EventGroup_t * pxEventBits = xEventGroup;
         configASSERT( pxEventBits );
         configASSERT( ppxEventGroupBuffer );
-        #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+        /* Check if the event group was statically allocated. */
+        if( pxEventBits->StaticallyAllocated == ( uint8_t ) true )
         {
-            /* Check if the event group was statically allocated. */
-            if( pxEventBits->StaticallyAllocated == ( uint8_t ) true )
-            {
-                *ppxEventGroupBuffer = ( StaticEventGroup_t * ) pxEventBits;
-                xReturn = true;
-            }
-            else
-            {
-                xReturn = false;
-            }
-        }
-        #else /* configSUPPORT_DYNAMIC_ALLOCATION */
-        {
-            /* Event group must have been statically allocated. */
             *ppxEventGroupBuffer = ( StaticEventGroup_t * ) pxEventBits;
             xReturn = true;
         }
-        #endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+        else
+        {
+            xReturn = false;
+        }
         return xReturn;
     }
 #endif /* configSUPPORT_STATIC_ALLOCATION */
@@ -474,7 +457,7 @@ void vEventGroupDelete( EventGroupHandle_t xEventGroup )
 void vEventGroupSetBitsCallback( void * pvEventGroup,
                                     uint32_t ulBitsToSet )
 {
-    ( void ) xEventGroupSetBits( pvEventGroup, ( EventBits_t ) ulBitsToSet );
+    ( void ) xEventGroupSetBits( (EventGroupHandle_t)pvEventGroup, ( EventBits_t ) ulBitsToSet );
 }
 
 /* For internal use only - execute a 'clear bits' command that was pended from
@@ -482,7 +465,7 @@ void vEventGroupSetBitsCallback( void * pvEventGroup,
 void vEventGroupClearBitsCallback( void * pvEventGroup,
                                     uint32_t ulBitsToClear )
 {
-    ( void ) xEventGroupClearBits( pvEventGroup, ( EventBits_t ) ulBitsToClear );
+    ( void ) xEventGroupClearBits( (EventGroupHandle_t)pvEventGroup, ( EventBits_t ) ulBitsToClear );
 }
 
 static BaseType_t TestWaitCondition( const EventBits_t uxCurrentEventBits,

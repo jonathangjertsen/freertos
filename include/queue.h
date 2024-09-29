@@ -31,7 +31,7 @@
 #ifndef INC_FREERTOS_H
     #error "include FreeRTOS.h" must appear in source files before "include queue.h"
 #endif
-#include "task.h"
+#include "task.hpp"
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     extern "C" {

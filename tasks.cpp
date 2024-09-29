@@ -31,7 +31,7 @@
 #include <stdbool.h>
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
-#include "task.h"
+#include "task.hpp"
 #include "timers.h"
 #include "stack_macros.h"
 
@@ -101,9 +101,7 @@
             --uxTopPriority;                                                             \
         }                                                                                \
                                                                                          \
-        /* GET_OWNER_OF_NEXT_ENTRY indexes through the list, so the tasks of \
-         * the  same priority get an equal share of the processor time. */                    \
-        GET_OWNER_OF_NEXT_ENTRY( CurrentTCB, &( ReadyTasksLists[ uxTopPriority ] ) ); \
+        CurrentTCB = GET_OWNER_OF_NEXT_ENTRY(&( ReadyTasksLists[ uxTopPriority ] ) ); \
         TopReadyPriority = uxTopPriority;                                                   \
     } while( 0 ) /* taskSELECT_HIGHEST_PRIORITY_TASK */
 
@@ -119,16 +117,6 @@
 /* A port optimised version is provided.  Call the port defined macros. */
     #define RECORD_READY_PRIORITY( Priority )    portRECORD_READY_PRIORITY( ( Priority ), TopReadyPriority )
 
-    #define taskSELECT_HIGHEST_PRIORITY_TASK()                                                  \
-    do {                                                                                        \
-        UBaseType_t uxTopPriority;                                                              \
-                                                                                                \
-        /* Find the highest priority list that contains ready tasks. */                         \
-        portGET_HIGHEST_PRIORITY( uxTopPriority, TopReadyPriority );                          \
-        configASSERT( CURRENT_LIST_LENGTH( &( ReadyTasksLists[ uxTopPriority ] ) ) > 0 ); \
-        GET_OWNER_OF_NEXT_ENTRY( CurrentTCB, &( ReadyTasksLists[ uxTopPriority ] ) );   \
-    } while( 0 )
-
 /* A port optimised version is provided, call it only if the TCB being reset
  * is being referenced from a ready list.  If it is referenced from a delayed
  * or suspended list then it won't be in a ready list. */
@@ -140,22 +128,6 @@
         }                                                                                              \
     } while( 0 )
 #endif /* configUSE_PORT_OPTIMISED_TASK_SELECTION */
-
-/* DelayedTaskList and OverflowDelayedTaskList are switched when the tick
- * count overflows. */
-#define taskSWITCH_DELAYED_LISTS()                                                \
-    do {                                                                          \
-        List_t * pxTemp;                                                          \
-                                                                                  \
-        /* The delayed tasks list should be empty when the lists are switched. */ \
-        configASSERT( ( LIST_IS_EMPTY( DelayedTaskList ) ) );               \
-                                                                                  \
-        pxTemp = DelayedTaskList;                                               \
-        DelayedTaskList = OverflowDelayedTaskList;                            \
-        OverflowDelayedTaskList = pxTemp;                                       \
-        NumOfOverflows = ( BaseType_t ) ( NumOfOverflows + 1 );                 \
-        ResetNextTaskUnblockTime();                                            \
-    } while( 0 )
 
 /*
  * Place the task represented by pxTCB into the appropriate ready list for
@@ -207,8 +179,8 @@
  */
 typedef struct TCB_t {
     volatile StackType_t * pxTopOfStack; /**< Points to the location of the last item placed on the tasks stack.  THIS MUST BE THE FIRST MEMBER OF THE TCB STRUCT. */
-    ListItem_t xStateListItem;                  /**< The list that the state list item of a task is reference from denotes the state of that task (Ready, Blocked, Suspended ). */
-    ListItem_t xEventListItem;                  /**< Used to reference a task from an event list. */
+    ListItem_t<TCB_t> xStateListItem;                  /**< The list that the state list item of a task is reference from denotes the state of that task (Ready, Blocked, Suspended ). */
+    ListItem_t<TCB_t> xEventListItem;                  /**< Used to reference a task from an event list. */
     UBaseType_t Priority;                     /**< The priority of the task.  0 is the lowest priority. */
     StackType_t * pxStack;                      /**< Points to the start of the stack. */
     char pcTaskName[ configMAX_TASK_NAME_LEN ]; /**< Descriptive name given to the task when created.  Facilitates debugging only. */
@@ -221,21 +193,21 @@ typedef struct TCB_t {
     uint8_t ucDelayAborted;
 } TCB_t;
 
-TCB_t * volatile CurrentTCB = NULL;
+TCB_t * volatile CurrentTCB = nullptr;
 
 /* Lists for ready and blocked tasks. --------------------
  * DelayedTaskList1 and DelayedTaskList2 could be moved to function scope but
  * doing so breaks some kernel aware debuggers and debuggers that rely on removing
  * the static qualifier. */
-static List_t ReadyTasksLists[ configMAX_PRIORITIES ]; /**< Prioritised ready tasks. */
-static List_t DelayedTaskList1;                         /**< Delayed tasks. */
-static List_t DelayedTaskList2;                         /**< Delayed tasks (two lists are used - one for delays that have overflowed the current tick count. */
-static List_t * volatile DelayedTaskList;              /**< Points to the delayed task list currently being used. */
-static List_t * volatile OverflowDelayedTaskList;      /**< Points to the delayed task list currently being used to hold tasks that have overflowed the current tick count. */
-static List_t PendingReadyList;                         /**< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready list when the scheduler is resumed. */
-static List_t xTasksWaitingTermination; /**< Tasks that have been deleted - but their memory not yet freed. */
+static List_t<TCB_t> ReadyTasksLists[ configMAX_PRIORITIES ]; /**< Prioritised ready tasks. */
+static List_t<TCB_t> DelayedTaskList1;                         /**< Delayed tasks. */
+static List_t<TCB_t> DelayedTaskList2;                         /**< Delayed tasks (two lists are used - one for delays that have overflowed the current tick count. */
+static List_t<TCB_t> * volatile DelayedTaskList;              /**< Points to the delayed task list currently being used. */
+static List_t<TCB_t> * volatile OverflowDelayedTaskList;      /**< Points to the delayed task list currently being used to hold tasks that have overflowed the current tick count. */
+static List_t<TCB_t> PendingReadyList;                         /**< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready list when the scheduler is resumed. */
+static List_t<TCB_t> xTasksWaitingTermination; /**< Tasks that have been deleted - but their memory not yet freed. */
 static volatile UBaseType_t uxDeletedTasksWaitingCleanUp = ( UBaseType_t ) 0U;
-static List_t SuspendedTaskList; /**< Tasks that are currently suspended. */
+static List_t<TCB_t> SuspendedTaskList; /**< Tasks that are currently suspended. */
 /* Other file private variables. --------------------------------*/
 static volatile UBaseType_t CurrentNumberOfTasks = ( UBaseType_t ) 0U;
 static volatile TickType_t TickCount = ( TickType_t ) configINITIAL_TICK_COUNT;
@@ -264,6 +236,24 @@ static const volatile UBaseType_t TopUsedPriority = configMAX_PRIORITIES - 1U;
  * and must not be done from an ISR. Reads must be protected by either lock and may be done
  * from either an ISR or a task. */
  static volatile bool SchedulerSuspended = false;
+
+static void ResetNextTaskUnblockTime();
+static inline void taskSWITCH_DELAYED_LISTS() {                                            
+    List_t<TCB_t> * pxTemp;                                                          
+    configASSERT( ( LIST_IS_EMPTY( DelayedTaskList ) ) );               
+    pxTemp = DelayedTaskList;                                               
+    DelayedTaskList = OverflowDelayedTaskList;                            
+    OverflowDelayedTaskList = pxTemp;                                       
+    NumOfOverflows++;                 
+    ResetNextTaskUnblockTime();                                            
+}
+
+static inline void taskSELECT_HIGHEST_PRIORITY_TASK() {
+    UBaseType_t uxTopPriority;                                                           
+    portGET_HIGHEST_PRIORITY( uxTopPriority, TopReadyPriority );                       
+    configASSERT( CURRENT_LIST_LENGTH( &( ReadyTasksLists[ uxTopPriority ] ) ) > 0 ); 
+    CurrentTCB = GET_OWNER_OF_NEXT_ENTRY(&( ReadyTasksLists[ uxTopPriority ] ) );
+}
 
 /* File private functions. --------------------------------*/
 /*
@@ -442,260 +432,168 @@ static void AddNewTaskToReadyList( TCB_t * pxNewTCB ) ;
 #if ( configUSE_PASSIVE_IDLE_HOOK == 1 )
     extern void vApplicationPassiveIdleHook( void );
 #endif /* #if ( configUSE_PASSIVE_IDLE_HOOK == 1 ) */
-#if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS > 0 ) )
-/*
- * Convert the snprintf return value to the number of characters
- * written. The following are the possible cases:
- *
- * 1. The buffer supplied to snprintf is large enough to hold the
- *    generated string. The return value in this case is the number
- *    of characters actually written, not counting the terminating
- *    null character.
- * 2. The buffer supplied to snprintf is NOT large enough to hold
- *    the generated string. The return value in this case is the
- *    number of characters that would have been written if the
- *    buffer had been sufficiently large, not counting the
- *    terminating null character.
- * 3. Encoding error. The return value in this case is a negative
- *    number.
- *
- * From 1 and 2 above ==> Only when the return value is non-negative
- * and less than the supplied buffer length, the string has been
- * completely written.
- */
-    static size_t SnprintfReturnValueToCharsWritten( int iSnprintfReturnValue,
-                                                        size_t n );
-#endif /* #if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS > 0 ) ) */
 
-#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
-    static TCB_t * CreateStaticTask( TaskFunction_t TaskCode,
-                                        const char * const Name,
-                                        const configSTACK_DEPTH_TYPE StackDepth,
-                                        void * const Parameters,
-                                        UBaseType_t Priority,
-                                        StackType_t * const StackBuffer,
-                                        StaticTask_t * const TaskBuffer,
-                                        TaskHandle_t * const CreatedTask )
-    {
-        TCB_t * pxNewTCB;
-        configASSERT( StackBuffer != NULL );
-        configASSERT( TaskBuffer != NULL );
-        #if ( configASSERT_DEFINED == 1 )
-        {
-            /* Sanity check that the size of the structure used to declare a
-             * variable of type StaticTask_t equals the size of the real task
-             * structure. */
-            volatile size_t xSize = sizeof( StaticTask_t );
-            configASSERT( xSize == sizeof( TCB_t ) );
-            ( void ) xSize; /* Prevent unused variable warning when configASSERT() is not used. */
-        }
-        #endif /* configASSERT_DEFINED */
-        if( ( TaskBuffer != NULL ) && ( StackBuffer != NULL ) )
-        {
-            /* The memory used for the task's TCB and stack are passed into this
-             * function - use them. */
-
-            pxNewTCB = ( TCB_t * ) TaskBuffer;
-            ( void ) memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
-            pxNewTCB->pxStack = ( StackType_t * ) StackBuffer;
-            #if ( tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE != 0 )
-            {
-                /* Tasks can be created statically or dynamically, so note this
-                 * task was created statically in case the task is later deleted. */
-                pxNewTCB->StaticallyAllocated = tskSTATICALLY_ALLOCATED_STACK_AND_TCB;
-            }
-            #endif /* tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE */
-            InitialiseNewTask( TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask, pxNewTCB, NULL );
-        }
-        else
-        {
-            pxNewTCB = NULL;
-        }
-        return pxNewTCB;
-    }
-
-    TaskHandle_t xTaskCreateStatic( TaskFunction_t TaskCode,
+static TCB_t * CreateStaticTask( TaskFunction_t TaskCode,
                                     const char * const Name,
                                     const configSTACK_DEPTH_TYPE StackDepth,
                                     void * const Parameters,
                                     UBaseType_t Priority,
                                     StackType_t * const StackBuffer,
-                                    StaticTask_t * const TaskBuffer )
+                                    StaticTask_t * const TaskBuffer,
+                                    TaskHandle_t * const CreatedTask )
+{
+    TCB_t * pxNewTCB;
+    configASSERT( StackBuffer != NULL );
+    configASSERT( TaskBuffer != NULL );
+    #if ( configASSERT_DEFINED == 1 )
     {
-        TaskHandle_t xReturn = NULL;
-        TCB_t * pxNewTCB;
-        pxNewTCB = CreateStaticTask( TaskCode, Name, StackDepth, Parameters, Priority, StackBuffer, TaskBuffer, &xReturn );
+        /* Sanity check that the size of the structure used to declare a
+            * variable of type StaticTask_t equals the size of the real task
+            * structure. */
+        volatile size_t xSize = sizeof( StaticTask_t );
+        configASSERT( xSize == sizeof( TCB_t ) );
+        ( void ) xSize; /* Prevent unused variable warning when configASSERT() is not used. */
+    }
+    #endif /* configASSERT_DEFINED */
+    if( ( TaskBuffer != NULL ) && ( StackBuffer != NULL ) )
+    {
+        /* The memory used for the task's TCB and stack are passed into this
+            * function - use them. */
+
+        pxNewTCB = ( TCB_t * ) TaskBuffer;
+        ( void ) memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
+        pxNewTCB->pxStack = ( StackType_t * ) StackBuffer;
+        #if ( tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE != 0 )
+        {
+            /* Tasks can be created statically or dynamically, so note this
+                * task was created statically in case the task is later deleted. */
+            pxNewTCB->StaticallyAllocated = tskSTATICALLY_ALLOCATED_STACK_AND_TCB;
+        }
+        #endif /* tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE */
+        InitialiseNewTask( TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask, pxNewTCB, NULL );
+    }
+    else
+    {
+        pxNewTCB = NULL;
+    }
+    return pxNewTCB;
+}
+
+TaskHandle_t xTaskCreateStatic( TaskFunction_t TaskCode,
+                                const char * const Name,
+                                const configSTACK_DEPTH_TYPE StackDepth,
+                                void * const Parameters,
+                                UBaseType_t Priority,
+                                StackType_t * const StackBuffer,
+                                StaticTask_t * const TaskBuffer )
+{
+    TaskHandle_t xReturn = NULL;
+    TCB_t * pxNewTCB;
+    pxNewTCB = CreateStaticTask( TaskCode, Name, StackDepth, Parameters, Priority, StackBuffer, TaskBuffer, &xReturn );
+    if( pxNewTCB != NULL )
+    {
+        AddNewTaskToReadyList( pxNewTCB );
+    }
+    return xReturn;
+}
+
+static TCB_t * CreateTask( TaskFunction_t TaskCode,
+                                const char * const Name,
+                                const configSTACK_DEPTH_TYPE StackDepth,
+                                void * const Parameters,
+                                UBaseType_t Priority,
+                                TaskHandle_t * const CreatedTask )
+{
+    TCB_t * pxNewTCB;
+    /* If the stack grows down then allocate the stack then the TCB so the stack
+        * does not grow into the TCB.  Likewise if the stack grows up then allocate
+        * the TCB then the stack. */
+    #if ( portSTACK_GROWTH > 0 )
+    {
+        /* Allocate space for the TCB.  Where the memory comes from depends on
+            * the implementation of the port malloc function and whether or not static
+            * allocation is being used. */
+
+        pxNewTCB = ( TCB_t * ) pvPortMalloc( sizeof( TCB_t ) );
         if( pxNewTCB != NULL )
         {
-            #if ( ( configNUMBER_OF_CORES > 1 ) && ( configUSE_CORE_AFFINITY == 1 ) )
+            ( void ) memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
+            /* Allocate space for the stack used by the task being created.
+                * The base of the stack memory stored in the TCB so the task can
+                * be deleted later if required. */
+
+            pxNewTCB->pxStack = ( StackType_t * ) pvPortMallocStack( ( ( ( size_t ) StackDepth ) * sizeof( StackType_t ) ) );
+            if( pxNewTCB->pxStack == NULL )
             {
-                /* Set the task's affinity before scheduling it. */
-                pxNewTCB->uxCoreAffinityMask = configTASK_DEFAULT_CORE_AFFINITY;
+                /* Could not allocate the stack.  Delete the allocated TCB. */
+                vPortFree( pxNewTCB );
+                pxNewTCB = NULL;
             }
-            #endif
-            AddNewTaskToReadyList( pxNewTCB );
         }
-        return xReturn;
     }
-
-    #if ( ( configNUMBER_OF_CORES > 1 ) && ( configUSE_CORE_AFFINITY == 1 ) )
-        TaskHandle_t xTaskCreateStaticAffinitySet( TaskFunction_t TaskCode,
-                                                   const char * const Name,
-                                                   const configSTACK_DEPTH_TYPE StackDepth,
-                                                   void * const Parameters,
-                                                   UBaseType_t Priority,
-                                                   StackType_t * const StackBuffer,
-                                                   StaticTask_t * const TaskBuffer,
-                                                   UBaseType_t uxCoreAffinityMask )
-        {
-            TaskHandle_t xReturn = NULL;
-            TCB_t * pxNewTCB;
-            pxNewTCB = CreateStaticTask( TaskCode, Name, StackDepth, Parameters, Priority, StackBuffer, TaskBuffer, &xReturn );
-            if( pxNewTCB != NULL )
-            {
-                /* Set the task's affinity before scheduling it. */
-                pxNewTCB->uxCoreAffinityMask = uxCoreAffinityMask;
-                AddNewTaskToReadyList( pxNewTCB );
-            }
-            return xReturn;
-        }
-    #endif /* #if ( ( configNUMBER_OF_CORES > 1 ) && ( configUSE_CORE_AFFINITY == 1 ) ) */
-#endif /* SUPPORT_STATIC_ALLOCATION */
-
-#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
-    static TCB_t * CreateTask( TaskFunction_t TaskCode,
-                                  const char * const Name,
-                                  const configSTACK_DEPTH_TYPE StackDepth,
-                                  void * const Parameters,
-                                  UBaseType_t Priority,
-                                  TaskHandle_t * const CreatedTask )
+    #else /* portSTACK_GROWTH */
     {
-        TCB_t * pxNewTCB;
-        /* If the stack grows down then allocate the stack then the TCB so the stack
-         * does not grow into the TCB.  Likewise if the stack grows up then allocate
-         * the TCB then the stack. */
-        #if ( portSTACK_GROWTH > 0 )
+        StackType_t *pxStack = (StackType_t *)pvPortMallocStack( ( ( ( size_t ) StackDepth ) * sizeof( StackType_t ) ) );
+        if( pxStack != NULL )
         {
-            /* Allocate space for the TCB.  Where the memory comes from depends on
-             * the implementation of the port malloc function and whether or not static
-             * allocation is being used. */
-
             pxNewTCB = ( TCB_t * ) pvPortMalloc( sizeof( TCB_t ) );
             if( pxNewTCB != NULL )
             {
                 ( void ) memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
-                /* Allocate space for the stack used by the task being created.
-                 * The base of the stack memory stored in the TCB so the task can
-                 * be deleted later if required. */
-
-                pxNewTCB->pxStack = ( StackType_t * ) pvPortMallocStack( ( ( ( size_t ) StackDepth ) * sizeof( StackType_t ) ) );
-                if( pxNewTCB->pxStack == NULL )
-                {
-                    /* Could not allocate the stack.  Delete the allocated TCB. */
-                    vPortFree( pxNewTCB );
-                    pxNewTCB = NULL;
-                }
-            }
-        }
-        #else /* portSTACK_GROWTH */
-        {
-            StackType_t * pxStack;
-            /* Allocate space for the stack used by the task being created. */
-
-            pxStack = pvPortMallocStack( ( ( ( size_t ) StackDepth ) * sizeof( StackType_t ) ) );
-            if( pxStack != NULL )
-            {
-                /* Allocate space for the TCB. */
-
-                pxNewTCB = ( TCB_t * ) pvPortMalloc( sizeof( TCB_t ) );
-                if( pxNewTCB != NULL )
-                {
-                    ( void ) memset( ( void * ) pxNewTCB, 0x00, sizeof( TCB_t ) );
-                    /* Store the stack location in the TCB. */
-                    pxNewTCB->pxStack = pxStack;
-                }
-                else
-                {
-                    /* The stack cannot be used as the TCB was not created.  Free
-                     * it again. */
-                    vPortFreeStack( pxStack );
-                }
+                pxNewTCB->pxStack = pxStack;
             }
             else
             {
-                pxNewTCB = NULL;
+                vPortFreeStack( pxStack );
             }
-        }
-        #endif /* portSTACK_GROWTH */
-        if( pxNewTCB != NULL )
-        {
-            #if ( tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE != 0 )
-            {
-                /* Tasks can be created statically or dynamically, so note this
-                 * task was created dynamically in case it is later deleted. */
-                pxNewTCB->StaticallyAllocated = tskDYNAMICALLY_ALLOCATED_STACK_AND_TCB;
-            }
-            #endif /* tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE */
-            InitialiseNewTask( TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask, pxNewTCB, NULL );
-        }
-        return pxNewTCB;
-    }
-
-    BaseType_t xTaskCreate( TaskFunction_t TaskCode,
-                            const char * const Name,
-                            const configSTACK_DEPTH_TYPE StackDepth,
-                            void * const Parameters,
-                            UBaseType_t Priority,
-                            TaskHandle_t * const CreatedTask )
-    {
-        TCB_t * pxNewTCB;
-        BaseType_t xReturn;
-        pxNewTCB = CreateTask( TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask );
-        if( pxNewTCB != NULL )
-        {
-            #if ( ( configNUMBER_OF_CORES > 1 ) && ( configUSE_CORE_AFFINITY == 1 ) )
-            {
-                /* Set the task's affinity before scheduling it. */
-                pxNewTCB->uxCoreAffinityMask = configTASK_DEFAULT_CORE_AFFINITY;
-            }
-            #endif
-            AddNewTaskToReadyList( pxNewTCB );
-            xReturn = true;
         }
         else
         {
-            xReturn = errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
+            pxNewTCB = NULL;
         }
-        return xReturn;
     }
-
-    #if ( ( configNUMBER_OF_CORES > 1 ) && ( configUSE_CORE_AFFINITY == 1 ) )
-        BaseType_t xTaskCreateAffinitySet( TaskFunction_t TaskCode,
-                                           const char * const Name,
-                                           const configSTACK_DEPTH_TYPE StackDepth,
-                                           void * const Parameters,
-                                           UBaseType_t Priority,
-                                           UBaseType_t uxCoreAffinityMask,
-                                           TaskHandle_t * const CreatedTask )
+    #endif /* portSTACK_GROWTH */
+    if( pxNewTCB != NULL )
+    {
+        #if ( tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE != 0 )
         {
-            TCB_t * pxNewTCB;
-            BaseType_t xReturn;
-            pxNewTCB = CreateTask( TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask );
-            if( pxNewTCB != NULL )
-            {
-                /* Set the task's affinity before scheduling it. */
-                pxNewTCB->uxCoreAffinityMask = uxCoreAffinityMask;
-                AddNewTaskToReadyList( pxNewTCB );
-                xReturn = true;
-            }
-            else
-            {
-                xReturn = errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
-            }
-            return xReturn;
+            /* Tasks can be created statically or dynamically, so note this
+                * task was created dynamically in case it is later deleted. */
+            pxNewTCB->StaticallyAllocated = tskDYNAMICALLY_ALLOCATED_STACK_AND_TCB;
         }
-    #endif /* #if ( ( configNUMBER_OF_CORES > 1 ) && ( configUSE_CORE_AFFINITY == 1 ) ) */
-#endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+        #endif /* tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE */
+        InitialiseNewTask( TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask, pxNewTCB, NULL );
+    }
+    return pxNewTCB;
+}
+
+BaseType_t xTaskCreate( TaskFunction_t TaskCode,
+                        const char * const Name,
+                        const configSTACK_DEPTH_TYPE StackDepth,
+                        void * const Parameters,
+                        UBaseType_t Priority,
+                        TaskHandle_t * const CreatedTask )
+{
+    TCB_t * pxNewTCB;
+    BaseType_t xReturn;
+    pxNewTCB = CreateTask( TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask );
+    if( pxNewTCB != NULL )
+    {
+        #if ( ( configNUMBER_OF_CORES > 1 ) && ( configUSE_CORE_AFFINITY == 1 ) )
+        {
+            /* Set the task's affinity before scheduling it. */
+            pxNewTCB->uxCoreAffinityMask = configTASK_DEFAULT_CORE_AFFINITY;
+        }
+        #endif
+        AddNewTaskToReadyList( pxNewTCB );
+        xReturn = true;
+    }
+    else
+    {
+        xReturn = errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
+    }
+    return xReturn;
+}
 
 static void InitialiseNewTask( TaskFunction_t TaskCode,
                                   const char * const Name,
@@ -1121,11 +1019,11 @@ static void InitialiseNewTask( TaskFunction_t TaskCode,
     eTaskState eTaskGetState( TaskHandle_t xTask )
     {
         eTaskState eReturn;
-        List_t const * pxStateList;
-        List_t const * pxEventList;
-        List_t const * pxDelayedList;
-        List_t const * pxOverflowedDelayedList;
-        const TCB_t * const pxTCB = xTask;
+        List_t<TCB_t> * pxStateList;
+        List_t<TCB_t> * pxEventList;
+        List_t<TCB_t> * pxDelayedList;
+        List_t<TCB_t> * pxOverflowedDelayedList;
+        TCB_t * pxTCB = xTask;
         configASSERT( pxTCB );
         if( pxTCB == CurrentTCB )
         {
@@ -1155,45 +1053,41 @@ static void InitialiseNewTask( TaskFunction_t TaskCode,
                  * lists. */
                 eReturn = eBlocked;
             }
-            #if ( INCLUDE_vTaskSuspend == 1 )
-                else if( pxStateList == &SuspendedTaskList )
+            else if( pxStateList == &SuspendedTaskList )
+            {
+                /* The task being queried is referenced from the suspended
+                    * list.  Is it genuinely suspended or is it blocked
+                    * indefinitely? */
+                if( LIST_ITEM_CONTAINER( &( pxTCB->xEventListItem ) ) == NULL )
                 {
-                    /* The task being queried is referenced from the suspended
-                     * list.  Is it genuinely suspended or is it blocked
-                     * indefinitely? */
-                    if( LIST_ITEM_CONTAINER( &( pxTCB->xEventListItem ) ) == NULL )
+                    BaseType_t x;
+                    /* The task does not appear on the event list item of
+                        * and of the RTOS objects, but could still be in the
+                        * blocked state if it is waiting on its notification
+                        * rather than waiting on an object.  If not, is
+                        * suspended. */
+                    eReturn = eSuspended;
+                    for( x = ( BaseType_t ) 0; x < ( BaseType_t ) configTASK_NOTIFICATION_ARRAY_ENTRIES; x++ )
                     {
-                        BaseType_t x;
-                        /* The task does not appear on the event list item of
-                            * and of the RTOS objects, but could still be in the
-                            * blocked state if it is waiting on its notification
-                            * rather than waiting on an object.  If not, is
-                            * suspended. */
-                        eReturn = eSuspended;
-                        for( x = ( BaseType_t ) 0; x < ( BaseType_t ) configTASK_NOTIFICATION_ARRAY_ENTRIES; x++ )
+                        if( pxTCB->ucNotifyState[ x ] == taskWAITING_NOTIFICATION )
                         {
-                            if( pxTCB->ucNotifyState[ x ] == taskWAITING_NOTIFICATION )
-                            {
-                                eReturn = eBlocked;
-                                break;
-                            }
+                            eReturn = eBlocked;
+                            break;
                         }
                     }
-                    else
-                    {
-                        eReturn = eBlocked;
-                    }
                 }
-            #endif /* if ( INCLUDE_vTaskSuspend == 1 ) */
-            #if ( INCLUDE_vTaskDelete == 1 )
-                else if( ( pxStateList == &xTasksWaitingTermination ) || ( pxStateList == NULL ) )
+                else
                 {
-                    /* The task being queried is referenced from the deleted
-                     * tasks list, or it is not referenced from any lists at
-                     * all. */
-                    eReturn = eDeleted;
+                    eReturn = eBlocked;
                 }
-            #endif
+            }
+            else if( ( pxStateList == &xTasksWaitingTermination ) || ( pxStateList == NULL ) )
+            {
+                /* The task being queried is referenced from the deleted
+                    * tasks list, or it is not referenced from any lists at
+                    * all. */
+                eReturn = eDeleted;
+            }
             else
             {
                 #if ( configNUMBER_OF_CORES == 1 )
@@ -1479,20 +1373,16 @@ void vTaskSuspend( TaskHandle_t xTaskToSuspend )
 static BaseType_t TaskIsTaskSuspended( const TaskHandle_t xTask )
 {
     BaseType_t xReturn = false;
-    const TCB_t * const pxTCB = xTask;
+    TCB_t * pxTCB = xTask;
     /* Accesses PendingReadyList so must be called from a critical
         * section. */
     /* It does not make sense to check if the calling task is suspended. */
     configASSERT( xTask );
-    /* Is the task being resumed actually in the suspended list? */
-    if( IS_CONTAINED_WITHIN( &SuspendedTaskList, &( pxTCB->xStateListItem ) ) != false )
+    if( IS_CONTAINED_WITHIN<TCB_t>( &SuspendedTaskList, &( pxTCB->xStateListItem ) ))
     {
-        /* Has the task already been resumed from within an ISR? */
-        if( IS_CONTAINED_WITHIN( &PendingReadyList, &( pxTCB->xEventListItem ) ) == false )
+        if(!IS_CONTAINED_WITHIN<TCB_t>( &PendingReadyList, &( pxTCB->xEventListItem ) ))
         {
-            /* Is it in the suspended list because it is in the Suspended
-                * state, or because it is blocked with no timeout? */
-            if( IS_CONTAINED_WITHIN( NULL, &( pxTCB->xEventListItem ) ) != false )
+            if( IS_CONTAINED_WITHIN<TCB_t>( nullptr, &( pxTCB->xEventListItem ) ))
             {
                 BaseType_t x;
                 /* The task does not appear on the event list item of
@@ -1901,7 +1791,7 @@ BaseType_t TaskResumeAll( void )
                     while( LIST_IS_EMPTY( &PendingReadyList ) == false )
                     {
 
-                        pxTCB = GET_OWNER_OF_HEAD_ENTRY( ( &PendingReadyList ) );
+                        pxTCB = GET_OWNER_OF_HEAD_ENTRY<TCB_t>( ( &PendingReadyList ) );
                         REMOVE_ITEM( &( pxTCB->xEventListItem ) );
                         portMEMORY_BARRIER();
                         REMOVE_ITEM( &( pxTCB->xStateListItem ) );
@@ -2034,7 +1924,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery )
             for( pxIterator = GET_HEAD_ENTRY( pxList ); pxIterator != pxEndMarker; pxIterator = GET_NEXT( pxIterator ) )
             {
 
-                pxTCB = GET_LIST_ITEM_OWNER( pxIterator );
+                pxTCB = GET_LIST_ITEM_OWNER<TCB_t>( pxIterator );
                 /* Check each character in the name looking for a match or
                  * mismatch. */
                 xBreakLoop = false;
@@ -2354,7 +2244,7 @@ BaseType_t xTaskIncrementTick( void )
                      * at which the task at the head of the delayed list must
                      * be removed from the Blocked state. */
 
-                    pxTCB = GET_OWNER_OF_HEAD_ENTRY( DelayedTaskList );
+                    pxTCB = GET_OWNER_OF_HEAD_ENTRY<TCB_t>( DelayedTaskList );
                     xItemValue = GET_LIST_ITEM_VALUE( &( pxTCB->xStateListItem ) );
                     if( ConstTickCount < xItemValue )
                     {
@@ -2597,38 +2487,7 @@ void vTaskSwitchContext( void )
     else
     {
         YieldPendings[ 0 ] = false;
-        #if ( configGENERATE_RUN_TIME_STATS == 1 )
-        {
-            #ifdef portALT_GET_RUN_TIME_COUNTER_VALUE
-                portALT_GET_RUN_TIME_COUNTER_VALUE( ulTotalRunTime[ 0 ] );
-            #else
-                ulTotalRunTime[ 0 ] = portGET_RUN_TIME_COUNTER_VALUE();
-            #endif
-            /* Add the amount of time the task has been running to the
-                * accumulated time so far.  The time the task started running was
-                * stored in ulTaskSwitchedInTime.  Note that there is no overflow
-                * protection here so count values are only valid until the timer
-                * overflows.  The guard against negative values is to protect
-                * against suspect run time stat counter implementations - which
-                * are provided by the application, not the kernel. */
-            if( ulTotalRunTime[ 0 ] > ulTaskSwitchedInTime[ 0 ] )
-            {
-                CurrentTCB->ulRunTimeCounter += ( ulTotalRunTime[ 0 ] - ulTaskSwitchedInTime[ 0 ] );
-            }
-            ulTaskSwitchedInTime[ 0 ] = ulTotalRunTime[ 0 ];
-        }
-        #endif /* configGENERATE_RUN_TIME_STATS */
-        /* Check for stack overflow, if configured. */
         taskCHECK_FOR_STACK_OVERFLOW();
-        /* Before the currently running task is switched out, save its errno. */
-        #if ( configUSE_POSIX_ERRNO == 1 )
-        {
-            CurrentTCB->iTaskErrno = FreeRTOS_errno;
-        }
-        #endif
-        /* Select a new task to run using either the generic C or port
-            * optimised asm code. */
-
         taskSELECT_HIGHEST_PRIORITY_TASK();
         /* Macro to inject port specific behaviour immediately after
             * switching tasks, such as setting an end of stack watchpoint
@@ -2650,53 +2509,26 @@ void vTaskSwitchContext( void )
     }
 }
 
-void vTaskPlaceOnEventList( List_t * const pxEventList,
+void vTaskPlaceOnEventList( List_t<TCB_t> * const pxEventList,
                             const TickType_t TicksToWait )
 {
-    
     configASSERT( pxEventList );
-    /* THIS FUNCTION MUST BE CALLED WITH THE
-     * SCHEDULER SUSPENDED AND THE QUEUE BEING ACCESSED LOCKED. */
-    /* Place the event list item of the TCB in the appropriate event list.
-     * This is placed in the list in priority order so the highest priority task
-     * is the first to be woken by the event.
-     *
-     * Note: Lists are sorted in ascending order by ListItem_t.xItemValue.
-     * Normally, the xItemValue of a TCB's ListItem_t members is:
-     *      xItemValue = ( configMAX_PRIORITIES - Priority )
-     * Therefore, the event list is sorted in descending priority order.
-     *
-     * The queue that contains the event list is locked, preventing
-     * simultaneous access from interrupts. */
     ListInsert( pxEventList, &( CurrentTCB->xEventListItem ) );
-    AddCurrentTaskToDelayedList( TicksToWait, true );
-    
+    AddCurrentTaskToDelayedList( TicksToWait, true );   
 }
 
-void vTaskPlaceOnUnorderedEventList( List_t * pxEventList,
+void vTaskPlaceOnUnorderedEventList( List_t<TCB_t> * pxEventList,
                                      const TickType_t xItemValue,
                                      const TickType_t TicksToWait )
 {
-    
     configASSERT( pxEventList );
-    /* THIS FUNCTION MUST BE CALLED WITH THE SCHEDULER SUSPENDED.  It is used by
-     * the event groups implementation. */
     configASSERT( SchedulerSuspended != ( UBaseType_t ) 0U );
-    /* Store the item value in the event list item.  It is safe to access the
-     * event list item here as interrupts won't access the event list item of a
-     * task that is not in the Blocked state. */
     SET_LIST_ITEM_VALUE( &( CurrentTCB->xEventListItem ), xItemValue | taskEVENT_LIST_ITEM_VALUE_IN_USE );
-    /* Place the event list item of the TCB at the end of the appropriate event
-     * list.  It is safe to access the event list here because it is part of an
-     * event group implementation - and interrupts don't access event groups
-     * directly (instead they access them indirectly by pending function calls to
-     * the task level). */
     INSERT_END( pxEventList, &( CurrentTCB->xEventListItem ) );
     AddCurrentTaskToDelayedList( TicksToWait, true );
-    
 }
 
-void vTaskPlaceOnEventListRestricted( List_t * const pxEventList,
+void vTaskPlaceOnEventListRestricted( List_t<TCB_t> * const pxEventList,
                                         TickType_t TicksToWait,
                                         const BaseType_t xWaitIndefinitely )
 {
@@ -2705,7 +2537,7 @@ void vTaskPlaceOnEventListRestricted( List_t * const pxEventList,
     AddCurrentTaskToDelayedList( xWaitIndefinitely ? portMAX_DELAY : TicksToWait, xWaitIndefinitely );
 }
 
-BaseType_t xTaskRemoveFromEventList( const List_t * const pxEventList )
+BaseType_t xTaskRemoveFromEventList(List_t<TCB_t> * const pxEventList )
 {
     TCB_t *UnblockedTCB = GET_OWNER_OF_HEAD_ENTRY( pxEventList );
     configASSERT( UnblockedTCB );
@@ -2723,30 +2555,18 @@ BaseType_t xTaskRemoveFromEventList( const List_t * const pxEventList )
     return false;
 }
 
-void vTaskRemoveFromUnorderedEventList( ListItem_t * EventListItem,
+void vTaskRemoveFromUnorderedEventList( ListItem_t<TCB_t> * EventListItem,
                                         const TickType_t ItemValue )
 {
-    /* THIS FUNCTION MUST BE CALLED WITH THE SCHEDULER SUSPENDED.  It is used by
-     * the event flags implementation. */
     configASSERT( SchedulerSuspended != ( UBaseType_t ) 0U );
-    /* Store the new item value in the event list. */
     SET_LIST_ITEM_VALUE( EventListItem, ItemValue | taskEVENT_LIST_ITEM_VALUE_IN_USE );
-    /* Remove the event list form the event flag.  Interrupts do not access
-     * event flags. */
-    TCB_t *UnblockedTCB = GET_LIST_ITEM_OWNER( EventListItem );
+    TCB_t *UnblockedTCB = GET_LIST_ITEM_OWNER<TCB_t>( EventListItem );
     configASSERT( UnblockedTCB );
     REMOVE_ITEM( EventListItem );
-    /* Remove the task from the delayed list and add it to the ready list.  The
-     * scheduler is suspended so interrupts will not be accessing the ready
-     * lists. */
     REMOVE_ITEM( &( UnblockedTCB->xStateListItem ) );
     AddTaskToReadyList( UnblockedTCB );
     if( UnblockedTCB->Priority > CurrentTCB->Priority )
     {
-        /* The unblocked task has a priority above that of the calling task, so
-            * a context switch is required.  This function is called with the
-            * scheduler suspended so xYieldPending is set so the context switch
-            * occurs immediately that the scheduler is resumed (unsuspended). */
         YieldPendings[ 0 ] = true;
     }
 }
@@ -2899,7 +2719,7 @@ static void CheckTasksWaitingTermination( void )
     {
         ENTER_CRITICAL();
         {
-            pxTCB = GET_OWNER_OF_HEAD_ENTRY( ( &xTasksWaitingTermination ) );
+            pxTCB = GET_OWNER_OF_HEAD_ENTRY<TCB_t>( ( &xTasksWaitingTermination ) );
             ( void ) ListRemove( &( pxTCB->xStateListItem ) );
             --CurrentNumberOfTasks;
             --uxDeletedTasksWaitingCleanUp;
@@ -3707,44 +3527,28 @@ static void AddCurrentTaskToDelayedList( TickType_t TicksToWait,
 {
     TickType_t TimeToWake;
     const TickType_t ConstTickCount = TickCount;
-    List_t * const pxDelayedList = DelayedTaskList;
-    List_t * const pxOverflowDelayedList = OverflowDelayedTaskList;
-    /* About to enter a delayed list, so ensure the ucDelayAborted flag is
-        * reset to false so it can be detected as having been set to true
-        * when the task leaves the Blocked state. */
+    auto *pxDelayedList = DelayedTaskList;
+    auto *pxOverflowDelayedList = OverflowDelayedTaskList;
     CurrentTCB->ucDelayAborted = ( uint8_t ) false;
-    /* Remove the task from the ready list before adding it to the blocked list
-     * as the same list item is used for both lists. */
     if( ListRemove( &( CurrentTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
     {
-        /* The current task must be in a ready list, so there is no need to
-         * check, and the port reset macro can be called directly. */
         portRESET_READY_PRIORITY( CurrentTCB->Priority, TopReadyPriority );
     }
     if( ( TicksToWait == portMAX_DELAY ) && ( CanBlockIndefinitely != false ) )
     {
-        /* Add the task to the suspended task list instead of a delayed task
-            * list to ensure it is not woken by a timing event.  It will block
-            * indefinitely. */
         INSERT_END( &SuspendedTaskList, &( CurrentTCB->xStateListItem ) );
     }
     else
     {
-        /* Calculate the time at which the task should be woken if the event
-            * does not occur.  This may overflow but this doesn't matter, the
-            * kernel will manage it correctly. */
         TimeToWake = ConstTickCount + TicksToWait;
-        /* The list item will be inserted in wake time order. */
         SET_LIST_ITEM_VALUE( &( CurrentTCB->xStateListItem ), TimeToWake );
         if( TimeToWake < ConstTickCount )
         {
-            /* Wake time has overflowed.  Place this item in the overflow
-                * list. */                ListInsert( pxOverflowDelayedList, &( CurrentTCB->xStateListItem ) );
+            ListInsert( pxOverflowDelayedList, &( CurrentTCB->xStateListItem ) );
         }
         else
         {
-            /* The wake time has not overflowed, so the current block list
-                * is used. */                ListInsert( pxDelayedList, &( CurrentTCB->xStateListItem ) );
+            ListInsert( pxDelayedList, &( CurrentTCB->xStateListItem ) );
             /* If the task entering the blocked state was placed at the
                 * head of the list of blocked tasks then NextTaskUnblockTime
                 * needs to be updated too. */

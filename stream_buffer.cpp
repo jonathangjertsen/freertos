@@ -31,7 +31,7 @@
 
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
-#include "task.h"
+#include "task.hpp"
 #include "stream_buffer.h"
 
 /* If the user has not provided application specific Rx notification macros,

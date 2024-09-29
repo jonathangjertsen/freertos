@@ -25,49 +25,34 @@
  * https://github.com/FreeRTOS
  *
  */
-#ifndef LIST_H
-#define LIST_H
+#pragma once
 
 #include "FreeRTOS.h"
 
-#define FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE
-#define SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE
-#define FIRST_LIST_INTEGRITY_CHECK_VALUE
-#define SECOND_LIST_INTEGRITY_CHECK_VALUE
-#define SET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )
-#define SET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )
-#define SET_LIST_INTEGRITY_CHECK_1_VALUE( pxList )
-#define SET_LIST_INTEGRITY_CHECK_2_VALUE( pxList )
-#define TEST_LIST_ITEM_INTEGRITY( pxItem )
-#define TEST_LIST_INTEGRITY( pxList )
+template<class T>
+struct List_t;
 
-/*
- * Definition of the only type of object that a list can contain.
- */
-struct xLIST;
-struct xLIST_ITEM
+template<class T>
+struct ListItem_t 
 {
-    FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE           /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
     TickType_t xItemValue;          /**< The value being listed.  In most cases this is used to sort the list in ascending order. */
-    struct xLIST_ITEM *pxNext;     /**< Pointer to the next ListItem_t in the list. */
-    struct xLIST_ITEM *pxPrevious; /**< Pointer to the previous ListItem_t in the list. */
-    void * pvOwner;                                     /**< Pointer to the object (normally a TCB) that contains the list item.  There is therefore a two way link between the object containing the list item and the list item itself. */
-    struct xLIST *pxContainer;     /**< Pointer to the list in which this list item is placed (if any). */
-    SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE          /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+    struct ListItem_t<T> *pxNext;     /**< Pointer to the next ListItem_t in the list. */
+    struct ListItem_t<T> *pxPrevious; /**< Pointer to the previous ListItem_t in the list. */
+    T *pvOwner;                                     /**< Pointer to the object (normally a TCB) that contains the list item.  There is therefore a two way link between the object containing the list item and the list item itself. */
+    List_t<T> *pvContainer;     /**< Pointer to the list in which this list item is placed (if any). */
 };
-typedef struct xLIST_ITEM ListItem_t;
-typedef struct xLIST_ITEM MiniListItem_t;
+
 /*
  * Definition of the type of queue used by the scheduler.
  */
-typedef struct xLIST
+template<class T>
+struct List_t
 {
-    FIRST_LIST_INTEGRITY_CHECK_VALUE      /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
     UBaseType_t uxNumberOfItems;
-    ListItem_t *  Index; /**< Used to walk through the list.  Points to the last item returned by a call to listGET_OWNER_OF_NEXT_ENTRY (). */
-    MiniListItem_t xListEnd;                  /**< List item that contains the maximum possible item value meaning it is always at the end of the list and is therefore used as a marker. */
-    SECOND_LIST_INTEGRITY_CHECK_VALUE     /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
-} List_t;
+    ListItem_t<T> *  Index; /**< Used to walk through the list.  Points to the last item returned by a call to listGET_OWNER_OF_NEXT_ENTRY (). */
+    ListItem_t<T> xListEnd;                  /**< List item that contains the maximum possible item value meaning it is always at the end of the list and is therefore used as a marker. */
+};
+
 /*
  * Access macro to set the owner of a list item.  The owner of a list item
  * is the object (usually a TCB) that contains the list item.
@@ -76,120 +61,191 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 template<class T>
-void SET_LIST_ITEM_OWNER(ListItem_t *pxListItem, T *pxOwner) {
-    pxListItem->pvOwner = (void*)pxOwner;
+void SET_LIST_ITEM_OWNER(ListItem_t<T> *pxListItem, T *pxOwner) {
+    pxListItem->pvOwner = pxOwner;
 }
 
-void* GET_LIST_ITEM_OWNER(ListItem_t *pxListItem) {
-    return (pxListItem->pvOwner);
+template<class T>
+T* GET_LIST_ITEM_OWNER(ListItem_t<T> *pxListItem) {
+    return pxListItem->pvOwner;
 }
 
-static inline void SET_LIST_ITEM_VALUE(ListItem_t *pxListItem, TickType_t xValue ) {
+template<class T>
+static inline void SET_LIST_ITEM_VALUE(ListItem_t<T> *pxListItem, TickType_t xValue ) {
     pxListItem->xItemValue = xValue;
 }
 
-static inline TickType_t GET_LIST_ITEM_VALUE(ListItem_t *pxListItem) {
+template<class T>
+static inline TickType_t GET_LIST_ITEM_VALUE(ListItem_t<T> *pxListItem) {
     return pxListItem->xItemValue;
 }
 
-static inline TickType_t GET_ITEM_VALUE_OF_HEAD_ENTRY(List_t *pxList) {
+template<class T>
+static inline TickType_t GET_ITEM_VALUE_OF_HEAD_ENTRY(List_t<T> const *pxList) {
     return pxList->xListEnd.pxNext->xItemValue;
 }
 
-static inline ListItem_t *GET_HEAD_ENTRY(List_t *pxList ) {
+template<class T>
+static inline ListItem_t<T> *GET_HEAD_ENTRY(List_t<T> *pxList ) {
     return pxList->xListEnd.pxNext;
 }
 
-static inline ListItem_t *GET_NEXT(ListItem_t *pxListItem) {
+template<class T>
+static inline ListItem_t<T> *GET_NEXT(ListItem_t<T> *pxListItem) {
     return pxListItem->pxNext;
 }
 
-static inline ListItem_t const *GET_END_MARKER(List_t *pxList){
+template<class T>
+static inline ListItem_t<T> const *GET_END_MARKER(List_t<T> *pxList){
     return &pxList->xListEnd;
 }
 
-static inline bool LIST_IS_EMPTY(List_t *pxList) {
+template<class T>
+static inline bool LIST_IS_EMPTY(List_t<T> *pxList) {
     return pxList->uxNumberOfItems == 0;
 }
 
-static inline UBaseType_t CURRENT_LIST_LENGTH(List_t *pxList) {
+template<class T>
+static inline UBaseType_t CURRENT_LIST_LENGTH(List_t<T> const *pxList) {
     return pxList->uxNumberOfItems;
 }
 
-#define GET_OWNER_OF_NEXT_ENTRY( pxTCB, pxList )                                       \
-do {                                                                                       \
-    List_t * const pxConstList = ( pxList );                                               \
-    /* Increment the index to the next item and return the item, ensuring */               \
-    /* we don't return the marker used at the end of the list.  */                         \
-    ( pxConstList )->Index = ( pxConstList )->Index->pxNext;                           \
-    if( ( void * ) ( pxConstList )->Index == ( void * ) &( ( pxConstList )->xListEnd ) ) \
-    {                                                                                      \
-        ( pxConstList )->Index = ( pxConstList )->xListEnd.pxNext;                       \
-    }                                                                                      \
-    ( pxTCB ) = ( pxConstList )->Index->pvOwner;                                         \
-} while( 0 )
-
-#define REMOVE_ITEM( pxItemToRemove ) \
-    do {                                  \
-        /* The list item knows which list it is in.  Obtain the list from the list \
-         * item. */                                                                                 \
-        List_t * const pxList = ( pxItemToRemove )->pxContainer;                                    \
-                                                                                                    \
-        ( pxItemToRemove )->pxNext->pxPrevious = ( pxItemToRemove )->pxPrevious;                    \
-        ( pxItemToRemove )->pxPrevious->pxNext = ( pxItemToRemove )->pxNext;                        \
-        /* Make sure the index is left pointing to a valid item. */                                 \
-        if( pxList->Index == ( pxItemToRemove ) )                                                 \
-        {                                                                                           \
-            pxList->Index = ( pxItemToRemove )->pxPrevious;                                       \
-        }                                                                                           \
-                                                                                                    \
-        ( pxItemToRemove )->pxContainer = NULL;                                                     \
-        ( ( pxList )->uxNumberOfItems ) = ( UBaseType_t ) ( ( ( pxList )->uxNumberOfItems ) - 1U ); \
-    } while( 0 )
-#define INSERT_END( pxList, pxNewListItem )           \
-    do {                                                  \
-        ListItem_t * const Index = ( pxList )->Index; \
-                                                          \
-        /* Only effective when configASSERT() is also defined, these tests may catch \
-         * the list data structures being overwritten in memory.  They will not catch \
-         * data errors caused by incorrect configuration or use of FreeRTOS. */ \
-        TEST_LIST_INTEGRITY( ( pxList ) );                                  \
-        TEST_LIST_ITEM_INTEGRITY( ( pxNewListItem ) );                      \
-                                                                                \
-        /* Insert a new list item into ( pxList ), but rather than sort the list, \
-         * makes the new list item the last item to be removed by a call to \
-         * listGET_OWNER_OF_NEXT_ENTRY(). */                                                        \
-        ( pxNewListItem )->pxNext = Index;                                                        \
-        ( pxNewListItem )->pxPrevious = Index->pxPrevious;                                        \
-                                                                                                    \
-        Index->pxPrevious->pxNext = ( pxNewListItem );                                            \
-        Index->pxPrevious = ( pxNewListItem );                                                    \
-                                                                                                    \
-        /* Remember which list the item is in. */                                                   \
-        ( pxNewListItem )->pxContainer = ( pxList );                                                \
-                                                                                                    \
-        ( ( pxList )->uxNumberOfItems ) = ( UBaseType_t ) ( ( ( pxList )->uxNumberOfItems ) + 1U ); \
-    } while( 0 )
-
-static inline void *GET_OWNER_OF_HEAD_ENTRY(List_t *pxList) {
-    return pxList->xListEnd.pxNext->pvOwner;
+template<class T>
+static inline T*GET_OWNER_OF_NEXT_ENTRY(List_t<T> *list) {
+    list->Index = list->Index->pxNext;
+    if((void *)list->Index == (void *)&(list->xListEnd))
+    {
+        list->Index = list->xListEnd.pxNext;
+    }
+    return list->Index->pvOwner;
 }
 
-static inline bool IS_CONTAINED_WITHIN(List_t *pxList, ListItem_t *pxListItem ) {
-    return pxListItem->pxContainer == pxList;
+template<class T>
+static inline void REMOVE_ITEM(ListItem_t<T> *item) {
+    List_t<T> * const pxList = item->pvContainer;                                    
+    item->pxNext->pxPrevious = item->pxPrevious;                    
+    item->pxPrevious->pxNext = item->pxNext;                        
+    if( pxList->Index == item )                                                 
+    {                                                                                           
+        pxList->Index = item->pxPrevious;                                       
+    }                                                                                           
+    item->pvContainer = NULL;                                                     
+    ( pxList->uxNumberOfItems ) = ( UBaseType_t ) ( ( pxList->uxNumberOfItems ) - 1U ); 
 }
 
-static inline List_t *LIST_ITEM_CONTAINER(ListItem_t *pxListItem) {
-    return pxListItem->pxContainer;
+template<class T>
+static inline void INSERT_END(List_t<T> *list, ListItem_t<T> *item) {
+    ListItem_t<T> * const Index = list->Index;
+    item->pxNext = Index;
+    item->pxPrevious = Index->pxPrevious;
+    Index->pxPrevious->pxNext = item;
+    Index->pxPrevious = item;
+    item->pvContainer = list;
+    list->uxNumberOfItems = (UBaseType_t) ( ( list->uxNumberOfItems ) + 1U );
 }
 
-static inline bool LIST_IS_INITIALISED(List_t *pxList) {
+template<class T>
+static inline T *GET_OWNER_OF_HEAD_ENTRY(List_t<T> *pxList) {
+    return (T*)(pxList->xListEnd.pxNext->pvOwner);
+}
+
+template<class T>
+static inline bool IS_CONTAINED_WITHIN(List_t<T> *pxList, ListItem_t<T> *pxListItem ) {
+    return pxListItem->pvContainer == pxList;
+}
+
+template<class T>
+static inline List_t<T> *LIST_ITEM_CONTAINER(ListItem_t<T> *pxListItem) {
+    return pxListItem->pvContainer;
+}
+
+template<class T>
+static inline bool LIST_IS_INITIALISED(List_t<T> *pxList) {
     return pxList->xListEnd.xItemValue == portMAX_DELAY;
 }
 
-void ListInitialise(List_t *const pxList) ;
-void ListInitialiseItem( ListItem_t *const pxItem) ;
-void ListInsert(List_t *const pxList, ListItem_t *const pxNewListItem);
-void vListInsertEnd(List_t *const pxList, ListItem_t *const pxNewListItem);
-UBaseType_t ListRemove(ListItem_t *const pxItemToRemove) ;
-#endif /* ifndef LIST_H */
+
+template<class T>
+void ListInitialise(List_t<T> *const pxList) ;
+
+template<class T>
+void ListInitialiseItem( ListItem_t<T> *const pxItem) ;
+
+template<class T>
+void ListInsert(List_t<T> *const pxList, ListItem_t<T> *const pxNewListItem);
+
+template<class T>
+void vListInsertEnd(List_t<T> *const pxList, ListItem_t<T> *const pxNewListItem);
+
+template<class T>
+UBaseType_t ListRemove(ListItem_t<T> *const pxItemToRemove) ;
+
+template<class T>
+UBaseType_t ListRemove(ListItem_t<T> * const ItemToRemove)
+{
+    /* The list item knows which list it is in.  Obtain the list from the list
+     * item. */
+    auto * const List = ItemToRemove->pvContainer;
+    ItemToRemove->pxNext->pxPrevious = ItemToRemove->pxPrevious;
+    ItemToRemove->pxPrevious->pxNext = ItemToRemove->pxNext;
+    /* Make sure the index is left pointing to a valid item. */
+    if( List->Index == ItemToRemove )
+    {
+        List->Index = ItemToRemove->pxPrevious;
+    }
+    ItemToRemove->pvContainer = NULL;
+    ( List->uxNumberOfItems ) = ( UBaseType_t ) ( List->uxNumberOfItems - 1U );
+    return List->uxNumberOfItems;
+}
+
+template<class T>
+void ListInsert( List_t<T> * const List, ListItem_t<T> * const NewListItem )
+{
+    ListItem_t<T> *pxIterator;
+    const TickType_t xValueOfInsertion = NewListItem->xItemValue;
+    if( xValueOfInsertion == portMAX_DELAY )
+    {
+        pxIterator = List->xListEnd.pxPrevious;
+    }
+    else
+    {
+        for( pxIterator = ( ListItem_t<T>* ) &( List->xListEnd ); pxIterator->pxNext->xItemValue <= xValueOfInsertion; pxIterator = pxIterator->pxNext )
+        {
+        }
+    }
+    NewListItem->pxNext = pxIterator->pxNext;
+    NewListItem->pxNext->pxPrevious = NewListItem;
+    NewListItem->pxPrevious = pxIterator;
+    pxIterator->pxNext = NewListItem;
+    NewListItem->pvContainer = List;
+    ( List->uxNumberOfItems ) = ( UBaseType_t ) ( List->uxNumberOfItems + 1U );
+}
+
+template<class T>
+void ListInsertEnd( List_t<T> * const List,
+                     ListItem_t<T> * const NewListItem )
+{
+    auto * const Index = List->Index;
+    NewListItem->pxNext = Index;
+    NewListItem->pxPrevious = Index->pxPrevious;
+    Index->pxPrevious->pxNext = NewListItem;
+    Index->pxPrevious = NewListItem;
+    NewListItem->pvContainer = List;
+    ( List->uxNumberOfItems ) = ( UBaseType_t ) ( List->uxNumberOfItems + 1U );
+}
+
+template<class T>
+void ListInitialiseItem( ListItem_t<T> * const Item )
+{
+    Item->pvContainer = NULL;
+}
+
+template<class T>
+void ListInitialise(List_t<T> * const List )
+{
+    List->Index = &( List->xListEnd );
+    List->xListEnd.xItemValue = portMAX_DELAY;
+    List->xListEnd.pxNext = &( List->xListEnd );
+    List->xListEnd.pxPrevious = &( List->xListEnd );
+    List->uxNumberOfItems = ( UBaseType_t ) 0U;
+}

@@ -31,7 +31,7 @@
 #ifndef INC_FREERTOS_H
     #error "include FreeRTOS.h must appear in source files before include timers.h"
 #endif
-#include "task.h"
+#include "task.hpp"
 
 /* *INDENT-OFF* */
 #ifdef __cplusplus
@@ -66,8 +66,8 @@
  * reference the subject timer in calls to other software timer API functions
  * (for example, TimerStart(), TimerReset(), etc.).
  */
-struct tmrTimerControl; /* The old naming convention is used to prevent breaking kernel aware debuggers. */
-typedef struct tmrTimerControl * TimerHandle_t;
+struct Timer_t;
+using TimerHandle_t = Timer_t*;
 /*
  * Defines the prototype to which timer callback functions must conform.
  */
