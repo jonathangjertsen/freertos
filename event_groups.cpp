@@ -79,7 +79,7 @@ EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
                             const EventBits_t uxBitsToSet,
                             const EventBits_t uxBitsToWaitFor,
                             TickType_t xTicksToWait) {
-  EventBits_t uxOriginalBitValue, uxReturn;
+  EventBits_t uxOriginalBitValue, uRet;
   EventGroup_t *EventBits = xEventGroup;
   BaseType_t xAlreadyYielded;
   BaseType_t xTimeoutOccurred = false;
@@ -87,7 +87,7 @@ EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
   configASSERT(uxBitsToWaitFor != 0);
 #if ((INCLUDE_TaskGetSchedulerState == 1) || (configUSE_TIMERS == 1))
   {
-    configASSERT(!((TaskGetSchedulerState() == taskSCHEDULER_SUSPENDED) &&
+    configASSERT(!((GetSchedulerState() == taskSCHEDULER_SUSPENDED) &&
                    (xTicksToWait != 0)));
   }
 #endif
@@ -97,38 +97,38 @@ EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
     (void)xEventGroupSetBits(xEventGroup, uxBitsToSet);
     if (((uxOriginalBitValue | uxBitsToSet) & uxBitsToWaitFor) ==
         uxBitsToWaitFor) {
-      uxReturn = (uxOriginalBitValue | uxBitsToSet);
+      uRet = (uxOriginalBitValue | uxBitsToSet);
 
       EventBits->EventBits &= ~uxBitsToWaitFor;
       xTicksToWait = 0;
     } else {
       if (xTicksToWait != (TickType_t)0) {
-        TaskPlaceOnUnorderedEventList(
+        PlaceOnUnorderedEventList(
             &(EventBits->TasksWaitingForBits),
             (uxBitsToWaitFor | eventCLEAR_EVENTS_ON_EXIT_BIT |
              WAIT_FOR_ALL_BITS),
             xTicksToWait);
 
-        uxReturn = 0;
+        uRet = 0;
       } else {
-        uxReturn = EventBits->EventBits;
+        uRet = EventBits->EventBits;
         xTimeoutOccurred = true;
       }
     }
   }
-  xAlreadyYielded = TaskResumeAll();
+  xAlreadyYielded = ResumeAll();
   if (xTicksToWait != (TickType_t)0) {
     if (xAlreadyYielded == false) {
       taskYIELD_WITHIN_API();
     }
 
-    uxReturn = TaskResetEventItemValue();
-    if ((uxReturn & eventUNBLOCKED_DUE_TO_BIT_SET) == (EventBits_t)0) {
+    uRet = ResetEventItemValue();
+    if ((uRet & eventUNBLOCKED_DUE_TO_BIT_SET) == (EventBits_t)0) {
       ENTER_CRITICAL();
       {
-        uxReturn = EventBits->EventBits;
+        uRet = EventBits->EventBits;
 
-        if ((uxReturn & uxBitsToWaitFor) == uxBitsToWaitFor) {
+        if ((uRet & uxBitsToWaitFor) == uxBitsToWaitFor) {
           EventBits->EventBits &= ~uxBitsToWaitFor;
         }
       }
@@ -136,9 +136,9 @@ EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
       xTimeoutOccurred = true;
     }
 
-    uxReturn &= ~EVENT_BITS_CONTROL_BYTES;
+    uRet &= ~EVENT_BITS_CONTROL_BYTES;
   }
-  return uxReturn;
+  return uRet;
 }
 
 EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
@@ -147,7 +147,7 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
                                 const BaseType_t xWaitForAllBits,
                                 TickType_t xTicksToWait) {
   EventGroup_t *EventBits = xEventGroup;
-  EventBits_t uxReturn, uxControlBits = 0;
+  EventBits_t uRet, uxControlBits = 0;
   BaseType_t xWaitConditionMet, xAlreadyYielded;
   BaseType_t xTimeoutOccurred = false;
 
@@ -156,7 +156,7 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
   configASSERT(uxBitsToWaitFor != 0);
 #if ((INCLUDE_TaskGetSchedulerState == 1) || (configUSE_TIMERS == 1))
   {
-    configASSERT(!((TaskGetSchedulerState() == taskSCHEDULER_SUSPENDED) &&
+    configASSERT(!((GetSchedulerState() == taskSCHEDULER_SUSPENDED) &&
                    (xTicksToWait != 0)));
   }
 #endif
@@ -167,14 +167,14 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
     xWaitConditionMet =
         TestWaitCondition(uxCurrentEventBits, uxBitsToWaitFor, xWaitForAllBits);
     if (xWaitConditionMet != false) {
-      uxReturn = uxCurrentEventBits;
+      uRet = uxCurrentEventBits;
       xTicksToWait = (TickType_t)0;
 
       if (xClearOnExit != false) {
         EventBits->EventBits &= ~uxBitsToWaitFor;
       }
     } else if (xTicksToWait == (TickType_t)0) {
-      uxReturn = uxCurrentEventBits;
+      uRet = uxCurrentEventBits;
       xTimeoutOccurred = true;
     } else {
       if (xClearOnExit != false) {
@@ -184,26 +184,26 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
         uxControlBits |= WAIT_FOR_ALL_BITS;
       }
 
-      TaskPlaceOnUnorderedEventList(&(EventBits->TasksWaitingForBits),
-                                    (uxBitsToWaitFor | uxControlBits),
-                                    xTicksToWait);
+      PlaceOnUnorderedEventList(&(EventBits->TasksWaitingForBits),
+                                (uxBitsToWaitFor | uxControlBits),
+                                xTicksToWait);
 
-      uxReturn = 0;
+      uRet = 0;
     }
   }
-  xAlreadyYielded = TaskResumeAll();
+  xAlreadyYielded = ResumeAll();
   if (xTicksToWait != (TickType_t)0) {
     if (xAlreadyYielded == false) {
       taskYIELD_WITHIN_API();
     }
 
-    uxReturn = TaskResetEventItemValue();
-    if ((uxReturn & eventUNBLOCKED_DUE_TO_BIT_SET) == (EventBits_t)0) {
+    uRet = ResetEventItemValue();
+    if ((uRet & eventUNBLOCKED_DUE_TO_BIT_SET) == (EventBits_t)0) {
       ENTER_CRITICAL();
       {
-        uxReturn = EventBits->EventBits;
+        uRet = EventBits->EventBits;
 
-        if (TestWaitCondition(uxReturn, uxBitsToWaitFor, xWaitForAllBits) !=
+        if (TestWaitCondition(uRet, uxBitsToWaitFor, xWaitForAllBits) !=
             false) {
           if (xClearOnExit != false) {
             EventBits->EventBits &= ~uxBitsToWaitFor;
@@ -212,38 +212,38 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
         xTimeoutOccurred = true;
       }
     }
-    uxReturn &= ~EVENT_BITS_CONTROL_BYTES;
+    uRet &= ~EVENT_BITS_CONTROL_BYTES;
   }
-  return uxReturn;
+  return uRet;
 }
 
 EventBits_t xEventGroupClearBits(EventGroupHandle_t xEventGroup,
                                  const EventBits_t uxBitsToClear) {
   EventGroup_t *EventBits = xEventGroup;
-  EventBits_t uxReturn;
+  EventBits_t uRet;
 
   configASSERT(xEventGroup);
   configASSERT((uxBitsToClear & EVENT_BITS_CONTROL_BYTES) == 0);
   ENTER_CRITICAL();
   {
-    uxReturn = EventBits->EventBits;
+    uRet = EventBits->EventBits;
 
     EventBits->EventBits &= ~uxBitsToClear;
   }
   EXIT_CRITICAL();
-  return uxReturn;
+  return uRet;
 }
 EventBits_t xEventGroupGetBitsFromISR(EventGroupHandle_t xEventGroup) {
   UBaseType_t uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
-  EventBits_t uxReturn = xEventGroup->EventBits;
+  EventBits_t uRet = xEventGroup->EventBits;
   EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-  return uxReturn;
+  return uRet;
 }
 EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
                                const EventBits_t uxBitsToSet) {
   Item_t<TCB_t> *ListItem;
   Item_t<TCB_t> *Next;
-  EventBits_t uxBitsToClear = 0, uxBitsWaitedFor, uxControlBits, uxReturnBits;
+  EventBits_t uxBitsToClear = 0, uxBitsWaitedFor, uxControlBits, uRetBits;
   EventGroup_t *EventBits = xEventGroup;
   BaseType_t xMatchFound = false;
 
@@ -268,8 +268,7 @@ EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
         if ((uxBitsWaitedFor & EventBits->EventBits) != (EventBits_t)0) {
           xMatchFound = true;
         }
-      } else if ((uxBitsWaitedFor & EventBits->EventBits) ==
-                 uxBitsWaitedFor) {
+      } else if ((uxBitsWaitedFor & EventBits->EventBits) == uxBitsWaitedFor) {
         xMatchFound = true;
       }
       if (!xMatchFound) {
@@ -277,7 +276,7 @@ EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
           uxBitsToClear |= uxBitsWaitedFor;
         }
 
-        TaskRemoveFromUnorderedEventList(
+        RemoveFromUnorderedEventList(
             ListItem, EventBits->EventBits | eventUNBLOCKED_DUE_TO_BIT_SET);
       }
 
@@ -286,10 +285,10 @@ EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
 
     EventBits->EventBits &= ~uxBitsToClear;
 
-    uxReturnBits = EventBits->EventBits;
+    uRetBits = EventBits->EventBits;
   }
-  (void)TaskResumeAll();
-  return uxReturnBits;
+  (void)ResumeAll();
+  return uRetBits;
 }
 
 void vEventGroupDelete(EventGroupHandle_t xEventGroup) {
@@ -299,11 +298,11 @@ void vEventGroupDelete(EventGroupHandle_t xEventGroup) {
   TaskSuspendAll();
   {
     while (TasksWaitingForBits->Length > (UBaseType_t)0) {
-      TaskRemoveFromUnorderedEventList(TasksWaitingForBits->End.Next,
-                                       eventUNBLOCKED_DUE_TO_BIT_SET);
+      RemoveFromUnorderedEventList(TasksWaitingForBits->End.Next,
+                                   eventUNBLOCKED_DUE_TO_BIT_SET);
     }
   }
-  (void)TaskResumeAll();
+  (void)ResumeAll();
 #if ((configSUPPORT_DYNAMIC_ALLOCATION == 1) && \
      (configSUPPORT_STATIC_ALLOCATION == 0))
   { vPortFree(EventBits); }
@@ -318,20 +317,20 @@ void vEventGroupDelete(EventGroupHandle_t xEventGroup) {
 }
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-BaseType_t xEventGroupGetStaticBuffer(
-    EventGroupHandle_t xEventGroup, StaticEventGroup_t **EventGroupBuffer) {
-  BaseType_t xReturn;
+BaseType_t xEventGroupGetStaticBuffer(EventGroupHandle_t xEventGroup,
+                                      StaticEventGroup_t **EventGroupBuffer) {
+  BaseType_t Ret;
   EventGroup_t *EventBits = xEventGroup;
   configASSERT(EventBits);
   configASSERT(EventGroupBuffer);
 
   if (EventBits->StaticallyAllocated == (uint8_t) true) {
     *EventGroupBuffer = (StaticEventGroup_t *)EventBits;
-    xReturn = true;
+    Ret = true;
   } else {
-    xReturn = false;
+    Ret = false;
   }
-  return xReturn;
+  return Ret;
 }
 #endif
 

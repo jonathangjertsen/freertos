@@ -61,7 +61,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
 #define xSemaphoreGiveFromISR(xSemaphore, HigherPriorityTaskWoken) \
   xQueueGiveFromISR((QueueHandle_t)(xSemaphore), (HigherPriorityTaskWoken))
 #define xSemaphoreTakeFromISR(xSemaphore, HigherPriorityTaskWoken) \
-  xQueueReceiveFromISR((QueueHandle_t)(xSemaphore), NULL,            \
+  xQueueReceiveFromISR((QueueHandle_t)(xSemaphore), NULL,          \
                        (HigherPriorityTaskWoken))
 #define xSemaphoreCreateMutex() xQueueCreateMutex(queueQUEUE_TYPE_MUTEX)
 #define xSemaphoreCreateMuteStatic(MutexBuffer) \
@@ -73,7 +73,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
 #define xSemaphoreCreateCounting(uxMaxCount, uxInitialCount) \
   xQueueCreateCountingSemaphore((uxMaxCount), (uxInitialCount))
 #define xSemaphoreCreateCountingStatic(uxMaxCount, uxInitialCount,    \
-                                       SemaphoreBuffer)             \
+                                       SemaphoreBuffer)               \
   xQueueCreateCountingSemaphoreStatic((uxMaxCount), (uxInitialCount), \
                                       (SemaphoreBuffer))
 #define vSemaphoreDelete(xSemaphore) vQueueDelete((QueueHandle_t)(xSemaphore))
@@ -84,6 +84,6 @@ typedef QueueHandle_t SemaphoreHandle_t;
   uxQueueMessagesWaiting((QueueHandle_t)(xSemaphore))
 #define uxSemaphoreGetCountFromISR(xSemaphore) \
   uxQueueMessagesWaitingFromISR((QueueHandle_t)(xSemaphore))
-#define xSemaphoreGetStaticBuffer(xSemaphore, SemaphoreBuffer)  \
+#define xSemaphoreGetStaticBuffer(xSemaphore, SemaphoreBuffer)     \
   xQueueGenericGetStaticBuffers((QueueHandle_t)(xSemaphore), NULL, \
                                 (SemaphoreBuffer))

@@ -80,20 +80,20 @@ TaskHandle_t TimerGetTimerDaemonTaskHandle(void);
 #define TimerReset(Timer, xTicksToWait)                                      \
   TimerGenericCommand((Timer), tmrCOMMAND_RESET, (TaskGetTickCount()), NULL, \
                       (xTicksToWait))
-#define TimerStartFromISR(Timer, HigherPriorityTaskWoken) \
-  TimerGenericCommand((Timer), tmrCOMMAND_START_FROM_ISR,   \
-                      (TaskGetTickCountFromISR()),          \
-                      (HigherPriorityTaskWoken), 0U)
-#define TimerStopFromISR(Timer, HigherPriorityTaskWoken)  \
+#define TimerStartFromISR(Timer, HigherPriorityTaskWoken)                     \
+  TimerGenericCommand((Timer), tmrCOMMAND_START_FROM_ISR,                     \
+                      (TaskGetTickCountFromISR()), (HigherPriorityTaskWoken), \
+                      0U)
+#define TimerStopFromISR(Timer, HigherPriorityTaskWoken)    \
   TimerGenericCommand((Timer), tmrCOMMAND_STOP_FROM_ISR, 0, \
                       (HigherPriorityTaskWoken), 0U)
 #define TimerChangePeriodFromISR(Timer, xNewPeriod, HigherPriorityTaskWoken) \
-  TimerGenericCommand((Timer), tmrCOMMAND_CHANGE_PERIOD_FROM_ISR,              \
+  TimerGenericCommand((Timer), tmrCOMMAND_CHANGE_PERIOD_FROM_ISR,            \
                       (xNewPeriod), (HigherPriorityTaskWoken), 0U)
-#define TimerResetFromISR(Timer, HigherPriorityTaskWoken) \
-  TimerGenericCommand((Timer), tmrCOMMAND_RESET_FROM_ISR,   \
-                      (TaskGetTickCountFromISR()),          \
-                      (HigherPriorityTaskWoken), 0U)
+#define TimerResetFromISR(Timer, HigherPriorityTaskWoken)                     \
+  TimerGenericCommand((Timer), tmrCOMMAND_RESET_FROM_ISR,                     \
+                      (TaskGetTickCountFromISR()), (HigherPriorityTaskWoken), \
+                      0U)
 BaseType_t TimerPendFunctionCallFromISR(PendedFunction_t xFunctionToPend,
                                         void* pvParameter1,
                                         uint32_t ulParameter2,
@@ -112,18 +112,19 @@ BaseType_t TimerGetStaticBuffer(TimerHandle_t Timer,
 BaseType_t TimerCreateTimerTask(void);
 BaseType_t TimerGenericCommandFromTask(
     TimerHandle_t Timer, const BaseType_t xCommandID,
-    const TickType_t xOptionalValue,
-    BaseType_t* const HigherPriorityTaskWoken, const TickType_t xTicksToWait);
-BaseType_t TimerGenericCommandFromISR(
-    TimerHandle_t Timer, const BaseType_t xCommandID,
-    const TickType_t xOptionalValue,
-    BaseType_t* const HigherPriorityTaskWoken, const TickType_t xTicksToWait);
-#define TimerGenericCommand(Timer, xCommandID, xOptionalValue,                \
+    const TickType_t xOptionalValue, BaseType_t* const HigherPriorityTaskWoken,
+    const TickType_t xTicksToWait);
+BaseType_t TimerGenericCommandFromISR(TimerHandle_t Timer,
+                                      const BaseType_t xCommandID,
+                                      const TickType_t xOptionalValue,
+                                      BaseType_t* const HigherPriorityTaskWoken,
+                                      const TickType_t xTicksToWait);
+#define TimerGenericCommand(Timer, xCommandID, xOptionalValue,              \
                             HigherPriorityTaskWoken, xTicksToWait)          \
-  ((xCommandID) < tmrFIRST_FROM_ISR_COMMAND                                   \
-       ? TimerGenericCommandFromTask(Timer, xCommandID, xOptionalValue,       \
+  ((xCommandID) < tmrFIRST_FROM_ISR_COMMAND                                 \
+       ? TimerGenericCommandFromTask(Timer, xCommandID, xOptionalValue,     \
                                      HigherPriorityTaskWoken, xTicksToWait) \
-       : TimerGenericCommandFromISR(Timer, xCommandID, xOptionalValue,        \
+       : TimerGenericCommandFromISR(Timer, xCommandID, xOptionalValue,      \
                                     HigherPriorityTaskWoken, xTicksToWait))
 void ApplicationGetTimerTaskMemory(
     StaticTask_t** ppTimerTaskTCBBuffer, StackType_t** ppTimerTaskStackBuffer,

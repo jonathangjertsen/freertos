@@ -195,8 +195,7 @@ static void InitialiseNewTimer(const char *const pcTimerName,
 
 BaseType_t TimerGenericCommandFromTask(
     TimerHandle_t Timer, const BaseType_t xCommandID,
-    const TickType_t xOptionalValue,
-    BaseType_t *const HigherPriorityTaskWoken,
+    const TickType_t xOptionalValue, BaseType_t *const HigherPriorityTaskWoken,
     const TickType_t xTicksToWait) {
   DaemonTaskMessage_t xMessage;
   (void)HigherPriorityTaskWoken;
@@ -210,18 +209,18 @@ BaseType_t TimerGenericCommandFromTask(
   configASSERT(xCommandID < tmrFIRST_FROM_ISR_COMMAND);
   if (xCommandID < tmrFIRST_FROM_ISR_COMMAND) {
     return xQueueSendToBack(TimerQueue, &xMessage,
-                            TaskGetSchedulerState() == taskSCHEDULER_RUNNING
+                            GetSchedulerState() == taskSCHEDULER_RUNNING
                                 ? xTicksToWait
                                 : tmrNO_DELAY);
   }
   return false;
 }
 
-BaseType_t TimerGenericCommandFromISR(
-    TimerHandle_t Timer, const BaseType_t xCommandID,
-    const TickType_t xOptionalValue,
-    BaseType_t *const HigherPriorityTaskWoken,
-    const TickType_t xTicksToWait) {
+BaseType_t TimerGenericCommandFromISR(TimerHandle_t Timer,
+                                      const BaseType_t xCommandID,
+                                      const TickType_t xOptionalValue,
+                                      BaseType_t *const HigherPriorityTaskWoken,
+                                      const TickType_t xTicksToWait) {
   DaemonTaskMessage_t xMessage;
   (void)xTicksToWait;
   configASSERT(Timer);
@@ -347,17 +346,17 @@ static void ProcessTimerOrBlockTask(const TickType_t NextExpireTime,
   TaskSuspendAll();
   TimeNow = SampleTimeNow(&TimerListsWereSwitched);
   if (TimerListsWereSwitched) {
-    TaskResumeAll();
+    ResumeAll();
     return;
   }
   if ((ListWasEmpty == false) && (NextExpireTime <= TimeNow)) {
-    (void)TaskResumeAll();
+    (void)ResumeAll();
     ProcessExpiredTimer(NextExpireTime, TimeNow);
   } else {
     ListWasEmpty |= OverflowTimerList->empty();
     vQueueWaitForMessageRestricted(TimerQueue, (NextExpireTime - TimeNow),
                                    ListWasEmpty);
-    if (TaskResumeAll() == false) {
+    if (ResumeAll() == false) {
       taskYIELD_WITHIN_API();
     }
   }
@@ -414,7 +413,7 @@ static void ProcessReceivedCommands(void) {
           &(xMessage.u.xCallbackParameters);
       configASSERT(Callback);
       Callback->CallbackFunction(Callback->pvParameter1,
-                                     Callback->ulParameter2);
+                                 Callback->ulParameter2);
     }
     if (xMessage.xMessageID >= (BaseType_t)0) {
       pTimer = xMessage.u.TimerParameters.pTimer;

@@ -67,7 +67,7 @@
 #endif
 
 StackType_t* PortInitialiseStack(StackType_t* StackTop, TaskFunction_t Code,
-                                   void* Params);
+                                 void* Params);
 
 typedef struct HeapRegion {
   uint8_t* pucStartAddress;

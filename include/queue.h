@@ -35,12 +35,12 @@
 extern "C" {
 #endif
 
-struct QueueDefinition;
-typedef struct QueueDefinition* QueueHandle_t;
+struct Queue_t;
+typedef struct Queue_t* QueueHandle_t;
 
-typedef struct QueueDefinition* QueueSetHandle_t;
+typedef struct Queue_t* QueueSetHandle_t;
 
-typedef struct QueueDefinition* QueueSetMemberHandle_t;
+typedef struct Queue_t* QueueSetMemberHandle_t;
 
 #define queueSEND_TO_BACK ((BaseType_t)0)
 #define queueSEND_TO_FRONT ((BaseType_t)1)
@@ -56,7 +56,7 @@ typedef struct QueueDefinition* QueueSetMemberHandle_t;
 #define xQueueCreate(uxQueueLength, uxItemSize) \
   xQueueGenericCreate((uxQueueLength), (uxItemSize), (queueQUEUE_TYPE_BASE))
 #define xQueueCreateStatic(uxQueueLength, uxItemSize, pucQueueStorage,        \
-                           QueueBuffer)                                     \
+                           QueueBuffer)                                       \
   xQueueGenericCreateStatic((uxQueueLength), (uxItemSize), (pucQueueStorage), \
                             (QueueBuffer), (queueQUEUE_TYPE_BASE))
 #define xQueueGetStaticBuffers(xQueue, ppucQueueStorage, ppStaticQueue) \
@@ -95,23 +95,22 @@ UBaseType_t uxQueueSpacesAvailable(const QueueHandle_t xQueue);
 
 void vQueueDelete(QueueHandle_t xQueue);
 
-#define xQueueSendToFrontFromISR(xQueue, pvItemToQueue,     \
+#define xQueueSendToFrontFromISR(xQueue, pvItemToQueue,   \
                                  HigherPriorityTaskWoken) \
-  xQueueGenericSendFromISR((xQueue), (pvItemToQueue),       \
+  xQueueGenericSendFromISR((xQueue), (pvItemToQueue),     \
                            (HigherPriorityTaskWoken), queueSEND_TO_FRONT)
 
-#define xQueueSendToBackFromISR(xQueue, pvItemToQueue,     \
+#define xQueueSendToBackFromISR(xQueue, pvItemToQueue,   \
                                 HigherPriorityTaskWoken) \
-  xQueueGenericSendFromISR((xQueue), (pvItemToQueue),      \
+  xQueueGenericSendFromISR((xQueue), (pvItemToQueue),    \
                            (HigherPriorityTaskWoken), queueSEND_TO_BACK)
 
-#define xQueueOverwriteFromISR(xQueue, pvItemToQueue,     \
-                               HigherPriorityTaskWoken) \
-  xQueueGenericSendFromISR((xQueue), (pvItemToQueue),     \
+#define xQueueOverwriteFromISR(xQueue, pvItemToQueue, HigherPriorityTaskWoken) \
+  xQueueGenericSendFromISR((xQueue), (pvItemToQueue),                          \
                            (HigherPriorityTaskWoken), queueOVERWRITE)
 
 #define xQueueSendFromISR(xQueue, pvItemToQueue, HigherPriorityTaskWoken) \
-  xQueueGenericSendFromISR((xQueue), (pvItemToQueue),                       \
+  xQueueGenericSendFromISR((xQueue), (pvItemToQueue),                     \
                            (HigherPriorityTaskWoken), queueSEND_TO_BACK)
 
 BaseType_t xQueueGenericSendFromISR(QueueHandle_t xQueue,
@@ -225,8 +224,8 @@ void vQueueWaitForMessageRestricted(QueueHandle_t xQueue,
                                     TickType_t xTicksToWait,
                                     const BaseType_t xWaitIndefinitely);
 BaseType_t xQueueGenericReset(QueueHandle_t xQueue, BaseType_t xNewQueue);
-UBaseType_t uxQueueGetQueueItemSize(QueueHandle_t xQueue);
-UBaseType_t uxQueueGetQueueLength(QueueHandle_t xQueue);
+UBaseType_t GetQueueItemSize(QueueHandle_t xQueue);
+UBaseType_t GetQueueLength(QueueHandle_t xQueue);
 
 #ifdef __cplusplus
 }

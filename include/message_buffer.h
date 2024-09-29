@@ -47,7 +47,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
                     (xTicksToWait))
 
 #define xMessageBufferSendFromISR(xMessageBuffer, pvTxData, xDataLengthBytes, \
-                                  HigherPriorityTaskWoken)                  \
+                                  HigherPriorityTaskWoken)                    \
   xStreamBufferSendFromISR((xMessageBuffer), (pvTxData), (xDataLengthBytes),  \
                            (HigherPriorityTaskWoken))
 
@@ -56,11 +56,10 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
   xStreamBufferReceive((xMessageBuffer), (pvRxData), (xBufferLengthBytes),  \
                        (xTicksToWait))
 
-#define xMessageBufferReceiveFromISR(                                        \
+#define xMessageBufferReceiveFromISR(                                      \
     xMessageBuffer, pvRxData, xBufferLengthBytes, HigherPriorityTaskWoken) \
-  xStreamBufferReceiveFromISR((xMessageBuffer), (pvRxData),                  \
-                              (xBufferLengthBytes),                          \
-                              (HigherPriorityTaskWoken))
+  xStreamBufferReceiveFromISR((xMessageBuffer), (pvRxData),                \
+                              (xBufferLengthBytes), (HigherPriorityTaskWoken))
 
 #define vMessageBufferDelete(xMessageBuffer) vStreamBufferDelete(xMessageBuffer)
 
@@ -82,12 +81,11 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
 #define xMessageBufferNextLengthBytes(xMessageBuffer) \
   xStreamBufferNextMessageLengthBytes(xMessageBuffer)
 
-#define xMessageBufferSendCompletedFromISR(xMessageBuffer,            \
+#define xMessageBufferSendCompletedFromISR(xMessageBuffer,          \
                                            HigherPriorityTaskWoken) \
-  xStreamBufferSendCompletedFromISR((xMessageBuffer),                 \
-                                    (HigherPriorityTaskWoken))
+  xStreamBufferSendCompletedFromISR((xMessageBuffer), (HigherPriorityTaskWoken))
 
-#define xMessageBufferReceiveCompletedFromISR(xMessageBuffer,            \
+#define xMessageBufferReceiveCompletedFromISR(xMessageBuffer,          \
                                               HigherPriorityTaskWoken) \
-  xStreamBufferReceiveCompletedFromISR((xMessageBuffer),                 \
+  xStreamBufferReceiveCompletedFromISR((xMessageBuffer),               \
                                        (HigherPriorityTaskWoken))

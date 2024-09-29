@@ -36,10 +36,10 @@
 #include "timers.h"
 
 #define taskYIELD_ANY_CORE_IF_USING_PREEMPTION(TCB) \
-  do {                                                \
+  do {                                              \
     if (CurrentTCB->Priority < (TCB)->Priority) {   \
-      portYIELD_WITHIN_API();                         \
-    }                                                 \
+      portYIELD_WITHIN_API();                       \
+    }                                               \
   } while (0)
 
 #define taskNOT_WAITING_NOTIFICATION ((uint8_t)0)
@@ -68,14 +68,13 @@
     }                                                           \
   } while (0)
 
-#define AddTaskToReadyList(TCB)                                \
-  do {                                                           \
-    RECORD_READY_PRIORITY((TCB)->Priority);                    \
+#define AddTaskToReadyList(TCB)                              \
+  do {                                                       \
+    RECORD_READY_PRIORITY((TCB)->Priority);                  \
     ReadyTasks[TCB->Priority].append(&(TCB)->StateListItem); \
   } while (0)
 
-#define GetTCBFromHandle(Handle) \
-  (((Handle) == NULL) ? CurrentTCB : (Handle))
+#define GetTCBFromHandle(Handle) (((Handle) == NULL) ? CurrentTCB : (Handle))
 
 #if (configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_16_BITS)
 #define taskEVENT_LIST_ITEM_VALUE_IN_USE ((uint16_t)0x8000U)
@@ -96,22 +95,7 @@
 #define taskATTRIBUTE_IS_IDLE (UBaseType_t)(1U << 0U)
 #define taskBITS_PER_BYTE ((size_t)8)
 
-typedef struct TCB_t {
-  volatile StackType_t *StackTop;
-  Item_t<TCB_t> StateListItem;
-  Item_t<TCB_t> EventListItem;
-  UBaseType_t Priority;
-  StackType_t *Stack;
-  char Name[configMAX_TASK_NAME_LEN];
-  UBaseType_t CriticalNesting;
-  UBaseType_t BasePriority;
-  UBaseType_t MutexesHeld;
-  volatile uint32_t NotifiedValue[configTASK_NOTIFICATION_ARRAY_ENTRIES];
-  volatile uint8_t NotifyState[configTASK_NOTIFICATION_ARRAY_ENTRIES];
-  uint8_t StaticallyAllocated;
-  uint8_t DelayAborted;
-} TCB_t;
-
+struct TCB_t;
 TCB_t *volatile CurrentTCB = nullptr;
 
 static List_t<TCB_t> ReadyTasks[configMAX_PRIORITIES];
@@ -133,11 +117,44 @@ static volatile BaseType_t YieldPendings[configNUMBER_OF_CORES] = {false};
 static volatile BaseType_t NOverflows = 0;
 static UBaseType_t TaskNumber = 0U;
 static volatile TickType_t NextTaskUnblockTime = 0U;
-static TaskHandle_t IdlTasks[configNUMBER_OF_CORES];
+static TaskHandle_t IdleTasks[configNUMBER_OF_CORES];
 
 static const volatile UBaseType_t TopUsedPriority = configMAX_PRIORITIES - 1U;
 
 static volatile bool SchedulerSuspended = false;
+struct TCB_t {
+  volatile StackType_t *StackTop;
+  Item_t<TCB_t> StateListItem;
+  Item_t<TCB_t> EventListItem;
+  UBaseType_t Priority;
+  StackType_t *Stack;
+  char Name[configMAX_TASK_NAME_LEN];
+  UBaseType_t CriticalNesting;
+  UBaseType_t BasePriority;
+  UBaseType_t MutexesHeld;
+  volatile uint32_t NotifiedValue[configTASK_NOTIFICATION_ARRAY_ENTRIES];
+  volatile uint8_t NotifyState[configTASK_NOTIFICATION_ARRAY_ENTRIES];
+  uint8_t StaticallyAllocated;
+  uint8_t DelayAborted;
+
+  bool Suspended() const {
+    if (StateListItem.Container != &SuspendedTasks) {
+      return false;
+    }
+    if (EventListItem.Container == &PendingReady) {
+      return false;
+    }
+    if (EventListItem.Container == nullptr) {
+      for (int x = 0; x < configTASK_NOTIFICATION_ARRAY_ENTRIES; x++) {
+        if (NotifyState[x] == taskWAITING_NOTIFICATION) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+};
 
 static void ResetNextTaskUnblockTime();
 static inline void taskSWITCH_DELAYED_LISTS() {
@@ -157,61 +174,18 @@ static inline void taskSELECT_HIGHEST_PRIORITY_TASK() {
   CurrentTCB = ReadyTasks[uxTopPriority].advance()->Owner;
 }
 
-static BaseType_t CreateIdlTasks(void);
-#if (configNUMBER_OF_CORES > 1)
+static BaseType_t CreateIdleTasks(void);
+static void InitialiseTaskLists(void);
+static portTASK_FUNCTION_PROTO(IdleTask, Parameters);
 
-static void CheckForRunStateChange(void);
-#endif
-#if (configNUMBER_OF_CORES > 1)
-
-static void YieldForTask(const TCB_t *TCB);
-#endif
-#if (configNUMBER_OF_CORES > 1)
-
-static void SelectHighestPriorityTask(BaseType_t xCoreID);
-#endif
-
-#if (INCLUDE_TaskSuspend == 1)
-static BaseType_t TaskIsTaskSuspended(const TaskHandle_t Task);
-#endif
-
-static void InitialisTaskLists(void);
-
-static portTASK_FUNCTION_PROTO(IdlTask, Parameters);
-#if (configNUMBER_OF_CORES > 1)
-static portTASK_FUNCTION_PROTO(PassiveIdlTask, Parameters);
-#endif
-
-#if (INCLUDE_TaskDelete == 1)
 static void DeleteTCB(TCB_t *TCB);
-#endif
 
 static void CheckTasksWaitingTermination(void);
 
 static void AddCurrentTaskToDelayedList(TickType_t TicksToWait,
                                         const BaseType_t CanBlockIndefinitely);
 
-#if (INCLUDE_TaskGetHandle == 1)
-static TCB_t *SearchForNameWithinSingleList(List_t *List,
-                                            const char NameToQuery[]);
-#endif
-
-#if ((configUSE_TRACE_FACILITY == 1) ||          \
-     (INCLUDE_TaskGetStackHighWaterMark == 1) || \
-     (INCLUDE_TaskGetStackHighWaterMark2 == 1))
-static configSTACK_DEPTH_TYPE TaskCheckFreeStackSpace(
-    const uint8_t *pucStackByte);
-#endif
-
-#if (configUSE_TICKLESS_IDLE != 0)
-static TickType_t GetExpectedIdleTime(void);
-#endif
-
 static void ResetNextTaskUnblockTime(void);
-#if (configUSE_STATS_FORMATTING_FUNCTIONS > 0)
-
-static char *WriteNameToBuffer(char *pcBuffer, const char *Name);
-#endif
 
 static void InitialiseNewTask(TaskFunction_t TaskCode, const char *const Name,
                               const configSTACK_DEPTH_TYPE StackDepth,
@@ -221,28 +195,17 @@ static void InitialiseNewTask(TaskFunction_t TaskCode, const char *const Name,
 
 static void AddNewTaskToReadyList(TCB_t *NewTCB);
 
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
 static TCB_t *CreateStaticTask(TaskFunction_t TaskCode, const char *const Name,
                                const configSTACK_DEPTH_TYPE StackDepth,
                                void *const Parameters, UBaseType_t Priority,
                                StackType_t *const StackBuffer,
                                StaticTask_t *const TaskBuffer,
                                TaskHandle_t *const CreatedTask);
-#endif
 
-#if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
-static TCB_t *CreatTask(TaskFunction_t TaskCode, const char *const Name,
-                        const configSTACK_DEPTH_TYPE StackDepth,
-                        void *const Parameters, UBaseType_t Priority,
-                        TaskHandle_t *const CreatedTask);
-#endif
-
-#ifdef FREERTOS_TASKS_C_ADDITIONS_INIT
-static void freertos_tasks_c_additions_init(void);
-#endif
-#if (configUSE_PASSIVE_IDLE_HOOK == 1)
-extern void ApplicationPassiveIdleHook(void);
-#endif
+static TCB_t *CreateTask(TaskFunction_t TaskCode, const char *const Name,
+                         const configSTACK_DEPTH_TYPE StackDepth,
+                         void *const Parameters, UBaseType_t Priority,
+                         TaskHandle_t *const CreatedTask);
 
 static TCB_t *CreateStaticTask(TaskFunction_t TaskCode, const char *const Name,
                                const configSTACK_DEPTH_TYPE StackDepth,
@@ -253,20 +216,12 @@ static TCB_t *CreateStaticTask(TaskFunction_t TaskCode, const char *const Name,
   TCB_t *NewTCB;
   configASSERT(StackBuffer != NULL);
   configASSERT(TaskBuffer != NULL);
-#if (configASSERT_DEFINED == 1)
-  {
-    volatile size_t xSize = sizeof(StaticTask_t);
-    configASSERT(xSize == sizeof(TCB_t));
-    (void)xSize;
-  }
-#endif
+  configASSERT(sizeof(StaticTask_t) == sizeof(TCB_t));
   if ((TaskBuffer != NULL) && (StackBuffer != NULL)) {
     NewTCB = (TCB_t *)TaskBuffer;
     (void)memset((void *)NewTCB, 0x00, sizeof(TCB_t));
     NewTCB->Stack = (StackType_t *)StackBuffer;
-#if (tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE != 0)
     { NewTCB->StaticallyAllocated = tskSTATICALLY_ALLOCATED_STACK_AND_TCB; }
-#endif
     InitialiseNewTask(TaskCode, Name, StackDepth, Parameters, Priority,
                       CreatedTask, NewTCB, NULL);
   } else {
@@ -280,37 +235,22 @@ TaskHandle_t TaskCreateStatic(TaskFunction_t TaskCode, const char *const Name,
                               void *const Parameters, UBaseType_t Priority,
                               StackType_t *const StackBuffer,
                               StaticTask_t *const TaskBuffer) {
-  TaskHandle_t xReturn = NULL;
+  TaskHandle_t Ret = NULL;
   TCB_t *NewTCB;
   NewTCB = CreateStaticTask(TaskCode, Name, StackDepth, Parameters, Priority,
-                              StackBuffer, TaskBuffer, &xReturn);
+                            StackBuffer, TaskBuffer, &Ret);
   if (NewTCB != NULL) {
     AddNewTaskToReadyList(NewTCB);
   }
-  return xReturn;
+  return Ret;
 }
 
-static TCB_t *CreatTask(TaskFunction_t TaskCode, const char *const Name,
-                        const configSTACK_DEPTH_TYPE StackDepth,
-                        void *const Parameters, UBaseType_t Priority,
-                        TaskHandle_t *const CreatedTask) {
+static TCB_t *CreateTask(TaskFunction_t TaskCode, const char *const Name,
+                         const configSTACK_DEPTH_TYPE StackDepth,
+                         void *const Parameters, UBaseType_t Priority,
+                         TaskHandle_t *const CreatedTask) {
   TCB_t *NewTCB;
 
-#if (portSTACK_GROWTH > 0)
-  {
-    NewTCB = (TCB_t *)pvPortMalloc(sizeof(TCB_t));
-    if (NewTCB != NULL) {
-      (void)memset((void *)NewTCB, 0x00, sizeof(TCB_t));
-
-      NewTCB->Stack = (StackType_t *)pvPortMallocStack(
-          (((size_t)StackDepth) * sizeof(StackType_t)));
-      if (NewTCB->Stack == NULL) {
-        vPortFree(NewTCB);
-        NewTCB = NULL;
-      }
-    }
-  }
-#else
   {
     StackType_t *Stack = (StackType_t *)pvPortMallocStack(
         (((size_t)StackDepth) * sizeof(StackType_t)));
@@ -326,11 +266,10 @@ static TCB_t *CreatTask(TaskFunction_t TaskCode, const char *const Name,
       NewTCB = NULL;
     }
   }
-#endif
   if (NewTCB != NULL) {
-#if (tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE != 0)
-    { NewTCB->StaticallyAllocated = tskDYNAMICALLY_ALLOCATED_STACK_AND_TCB; }
-#endif
+    {
+      NewTCB->StaticallyAllocated = tskDYNAMICALLY_ALLOCATED_STACK_AND_TCB;
+    }
     InitialiseNewTask(TaskCode, Name, StackDepth, Parameters, Priority,
                       CreatedTask, NewTCB, NULL);
   }
@@ -341,20 +280,13 @@ BaseType_t TaskCreate(TaskFunction_t TaskCode, const char *const Name,
                       const configSTACK_DEPTH_TYPE StackDepth,
                       void *const Parameters, UBaseType_t Priority,
                       TaskHandle_t *const CreatedTask) {
-  TCB_t *NewTCB;
-  BaseType_t xReturn;
-  NewTCB =
-      CreatTask(TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask);
+  TCB_t *NewTCB =
+      CreateTask(TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask);
   if (NewTCB != NULL) {
-#if ((configNUMBER_OF_CORES > 1) && (configUSE_CORE_AFFINITY == 1))
-    { NewTCB->uxCoreAffinityMask = configTASK_DEFAULT_CORE_AFFINITY; }
-#endif
     AddNewTaskToReadyList(NewTCB);
-    xReturn = true;
-  } else {
-    xReturn = errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
+    return true;
   }
-  return xReturn;
+  return errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
 }
 
 static void InitialiseNewTask(TaskFunction_t TaskCode, const char *const Name,
@@ -441,7 +373,7 @@ static void AddNewTaskToReadyList(TCB_t *NewTCB) {
     if (CurrentTCB == NULL) {
       CurrentTCB = NewTCB;
       if (CurrentNumberOfTasks == (UBaseType_t)1) {
-        InitialisTaskLists();
+        InitialiseTaskLists();
       }
     } else {
       if (SchedulerRunning == false) {
@@ -455,14 +387,14 @@ static void AddNewTaskToReadyList(TCB_t *NewTCB) {
     portSETUP_TCB(NewTCB);
   }
   EXIT_CRITICAL();
-  if (SchedulerRunning != false) {
+  if (SchedulerRunning) {
     taskYIELD_ANY_CORE_IF_USING_PREEMPTION(NewTCB);
   }
 }
 
 void TaskDelete(TaskHandle_t TaskToDelete) {
   TCB_t *TCB;
-  BaseType_t xDeleteTCBInIdlTask = false;
+  BaseType_t xDeleteTCBInIdleTask = false;
   BaseType_t TaskIsRunningOrYielding;
   ENTER_CRITICAL();
   {
@@ -473,10 +405,10 @@ void TaskDelete(TaskHandle_t TaskToDelete) {
     TCB->EventListItem.ensureRemoved();
     TaskNumber++;
     TaskIsRunningOrYielding = taskTASK_IS_RUNNING_OR_SCHEDULED_TO_YIELD(TCB);
-    if ((SchedulerRunning != false) && (TaskIsRunningOrYielding != false)) {
+    if ((SchedulerRunning) && (TaskIsRunningOrYielding)) {
       TasksWaitingTermination.append(&TCB->StateListItem);
       ++DeletedTasksWaitingCleanUp;
-      xDeleteTCBInIdlTask = true;
+      xDeleteTCBInIdleTask = true;
       portPRE_TASK_DELETE_HOOK(TCB, &(YieldPendings[0]));
     } else {
       --CurrentNumberOfTasks;
@@ -484,7 +416,7 @@ void TaskDelete(TaskHandle_t TaskToDelete) {
     }
   }
   EXIT_CRITICAL();
-  if (xDeleteTCBInIdlTask != true) {
+  if (xDeleteTCBInIdleTask != true) {
     DeleteTCB(TCB);
   }
   if (SchedulerRunning) {
@@ -495,8 +427,8 @@ void TaskDelete(TaskHandle_t TaskToDelete) {
   }
 }
 
-BaseType_t TaskDelayUntil(TickType_t *const PreviousWakeTime,
-                          const TickType_t xTimeIncrement) {
+BaseType_t DelayUntil(TickType_t *const PreviousWakeTime,
+                      const TickType_t xTimeIncrement) {
   TickType_t TimeToWake;
   BaseType_t xAlreadyYielded, xShouldDelay = false;
   configASSERT(PreviousWakeTime);
@@ -518,29 +450,27 @@ BaseType_t TaskDelayUntil(TickType_t *const PreviousWakeTime,
     }
 
     *PreviousWakeTime = TimeToWake;
-    if (xShouldDelay != false) {
+    if (xShouldDelay) {
       AddCurrentTaskToDelayedList(TimeToWake - ConstTickCount, false);
     }
   }
-  if (!TaskResumeAll()) {
+  if (!ResumeAll()) {
     taskYIELD_WITHIN_API();
   }
   return xShouldDelay;
 }
 
-void TaskDelay(const TickType_t xTicksToDelay) {
+void Delay(const TickType_t xTicksToDelay) {
   if (xTicksToDelay > 0U) {
     TaskSuspendAll();
     configASSERT(SchedulerSuspended);
     AddCurrentTaskToDelayedList(xTicksToDelay, false);
-    if (!TaskResumeAll()) {
+    if (!ResumeAll()) {
       taskYIELD_WITHIN_API();
     }
   }
 }
 
-#if ((INCLUDE_TaskGetState == 1) || (configUSE_TRACE_FACILITY == 1) || \
-     (INCLUDE_TaskAbortDelay == 1))
 TaskState TaskGetState(TaskHandle_t Task) {
   TaskState eReturn;
   List_t<TCB_t> *StateList;
@@ -579,77 +509,65 @@ TaskState TaskGetState(TaskHandle_t Task) {
       } else {
         eReturn = eBlocked;
       }
-    } else if ((StateList == &TasksWaitingTermination) ||
-               (StateList == NULL)) {
+    } else if ((StateList == &TasksWaitingTermination) || (StateList == NULL)) {
       eReturn = eDeleted;
     } else {
-#if (configNUMBER_OF_CORES == 1)
       { eReturn = eReady; }
-#else
-      {
-        if (taskTASK_IS_RUNNING(TCB)) {
-          eReturn = eRunning;
-        } else {
-          eReturn = eReady;
-        }
-      }
-#endif
     }
   }
   return eReturn;
 }
-#endif
 
 UBaseType_t TaskPriorityGet(const TaskHandle_t Task) {
   TCB_t const *TCB;
-  UBaseType_t uxReturn;
+  UBaseType_t uRet;
   ENTER_CRITICAL();
   {
     TCB = GetTCBFromHandle(Task);
-    uxReturn = TCB->Priority;
+    uRet = TCB->Priority;
   }
   EXIT_CRITICAL();
-  return uxReturn;
+  return uRet;
 }
 
 UBaseType_t TaskPriorityGetFromISR(const TaskHandle_t Task) {
   TCB_t const *TCB;
-  UBaseType_t uxReturn;
+  UBaseType_t uRet;
   UBaseType_t uxSavedInterruptStatus;
   portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
   uxSavedInterruptStatus = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
   {
     TCB = GetTCBFromHandle(Task);
-    uxReturn = TCB->Priority;
+    uRet = TCB->Priority;
   }
   EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-  return uxReturn;
+  return uRet;
 }
 
 UBaseType_t TaskBasePriorityGet(const TaskHandle_t Task) {
   TCB_t const *TCB;
-  UBaseType_t uxReturn;
+  UBaseType_t uRet;
   ENTER_CRITICAL();
   {
     TCB = GetTCBFromHandle(Task);
-    uxReturn = TCB->BasePriority;
+    uRet = TCB->BasePriority;
   }
   EXIT_CRITICAL();
-  return uxReturn;
+  return uRet;
 }
 
 UBaseType_t TaskBasePriorityGetFromISR(const TaskHandle_t Task) {
   TCB_t const *TCB;
-  UBaseType_t uxReturn;
+  UBaseType_t uRet;
   UBaseType_t uxSavedInterruptStatus;
   portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
   uxSavedInterruptStatus = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
   {
     TCB = GetTCBFromHandle(Task);
-    uxReturn = TCB->BasePriority;
+    uRet = TCB->BasePriority;
   }
   EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-  return uxReturn;
+  return uRet;
 }
 
 void TaskPrioritySet(TaskHandle_t Task, UBaseType_t uxNewPriority) {
@@ -683,8 +601,7 @@ void TaskPrioritySet(TaskHandle_t Task, UBaseType_t uxNewPriority) {
         TCB->Priority = uxNewPriority;
       }
       TCB->BasePriority = uxNewPriority;
-      if ((TCB->EventListItem.Value & taskEVENT_LIST_ITEM_VALUE_IN_USE) ==
-          0U) {
+      if ((TCB->EventListItem.Value & taskEVENT_LIST_ITEM_VALUE_IN_USE) == 0U) {
         TCB->EventListItem.Value =
             (TickType_t)configMAX_PRIORITIES - (TickType_t)uxNewPriority;
       }
@@ -694,7 +611,7 @@ void TaskPrioritySet(TaskHandle_t Task, UBaseType_t uxNewPriority) {
         }
         AddTaskToReadyList(TCB);
       }
-      if (xYieldRequired != false) {
+      if (xYieldRequired) {
         portYIELD_WITHIN_API();
       }
       (void)PriorityUsedOnEntry;
@@ -724,14 +641,14 @@ void TaskSuspend(TaskHandle_t TaskToSuspend) {
   EXIT_CRITICAL();
   {
     UBaseType_t uxCurrentListLength;
-    if (SchedulerRunning != false) {
+    if (SchedulerRunning) {
       ENTER_CRITICAL();
       { ResetNextTaskUnblockTime(); }
       EXIT_CRITICAL();
     }
 
     if (TCB == CurrentTCB) {
-      if (SchedulerRunning != false) {
+      if (SchedulerRunning) {
         configASSERT(SchedulerSuspended == 0);
         portYIELD_WITHIN_API();
       } else {
@@ -739,32 +656,11 @@ void TaskSuspend(TaskHandle_t TaskToSuspend) {
         if (uxCurrentListLength == CurrentNumberOfTasks) {
           CurrentTCB = NULL;
         } else {
-          TaskSwitchContext();
+          SwitchContext();
         }
       }
     }
   }
-}
-
-static BaseType_t TaskIsTaskSuspended(const TaskHandle_t Task) {
-  BaseType_t xReturn = false;
-  TCB_t *TCB = Task;
-  configASSERT(Task);
-  if (TCB->StateListItem.Container == &SuspendedTasks) {
-    if (TCB->EventListItem.Container != &PendingReady) {
-      if (TCB->EventListItem.Container == nullptr) {
-        xReturn = true;
-        for (BaseType_t x = 0;
-             x < (BaseType_t)configTASK_NOTIFICATION_ARRAY_ENTRIES; x++) {
-          if (TCB->NotifyState[x] == taskWAITING_NOTIFICATION) {
-            xReturn = false;
-            break;
-          }
-        }
-      }
-    }
-  }
-  return xReturn;
 }
 
 void TaskResume(TaskHandle_t TaskToResume) {
@@ -773,15 +669,12 @@ void TaskResume(TaskHandle_t TaskToResume) {
   configASSERT(TaskToResume);
 
   if ((TCB != CurrentTCB) && (TCB != NULL)) {
-    ENTER_CRITICAL();
-    {
-      if (TaskIsTaskSuspended(TCB) != false) {
-        TCB->StateListItem.remove();
-        AddTaskToReadyList(TCB);
-        taskYIELD_ANY_CORE_IF_USING_PREEMPTION(TCB);
-      }
+    CriticalSection s;
+    if (TCB->Suspended()) {
+      TCB->StateListItem.remove();
+      AddTaskToReadyList(TCB);
+      taskYIELD_ANY_CORE_IF_USING_PREEMPTION(TCB);
     }
-    EXIT_CRITICAL();
   }
 }
 
@@ -793,7 +686,7 @@ BaseType_t TaskResumeFromISR(TaskHandle_t TaskToResume) {
   portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
   uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
   {
-    if (TaskIsTaskSuspended(TCB) != false) {
+    if (TCB->Suspended()) {
       if (SchedulerSuspended == 0U) {
         if (TCB->Priority > CurrentTCB->Priority) {
           xYieldRequired = true;
@@ -810,61 +703,56 @@ BaseType_t TaskResumeFromISR(TaskHandle_t TaskToResume) {
   return xYieldRequired;
 }
 
-static BaseType_t CreateIdlTasks(void) {
-  BaseType_t xReturn = true;
+static BaseType_t CreateIdleTasks(void) {
+  BaseType_t Ret = true;
   BaseType_t xCoreID;
   char cIdleName[configMAX_TASK_NAME_LEN];
-  TaskFunction_t IdlTaskFunction = NULL;
-  BaseType_t xIdlTaskNameIndex;
-  for (xIdlTaskNameIndex = 0;
-       xIdlTaskNameIndex < (BaseType_t)configMAX_TASK_NAME_LEN;
-       xIdlTaskNameIndex++) {
-    cIdleName[xIdlTaskNameIndex] = configIDLE_TASK_NAME[xIdlTaskNameIndex];
+  TaskFunction_t IdleTaskFunction = NULL;
+  BaseType_t xIdleTaskNameIndex;
+  for (xIdleTaskNameIndex = 0;
+       xIdleTaskNameIndex < (BaseType_t)configMAX_TASK_NAME_LEN;
+       xIdleTaskNameIndex++) {
+    cIdleName[xIdleTaskNameIndex] = configIDLE_TASK_NAME[xIdleTaskNameIndex];
 
-    if (cIdleName[xIdlTaskNameIndex] == (char)0x00) {
+    if (cIdleName[xIdleTaskNameIndex] == (char)0x00) {
       break;
     }
   }
 
   for (xCoreID = 0; xCoreID < (BaseType_t)configNUMBER_OF_CORES; xCoreID++) {
-    IdlTaskFunction = IdlTask;
-    StaticTask_t *pIdlTaskTCBBuffer = NULL;
-    StackType_t *IdlTaskStackBuffer = NULL;
-    configSTACK_DEPTH_TYPE IdlTaskStackSize;
+    IdleTaskFunction = IdleTask;
+    StaticTask_t *pIdleTaskTCBBuffer = NULL;
+    StackType_t *IdleTaskStackBuffer = NULL;
+    configSTACK_DEPTH_TYPE IdleTaskStackSize;
 
-    ApplicationGetIdlTaskMemory(&pIdlTaskTCBBuffer, &IdlTaskStackBuffer,
-                                &IdlTaskStackSize);
-    IdlTasks[xCoreID] = TaskCreateStatic(
-        IdlTaskFunction, cIdleName, IdlTaskStackSize, (void *)NULL,
-        portPRIVILEGE_BIT, IdlTaskStackBuffer, pIdlTaskTCBBuffer);
-    if (IdlTasks[xCoreID] != NULL) {
-      xReturn = true;
+    GetIdleTaskMemory(&pIdleTaskTCBBuffer, &IdleTaskStackBuffer,
+                      &IdleTaskStackSize);
+    IdleTasks[xCoreID] = TaskCreateStatic(
+        IdleTaskFunction, cIdleName, IdleTaskStackSize, (void *)NULL,
+        portPRIVILEGE_BIT, IdleTaskStackBuffer, pIdleTaskTCBBuffer);
+    if (IdleTasks[xCoreID] != NULL) {
+      Ret = true;
     } else {
-      xReturn = false;
+      Ret = false;
     }
 
-    if (xReturn == false) {
+    if (Ret == false) {
       break;
     }
   }
-  return xReturn;
+  return Ret;
 }
 
 void TaskStartScheduler(void) {
-  BaseType_t xReturn;
-  xReturn = CreateIdlTasks();
-  if (xReturn) {
-    xReturn = TimerCreateTimerTask();
+  BaseType_t Ret;
+  Ret = CreateIdleTasks();
+  if (Ret) {
+    Ret = TimerCreateTimerTask();
   }
-  if (xReturn) {
-#ifdef FREERTOS_TASKS_C_ADDITIONS_INIT
-    { freertos_tasks_c_additions_init(); }
-#endif
+  if (Ret) {
 
     portDISABLE_INTERRUPTS();
-#if (configUSE_C_RUNTIME_TLS_SUPPORT == 1)
-    { configSET_TLS_BLOCK(CurrentTCB->xTLSBlock); }
-#endif
+
     NextTaskUnblockTime = portMAX_DELAY;
     SchedulerRunning = true;
     TickCount = (TickType_t)configINITIAL_TICK_COUNT;
@@ -874,29 +762,25 @@ void TaskStartScheduler(void) {
     (void)xPortStartScheduler();
 
   } else {
-    configASSERT(xReturn != errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY);
+    configASSERT(Ret != errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY);
   }
 
-  (void)IdlTasks;
+  (void)IdleTasks;
 
   (void)TopUsedPriority;
 }
 
 void TaskEndScheduler(void) {
-#if (INCLUDE_TaskDelete == 1)
   {
     BaseType_t xCoreID;
-#if (configUSE_TIMERS == 1)
     { TaskDelete(TimerGetTimerDaemonTaskHandle()); }
-#endif
 
     for (xCoreID = 0; xCoreID < (BaseType_t)configNUMBER_OF_CORES; xCoreID++) {
-      TaskDelete(IdlTasks[xCoreID]);
+      TaskDelete(IdleTasks[xCoreID]);
     }
 
     CheckTasksWaitingTermination();
   }
-#endif
 
   portDISABLE_INTERRUPTS();
   SchedulerRunning = false;
@@ -905,81 +789,14 @@ void TaskEndScheduler(void) {
 }
 
 void TaskSuspendAll(void) {
-#if (configNUMBER_OF_CORES == 1)
-  {
     portSOFTWARE_BARRIER();
-
     SchedulerSuspended = (UBaseType_t)(SchedulerSuspended + 1U);
-
     portMEMORY_BARRIER();
-  }
-#else
-  {
-    UBaseType_t ulState;
-
-    portASSERT_IF_IN_ISR();
-    if (SchedulerRunning != false) {
-      ulState = portSET_INTERRUPT_MASK();
-
-      configASSERT(portGET_CRITICAL_NESTING_COUNT() == 0);
-
-      portSOFTWARE_BARRIER();
-      portGET_TASK_LOCK();
-
-      if (SchedulerSuspended == 0U) {
-        CheckForRunStateChange();
-      }
-
-      portGET_ISR_LOCK();
-
-      ++SchedulerSuspended;
-      portRELEASE_ISR_LOCK();
-      portCLEAR_INTERRUPT_MASK(ulState);
-    }
-  }
-#endif
 }
 
-#if (configUSE_TICKLESS_IDLE != 0)
-static TickType_t GetExpectedIdleTime(void) {
-  TickType_t xReturn;
-  BaseType_t xHigherPriorityReadyTasks = false;
-
-#if (configUSE_PORT_OPTIMISED_TASK_SELECTION == 0)
-  {
-    if (TopReadyPriority > tskIDLE_PRIORITY) {
-      xHigherPriorityReadyTasks = true;
-    }
-  }
-#else
-  {
-    const UBaseType_t uxLeastSignificantBit = (UBaseType_t)0x01;
-
-    if (TopReadyPriority > uxLeastSignificantBit) {
-      xHigherPriorityReadyTasks = true;
-    }
-  }
-#endif
-  if (CurrentTCB->Priority > tskIDLE_PRIORITY) {
-    xReturn = 0;
-  } else if (CURRENT_LIST_LENGTH(&(ReadyTasks[tskIDLE_PRIORITY])) > 1U) {
-    xReturn = 0;
-  } else if (xHigherPriorityReadyTasks != false) {
-    xReturn = 0;
-  } else {
-    xReturn = NextTaskUnblockTime;
-    xReturn -= TickCount;
-  }
-  return xReturn;
-}
-#endif
-
-BaseType_t TaskResumeAll(void) {
+BaseType_t ResumeAll(void) {
   TCB_t *TCB = NULL;
   BaseType_t xAlreadyYielded = false;
-#if (configNUMBER_OF_CORES > 1)
-  if (SchedulerRunning != false)
-#endif
   {
 
     ENTER_CRITICAL();
@@ -998,16 +815,11 @@ BaseType_t TaskResumeAll(void) {
             portMEMORY_BARRIER();
             TCB->StateListItem.remove();
             AddTaskToReadyList(TCB);
-#if (configNUMBER_OF_CORES == 1)
             {
               if (TCB->Priority > CurrentTCB->Priority) {
                 YieldPendings[xCoreID] = true;
               }
             }
-#else
-            {
-            }
-#endif
           }
           if (TCB != NULL) {
             ResetNextTaskUnblockTime();
@@ -1017,7 +829,7 @@ BaseType_t TaskResumeAll(void) {
             TickType_t xPendedCounts = PendedTicks;
             if (xPendedCounts > 0U) {
               do {
-                if (TaskIncrementTick() != false) {
+                if (TaskIncrementTick()) {
                   YieldPendings[xCoreID] = true;
                 }
                 --xPendedCounts;
@@ -1025,10 +837,8 @@ BaseType_t TaskResumeAll(void) {
               PendedTicks = 0;
             }
           }
-          if (YieldPendings[xCoreID] != false) {
-#if (configUSE_PREEMPTION != 0)
+          if (YieldPendings[xCoreID]) {
             { xAlreadyYielded = true; }
-#endif
             portYIELD_WITHIN_API();
           }
         }
@@ -1047,13 +857,13 @@ TickType_t TaskGetTickCount(void) {
 }
 
 TickType_t TaskGetTickCountFromISR(void) {
-  TickType_t xReturn;
+  TickType_t Ret;
   UBaseType_t uxSavedInterruptStatus;
   portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
   uxSavedInterruptStatus = portTICK_TYPE_SET_INTERRUPT_MASK_FROM_ISR();
-  { xReturn = TickCount; }
+  { Ret = TickCount; }
   portTICK_TYPE_CLEAR_INTERRUPT_MASK_FROM_ISR(uxSavedInterruptStatus);
-  return xReturn;
+  return Ret;
 }
 
 UBaseType_t TaskGetNumberOfTasks(void) { return CurrentNumberOfTasks; }
@@ -1083,35 +893,35 @@ BaseType_t TaskGetStaticBuffers(TaskHandle_t Task, StackType_t **pStackBuffer,
   }
   return true;
 }
-TaskHandle_t TaskGetIdlTaskHandle(void) {
-  configASSERT((IdlTasks[0] != NULL));
-  return IdlTasks[0];
+TaskHandle_t TaskGetIdleTaskHandle(void) {
+  configASSERT((IdleTasks[0] != NULL));
+  return IdleTasks[0];
 }
-TaskHandle_t TaskGetIdlTaskHandleForCore(BaseType_t xCoreID) {
+TaskHandle_t TaskGetIdleTaskHandleForCore(BaseType_t xCoreID) {
   configASSERT(taskVALID_CORE_ID(xCoreID));
 
-  configASSERT((IdlTasks[xCoreID] != NULL));
-  return IdlTasks[xCoreID];
+  configASSERT((IdleTasks[xCoreID] != NULL));
+  return IdleTasks[xCoreID];
 }
 
-BaseType_t TaskCatchUpTicks(TickType_t xTicksToCatchUp) {
+BaseType_t CatchUpTicks(TickType_t xTicksToCatchUp) {
   BaseType_t xYieldOccurred;
   configASSERT(SchedulerSuspended == 0U);
   TaskSuspendAll();
   ENTER_CRITICAL();
   PendedTicks += xTicksToCatchUp;
   EXIT_CRITICAL();
-  return TaskResumeAll();
+  return ResumeAll();
 }
 
-BaseType_t TaskAbortDelay(TaskHandle_t Task) {
+BaseType_t AbortDelay(TaskHandle_t Task) {
   TCB_t *TCB = Task;
-  BaseType_t xReturn;
+  BaseType_t Ret;
   configASSERT(TCB);
   TaskSuspendAll();
   {
     if (TaskGetState(Task) == eBlocked) {
-      xReturn = true;
+      Ret = true;
       TCB->StateListItem.remove();
       ENTER_CRITICAL();
       {
@@ -1126,11 +936,11 @@ BaseType_t TaskAbortDelay(TaskHandle_t Task) {
         YieldPendings[0] = true;
       }
     } else {
-      xReturn = false;
+      Ret = false;
     }
   }
-  (void)TaskResumeAll();
-  return xReturn;
+  (void)ResumeAll();
+  return Ret;
 }
 
 BaseType_t TaskIncrementTick(void) {
@@ -1170,7 +980,7 @@ BaseType_t TaskIncrementTick(void) {
     if (PendedTicks == (TickType_t)0) {
       ApplicationTickHook();
     }
-    if (YieldPendings[0] != false) {
+    if (YieldPendings[0]) {
       xSwitchRequired = true;
     }
   } else {
@@ -1184,7 +994,7 @@ BaseType_t TaskIncrementTick(void) {
   return xSwitchRequired;
 }
 
-void TaskSwitchContext(void) {
+void SwitchContext(void) {
   if (SchedulerSuspended != 0U) {
     YieldPendings[0] = true;
   } else {
@@ -1194,16 +1004,15 @@ void TaskSwitchContext(void) {
   }
 }
 
-void TaskPlaceOnEventList(List_t<TCB_t> *const EventList,
-                          const TickType_t TicksToWait) {
+void PlaceOnEventList(List_t<TCB_t> *const EventList,
+                      const TickType_t TicksToWait) {
   configASSERT(EventList);
   EventList->insert(&(CurrentTCB->EventListItem));
   AddCurrentTaskToDelayedList(TicksToWait, true);
 }
 
-void TaskPlaceOnUnorderedEventList(List_t<TCB_t> *EventList,
-                                   const TickType_t Value,
-                                   const TickType_t TicksToWait) {
+void PlaceOnUnorderedEventList(List_t<TCB_t> *EventList, const TickType_t Value,
+                               const TickType_t TicksToWait) {
   configASSERT(EventList);
   configASSERT(SchedulerSuspended != 0U);
   CurrentTCB->EventListItem.Value = Value | taskEVENT_LIST_ITEM_VALUE_IN_USE;
@@ -1211,9 +1020,9 @@ void TaskPlaceOnUnorderedEventList(List_t<TCB_t> *EventList,
   AddCurrentTaskToDelayedList(TicksToWait, true);
 }
 
-void TaskPlaceOnEventListRestricted(List_t<TCB_t> *const EventList,
-                                    TickType_t TicksToWait,
-                                    const BaseType_t xWaitIndefinitely) {
+void PlaceOnEventListRestricted(List_t<TCB_t> *const EventList,
+                                TickType_t TicksToWait,
+                                const BaseType_t xWaitIndefinitely) {
   configASSERT(EventList);
   EventList->append(&(CurrentTCB->EventListItem));
   AddCurrentTaskToDelayedList(xWaitIndefinitely ? portMAX_DELAY : TicksToWait,
@@ -1237,8 +1046,8 @@ BaseType_t TaskRemoveFromEventList(List_t<TCB_t> *const EventList) {
   return false;
 }
 
-void TaskRemoveFromUnorderedEventList(Item_t<TCB_t> *EventListItem,
-                                      const TickType_t ItemValue) {
+void RemoveFromUnorderedEventList(Item_t<TCB_t> *EventListItem,
+                                  const TickType_t ItemValue) {
   configASSERT(SchedulerSuspended != 0U);
   EventListItem->Value = ItemValue | taskEVENT_LIST_ITEM_VALUE_IN_USE;
   TCB_t *UnblockedTCB = EventListItem->Owner;
@@ -1257,13 +1066,13 @@ void TaskSetTimeOutState(TimeOut_t *const TimeOut) {
   TimeOut->TimeOnEntering = TickCount;
   EXIT_CRITICAL();
 }
-void TaskInternalSetTimeOutState(TimeOut_t *const TimeOut) {
+void SetTimeOutState(TimeOut_t *const TimeOut) {
   TimeOut->OverflowCount = NOverflows;
   TimeOut->TimeOnEntering = TickCount;
 }
-BaseType_t TaskCheckForTimeOut(TimeOut_t *const TimeOut,
-                               TickType_t *const pTicksToWait) {
-  BaseType_t xReturn;
+BaseType_t CheckForTimeOut(TimeOut_t *const TimeOut,
+                           TickType_t *const pTicksToWait) {
+  BaseType_t Ret;
   configASSERT(TimeOut);
   configASSERT(pTicksToWait);
   CriticalSection s;
@@ -1286,7 +1095,7 @@ BaseType_t TaskCheckForTimeOut(TimeOut_t *const TimeOut,
 
   if (xElapsedTime < *pTicksToWait) {
     *pTicksToWait -= xElapsedTime;
-    TaskInternalSetTimeOutState(TimeOut);
+    SetTimeOutState(TimeOut);
     return false;
   }
 
@@ -1294,9 +1103,9 @@ BaseType_t TaskCheckForTimeOut(TimeOut_t *const TimeOut,
   return true;
 }
 
-void TaskMissedYield(void) { YieldPendings[portGET_CORE_ID()] = true; }
+void MissedYield(void) { YieldPendings[portGET_CORE_ID()] = true; }
 
-static void IdlTask(void *) {
+static void IdleTask(void *) {
   portALLOCATE_SECURE_CONTEXT(configMINIMAL_SECURE_STACK_SIZE);
   for (; configCONTROL_INFINITE_LOOP();) {
     CheckTasksWaitingTermination();
@@ -1308,7 +1117,7 @@ static void IdlTask(void *) {
   }
 }
 
-static void InitialisTaskLists(void) {
+static void InitialiseTaskLists(void) {
   for (int pri = 0; pri < configMAX_PRIORITIES; pri++) {
     (ReadyTasks[pri]).init();
   }
@@ -1353,15 +1162,15 @@ static void ResetNextTaskUnblockTime(void) {
       DelayedTasks->empty() ? portMAX_DELAY : DelayedTasks->head()->Value;
 }
 
-TaskHandle_t TaskGetCurrentTaskHandle(void) { return CurrentTCB; }
+TaskHandle_t GetCurrentTaskHandle(void) { return CurrentTCB; }
 
-BaseType_t TaskGetSchedulerState(void) {
+BaseType_t GetSchedulerState(void) {
   return SchedulerRunning ? SchedulerSuspended ? taskSCHEDULER_SUSPENDED
                                                : taskSCHEDULER_RUNNING
                           : taskSCHEDULER_NOT_STARTED;
 }
 
-BaseType_t TaskPriorityInherit(TaskHandle_t const pMutexHolder) {
+BaseType_t PriorityInherit(TaskHandle_t const pMutexHolder) {
   TCB_t *const pMutexHolderTCB = pMutexHolder;
   if (pMutexHolder == NULL) {
     return false;
@@ -1387,9 +1196,9 @@ BaseType_t TaskPriorityInherit(TaskHandle_t const pMutexHolder) {
   return true;
 }
 
-BaseType_t TaskPriorityDisinherit(TaskHandle_t const pMutexHolder) {
+BaseType_t PriorityDisinherit(TaskHandle_t const pMutexHolder) {
   TCB_t *const TCB = pMutexHolder;
-  BaseType_t xReturn = false;
+  BaseType_t Ret = false;
   if (pMutexHolder == NULL) {
     return false;
   }
@@ -1412,8 +1221,8 @@ BaseType_t TaskPriorityDisinherit(TaskHandle_t const pMutexHolder) {
   return true;
 }
 
-void TaskPriorityDisinheritAfterTimeout(
-    TaskHandle_t const pMutexHolder, UBaseType_t uxHighestPriorityWaitingTask) {
+void PriorityDisinheritAfterTimeout(TaskHandle_t const pMutexHolder,
+                                    UBaseType_t uxHighestPriorityWaitingTask) {
   TCB_t *const TCB = pMutexHolder;
   UBaseType_t PriorityUsedOnEntry, PriorityToUse;
   const UBaseType_t uxOnlyOneMutexHeld = (UBaseType_t)1;
@@ -1434,8 +1243,7 @@ void TaskPriorityDisinheritAfterTimeout(
           TCB->EventListItem.Value =
               (TickType_t)configMAX_PRIORITIES - (TickType_t)PriorityToUse;
         }
-        if (TCB->StateListItem.Container ==
-            &ReadyTasks[PriorityUsedOnEntry]) {
+        if (TCB->StateListItem.Container == &ReadyTasks[PriorityUsedOnEntry]) {
           if (TCB->StateListItem.remove() == 0) {
             portRESET_READY_PRIORITY(TCB->Priority, TopReadyPriority);
           }
@@ -1448,7 +1256,7 @@ void TaskPriorityDisinheritAfterTimeout(
 
 void TaskEnterCritical(void) {
   portDISABLE_INTERRUPTS();
-  if (SchedulerRunning != false) {
+  if (SchedulerRunning) {
     (CurrentTCB->CriticalNesting)++;
     if (CurrentTCB->CriticalNesting == 1U) {
       portASSERT_IF_IN_ISR();
@@ -1470,14 +1278,14 @@ void TaskExitCritical(void) {
   }
 }
 
-TickType_t TaskResetEventItemValue(void) {
-  TickType_t uxReturn = CurrentTCB->EventListItem.Value;
+TickType_t ResetEventItemValue(void) {
+  TickType_t uRet = CurrentTCB->EventListItem.Value;
   CurrentTCB->EventListItem.Value =
       (TickType_t)configMAX_PRIORITIES - (TickType_t)CurrentTCB->Priority;
-  return uxReturn;
+  return uRet;
 }
 
-TaskHandle_t TaskIncrementMutexHeldCount(void) {
+TaskHandle_t IncrementMutexHeldCount(void) {
   TCB_t *TCB = CurrentTCB;
   if (TCB != NULL) {
     (TCB->MutexesHeld)++;
@@ -1504,7 +1312,7 @@ uint32_t ulTaskGenericNotifyTake(UBaseType_t uxIndexToWaitOn,
   if (ShouldBlock) {
     AddCurrentTaskToDelayedList(TicksToWait, true);
   }
-  xAlreadyYielded = TaskResumeAll();
+  xAlreadyYielded = ResumeAll();
   if ((ShouldBlock) && (xAlreadyYielded == false)) {
     taskYIELD_WITHIN_API();
   }
@@ -1513,7 +1321,7 @@ uint32_t ulTaskGenericNotifyTake(UBaseType_t uxIndexToWaitOn,
   {
     ulReturn = CurrentTCB->NotifiedValue[uxIndexToWaitOn];
     if (ulReturn != 0U) {
-      if (xClearCountOnExit != false) {
+      if (xClearCountOnExit) {
         CurrentTCB->NotifiedValue[uxIndexToWaitOn] = (uint32_t)0U;
       } else {
         CurrentTCB->NotifiedValue[uxIndexToWaitOn] = ulReturn - (uint32_t)1;
@@ -1526,12 +1334,12 @@ uint32_t ulTaskGenericNotifyTake(UBaseType_t uxIndexToWaitOn,
   return ulReturn;
 }
 
-BaseType_t TaskGenericNotifyWait(UBaseType_t uxIndexToWaitOn,
-                                 uint32_t ulBitsToClearOnEntry,
-                                 uint32_t ulBitsToClearOnExit,
-                                 uint32_t *NotificationValue,
-                                 TickType_t TicksToWait) {
-  BaseType_t xReturn, xAlreadyYielded, ShouldBlock = false;
+BaseType_t GenericNotifyWait(UBaseType_t uxIndexToWaitOn,
+                             uint32_t ulBitsToClearOnEntry,
+                             uint32_t ulBitsToClearOnExit,
+                             uint32_t *NotificationValue,
+                             TickType_t TicksToWait) {
+  BaseType_t Ret, xAlreadyYielded, ShouldBlock = false;
   configASSERT(uxIndexToWaitOn < configTASK_NOTIFICATION_ARRAY_ENTRIES);
   TaskSuspendAll();
   {
@@ -1547,7 +1355,7 @@ BaseType_t TaskGenericNotifyWait(UBaseType_t uxIndexToWaitOn,
   if (ShouldBlock) {
     AddCurrentTaskToDelayedList(TicksToWait, true);
   }
-  xAlreadyYielded = TaskResumeAll();
+  xAlreadyYielded = ResumeAll();
   if ((ShouldBlock) && (xAlreadyYielded == false)) {
     taskYIELD_WITHIN_API();
   }
@@ -1557,21 +1365,20 @@ BaseType_t TaskGenericNotifyWait(UBaseType_t uxIndexToWaitOn,
     *NotificationValue = CurrentTCB->NotifiedValue[uxIndexToWaitOn];
   }
   if (CurrentTCB->NotifyState[uxIndexToWaitOn] != taskNOTIFICATION_RECEIVED) {
-    xReturn = false;
+    Ret = false;
   } else {
     CurrentTCB->NotifiedValue[uxIndexToWaitOn] &= ~ulBitsToClearOnExit;
-    xReturn = true;
+    Ret = true;
   }
   CurrentTCB->NotifyState[uxIndexToWaitOn] = taskNOT_WAITING_NOTIFICATION;
-  return xReturn;
+  return Ret;
 }
 
-BaseType_t TaskGenericNotify(TaskHandle_t TaskToNotify,
-                             UBaseType_t uxIndexToNotify, uint32_t ulValue,
-                             eNotifyAction eAction,
-                             uint32_t *PreviousNotificationValue) {
+BaseType_t GenericNotify(TaskHandle_t TaskToNotify, UBaseType_t uxIndexToNotify,
+                         uint32_t ulValue, eNotifyAction eAction,
+                         uint32_t *PreviousNotificationValue) {
   TCB_t *TCB;
-  BaseType_t xReturn = true;
+  BaseType_t Ret = true;
   uint8_t ucOriginalNotifyState;
   configASSERT(uxIndexToNotify < configTASK_NOTIFICATION_ARRAY_ENTRIES);
   configASSERT(TaskToNotify);
@@ -1596,7 +1403,7 @@ BaseType_t TaskGenericNotify(TaskHandle_t TaskToNotify,
       if (ucOriginalNotifyState != taskNOTIFICATION_RECEIVED) {
         TCB->NotifiedValue[uxIndexToNotify] = ulValue;
       } else {
-        xReturn = false;
+        Ret = false;
       }
       break;
     case eNoAction:
@@ -1611,17 +1418,17 @@ BaseType_t TaskGenericNotify(TaskHandle_t TaskToNotify,
     configASSERT(TCB->EventListItem.Container == NULL);
     taskYIELD_ANY_CORE_IF_USING_PREEMPTION(TCB);
   }
-  return xReturn;
+  return Ret;
 }
 
-BaseType_t TaskGenericNotifyFromISR(TaskHandle_t TaskToNotify,
-                                    UBaseType_t uxIndexToNotify,
-                                    uint32_t ulValue, eNotifyAction eAction,
-                                    uint32_t *PreviousNotificationValue,
-                                    BaseType_t *HigherPriorityTaskWoken) {
+BaseType_t GenericNotifyFromISR(TaskHandle_t TaskToNotify,
+                                UBaseType_t uxIndexToNotify, uint32_t ulValue,
+                                eNotifyAction eAction,
+                                uint32_t *PreviousNotificationValue,
+                                BaseType_t *HigherPriorityTaskWoken) {
   TCB_t *TCB;
   uint8_t ucOriginalNotifyState;
-  BaseType_t xReturn = true;
+  BaseType_t Ret = true;
   UBaseType_t uxSavedInterruptStatus;
   configASSERT(TaskToNotify);
   configASSERT(uxIndexToNotify < configTASK_NOTIFICATION_ARRAY_ENTRIES);
@@ -1648,7 +1455,7 @@ BaseType_t TaskGenericNotifyFromISR(TaskHandle_t TaskToNotify,
         if (ucOriginalNotifyState != taskNOTIFICATION_RECEIVED) {
           TCB->NotifiedValue[uxIndexToNotify] = ulValue;
         } else {
-          xReturn = false;
+          Ret = false;
         }
         break;
       case eNoAction:
@@ -1674,12 +1481,12 @@ BaseType_t TaskGenericNotifyFromISR(TaskHandle_t TaskToNotify,
     }
   }
   EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
-  return xReturn;
+  return Ret;
 }
 
-void TaskGenericNotifyGiveFromISR(TaskHandle_t TaskToNotify,
-                                  UBaseType_t uxIndexToNotify,
-                                  BaseType_t *HigherPriorityTaskWoken) {
+void GenericNotifyGiveFromISR(TaskHandle_t TaskToNotify,
+                              UBaseType_t uxIndexToNotify,
+                              BaseType_t *HigherPriorityTaskWoken) {
   TCB_t *TCB;
   uint8_t ucOriginalNotifyState;
   UBaseType_t uxSavedInterruptStatus;
@@ -1714,7 +1521,7 @@ void TaskGenericNotifyGiveFromISR(TaskHandle_t TaskToNotify,
 BaseType_t TaskGenericNotifyStateClear(TaskHandle_t Task,
                                        UBaseType_t IndexToClear) {
   TCB_t *TCB;
-  BaseType_t xReturn;
+  BaseType_t Ret;
   configASSERT(IndexToClear < configTASK_NOTIFICATION_ARRAY_ENTRIES);
   TCB = GetTCBFromHandle(Task);
   CriticalSection s;
@@ -1746,7 +1553,7 @@ static void AddCurrentTaskToDelayedList(TickType_t TicksToWait,
   if (CurrentTCB->StateListItem.remove() == (UBaseType_t)0) {
     portRESET_READY_PRIORITY(CurrentTCB->Priority, TopReadyPriority);
   }
-  if ((TicksToWait == portMAX_DELAY) && (CanBlockIndefinitely != false)) {
+  if ((TicksToWait == portMAX_DELAY) && (CanBlockIndefinitely)) {
     SuspendedTasks.append(&CurrentTCB->StateListItem);
   } else {
     TimeToWake = ConstTickCount + TicksToWait;
@@ -1762,9 +1569,8 @@ static void AddCurrentTaskToDelayedList(TickType_t TicksToWait,
   }
 }
 
-void ApplicationGetIdlTaskMemory(StaticTask_t **TCBBuffer,
-                                 StackType_t **StackBuffer,
-                                 configSTACK_DEPTH_TYPE *StackSize) {
+void GetIdleTaskMemory(StaticTask_t **TCBBuffer, StackType_t **StackBuffer,
+                       configSTACK_DEPTH_TYPE *StackSize) {
   static StaticTask_t TCB;
   static StackType_t Stack[configMINIMAL_STACK_SIZE];
   *TCBBuffer = &TCB;

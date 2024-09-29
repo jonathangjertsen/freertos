@@ -73,7 +73,7 @@ EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
                                const EventBits_t uxBitsToSet);
 
 #define xEventGroupSetBitsFromISR(xEventGroup, uxBitsToSet,                   \
-                                  HigherPriorityTaskWoken)                  \
+                                  HigherPriorityTaskWoken)                    \
   TimerPendFunctionCallFromISR(vEventGroupSetBitsCallback,                    \
                                (void*)(xEventGroup), (uint32_t)(uxBitsToSet), \
                                (HigherPriorityTaskWoken))
