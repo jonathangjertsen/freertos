@@ -157,7 +157,7 @@ struct TCB_t {
 };
 
 static void ResetNextTaskUnblockTime();
-static inline void taskSWITCH_DELAYED_LISTS() {
+static inline void switchDelayedLists() {
   List_t<TCB_t> *Temp;
   Temp = DelayedTasks;
   DelayedTasks = OverflowDelayed;
@@ -166,15 +166,15 @@ static inline void taskSWITCH_DELAYED_LISTS() {
   ResetNextTaskUnblockTime();
 }
 
-static inline void taskSELECT_HIGHEST_PRIORITY_TASK() {
-  UBaseType_t uxTopPriority;
-  portGET_HIGHEST_PRIORITY(uxTopPriority, TopReadyPriority);
-  CurrentTCB = ReadyTasks[uxTopPriority].advance()->Owner;
+static inline void selectHighestPriorityTask() {
+  UBaseType_t topPri;
+  portGET_HIGHEST_PRIORITY(topPri, TopReadyPriority);
+  CurrentTCB = ReadyTasks[topPri].advance()->Owner;
 }
 
 static BaseType_t CreateIdleTasks(void);
 static void InitialiseTaskLists(void);
-static portTASK_FUNCTION_PROTO(IdleTask, Parameters);
+static portTASK_FUNCTION_PROTO(IdleTask, Params);
 
 static void DeleteTCB(TCB_t *TCB);
 
@@ -187,7 +187,7 @@ static void ResetNextTaskUnblockTime(void);
 
 static void InitialiseNewTask(TaskFunction_t TaskCode, const char *const Name,
                               const configSTACK_DEPTH_TYPE StackDepth,
-                              void *const Parameters, UBaseType_t Priority,
+                              void *const Params, UBaseType_t Priority,
                               TaskHandle_t *const CreatedTask, TCB_t *NewTCB,
                               const MemoryRegion_t *const xRegions);
 
@@ -195,19 +195,19 @@ static void AddNewTaskToReadyList(TCB_t *NewTCB);
 
 static TCB_t *CreateStaticTask(TaskFunction_t TaskCode, const char *const Name,
                                const configSTACK_DEPTH_TYPE StackDepth,
-                               void *const Parameters, UBaseType_t Priority,
+                               void *const Params, UBaseType_t Priority,
                                StackType_t *const StackBuffer,
                                StaticTask_t *const TaskBuffer,
                                TaskHandle_t *const CreatedTask);
 
 static TCB_t *CreateTask(TaskFunction_t TaskCode, const char *const Name,
                          const configSTACK_DEPTH_TYPE StackDepth,
-                         void *const Parameters, UBaseType_t Priority,
+                         void *const Params, UBaseType_t Priority,
                          TaskHandle_t *const CreatedTask);
 
 static TCB_t *CreateStaticTask(TaskFunction_t TaskCode, const char *const Name,
                                const configSTACK_DEPTH_TYPE StackDepth,
-                               void *const Parameters, UBaseType_t Priority,
+                               void *const Params, UBaseType_t Priority,
                                StackType_t *const StackBuffer,
                                StaticTask_t *const TaskBuffer,
                                TaskHandle_t *const CreatedTask) {
@@ -217,8 +217,8 @@ static TCB_t *CreateStaticTask(TaskFunction_t TaskCode, const char *const Name,
     (void)memset((void *)NewTCB, 0x00, sizeof(TCB_t));
     NewTCB->Stack = (StackType_t *)StackBuffer;
     { NewTCB->StaticallyAllocated = tskSTATICALLY_ALLOCATED_STACK_AND_TCB; }
-    InitialiseNewTask(TaskCode, Name, StackDepth, Parameters, Priority,
-                      CreatedTask, NewTCB, NULL);
+    InitialiseNewTask(TaskCode, Name, StackDepth, Params, Priority, CreatedTask,
+                      NewTCB, NULL);
   } else {
     NewTCB = NULL;
   }
@@ -227,12 +227,12 @@ static TCB_t *CreateStaticTask(TaskFunction_t TaskCode, const char *const Name,
 
 TaskHandle_t TaskCreateStatic(TaskFunction_t TaskCode, const char *const Name,
                               const configSTACK_DEPTH_TYPE StackDepth,
-                              void *const Parameters, UBaseType_t Priority,
+                              void *const Params, UBaseType_t Priority,
                               StackType_t *const StackBuffer,
                               StaticTask_t *const TaskBuffer) {
   TaskHandle_t Ret = NULL;
   TCB_t *NewTCB;
-  NewTCB = CreateStaticTask(TaskCode, Name, StackDepth, Parameters, Priority,
+  NewTCB = CreateStaticTask(TaskCode, Name, StackDepth, Params, Priority,
                             StackBuffer, TaskBuffer, &Ret);
   if (NewTCB != NULL) {
     AddNewTaskToReadyList(NewTCB);
@@ -242,7 +242,7 @@ TaskHandle_t TaskCreateStatic(TaskFunction_t TaskCode, const char *const Name,
 
 static TCB_t *CreateTask(TaskFunction_t TaskCode, const char *const Name,
                          const configSTACK_DEPTH_TYPE StackDepth,
-                         void *const Parameters, UBaseType_t Priority,
+                         void *const Params, UBaseType_t Priority,
                          TaskHandle_t *const CreatedTask) {
   TCB_t *NewTCB;
 
@@ -263,18 +263,18 @@ static TCB_t *CreateTask(TaskFunction_t TaskCode, const char *const Name,
   }
   if (NewTCB != NULL) {
     NewTCB->StaticallyAllocated = tskDYNAMICALLY_ALLOCATED_STACK_AND_TCB;
-    InitialiseNewTask(TaskCode, Name, StackDepth, Parameters, Priority,
-                      CreatedTask, NewTCB, NULL);
+    InitialiseNewTask(TaskCode, Name, StackDepth, Params, Priority, CreatedTask,
+                      NewTCB, NULL);
   }
   return NewTCB;
 }
 
 BaseType_t TaskCreate(TaskFunction_t TaskCode, const char *const Name,
                       const configSTACK_DEPTH_TYPE StackDepth,
-                      void *const Parameters, UBaseType_t Priority,
+                      void *const Params, UBaseType_t Priority,
                       TaskHandle_t *const CreatedTask) {
   TCB_t *NewTCB =
-      CreateTask(TaskCode, Name, StackDepth, Parameters, Priority, CreatedTask);
+      CreateTask(TaskCode, Name, StackDepth, Params, Priority, CreatedTask);
   if (NewTCB != NULL) {
     AddNewTaskToReadyList(NewTCB);
     return true;
@@ -284,7 +284,7 @@ BaseType_t TaskCreate(TaskFunction_t TaskCode, const char *const Name,
 
 static void InitialiseNewTask(TaskFunction_t TaskCode, const char *const Name,
                               const configSTACK_DEPTH_TYPE StackDepth,
-                              void *const Parameters, UBaseType_t Priority,
+                              void *const Params, UBaseType_t Priority,
                               TaskHandle_t *const CreatedTask, TCB_t *NewTCB,
                               const MemoryRegion_t *const xRegions) {
   StackType_t *StackTop;
@@ -317,7 +317,7 @@ static void InitialiseNewTask(TaskFunction_t TaskCode, const char *const Name,
       (TickType_t)configMAX_PRIORITIES - (TickType_t)Priority;
   NewTCB->EventListItem.Owner = NewTCB;
   (void)xRegions;
-  NewTCB->StackTop = PortInitialiseStack(StackTop, TaskCode, Parameters);
+  NewTCB->StackTop = PortInitialiseStack(StackTop, TaskCode, Params);
   if (CreatedTask != NULL) {
     *CreatedTask = (TaskHandle_t)NewTCB;
   }
@@ -872,7 +872,7 @@ BaseType_t TaskIncrementTick(void) {
     const TickType_t ConstTickCount = TickCount + (TickType_t)1;
     TickCount = ConstTickCount;
     if (ConstTickCount == 0U) {
-      taskSWITCH_DELAYED_LISTS();
+      switchDelayedLists();
     }
     if (ConstTickCount >= NextTaskUnblockTime) {
       for (;;) {
@@ -920,7 +920,7 @@ void SwitchContext(void) {
     YieldPendings[0] = true;
   } else {
     YieldPendings[0] = false;
-    taskSELECT_HIGHEST_PRIORITY_TASK();
+    selectHighestPriorityTask();
     portTASK_SWITCH_HOOK(CurrentTCB);
   }
 }
