@@ -216,7 +216,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
  */
 #define IncrementQueueTxLock( pxQueue, cTxLock )                           \
     do {                                                                      \
-        const UBaseType_t uxNumberOfTasks = uxTaskGetNumberOfTasks();         \
+        const UBaseType_t uxNumberOfTasks = TaskGetNumberOfTasks();         \
         if( ( UBaseType_t ) ( cTxLock ) < uxNumberOfTasks )                   \
         {                                                                     \
             configASSERT( ( cTxLock ) != queueINT8_MAX );                     \
@@ -230,7 +230,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
  */
 #define IncrementQueueRxLock( pxQueue, cRxLock )                           \
     do {                                                                      \
-        const UBaseType_t uxNumberOfTasks = uxTaskGetNumberOfTasks();         \
+        const UBaseType_t uxNumberOfTasks = TaskGetNumberOfTasks();         \
         if( ( UBaseType_t ) ( cRxLock ) < uxNumberOfTasks )                   \
         {                                                                     \
             configASSERT( ( cRxLock ) != queueINT8_MAX );                     \

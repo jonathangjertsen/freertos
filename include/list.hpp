@@ -65,12 +65,8 @@ struct Item_t
     }
 };
 
-/*
- * Definition of the type of queue used by the scheduler.
- */
 template<class T>
-struct List_t
-{
+struct List_t {
     UBaseType_t Length;
     Item_t<T> *Index;
     Item_t<T> End;
@@ -93,8 +89,7 @@ struct List_t
 
     Item_t<T> *advance() {
         Index = Index->Next;
-        if(Index == &End)
-        {
+        if(Index == &End) {
             Index = End.Next;
         }
         return Index;
@@ -111,16 +106,13 @@ struct List_t
     }
 
     void insert(Item_t<T> *item) {
-        Item_t<T> *prev;
+        Item_t<T> *prev = &End;
         const TickType_t value = item->Value;
-        if(value == portMAX_DELAY)
-        {
-            prev = End.Prev;
-        }
-        else
-        {
-            for( prev = &End; prev->Next->Value <= value; prev = prev->Next )
-            {
+        if(value == portMAX_DELAY){
+            prev = prev->Prev;
+        } else {
+            while (prev->Next->Value <= value) {
+                prev = prev->Next;
             }
         }
         item->Next = prev->Next;

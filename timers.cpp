@@ -178,11 +178,6 @@ static void InitialiseNewTimer( const char * const pcTimerName,
 BaseType_t TimerCreateTimerTask( void )
 {
     BaseType_t Return = false;
-    
-    /* This function is called when the scheduler is started if
-        * configUSE_TIMERS is set to 1.  Check that the infrastructure used by the
-        * timer service task has been created/initialised.  If timers have already
-        * been created then the initialisation will already have been performed. */
     CheckForValidListAndQueue();
     if( TimerQueue != NULL )
     {
@@ -206,67 +201,45 @@ BaseType_t TimerCreateTimerTask( void )
     return Return;
 }
 
-#if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
-    TimerHandle_t TimerCreate( const char * const pcTimerName,
-                                const TickType_t TimerPeriodInTicks,
-                                const BaseType_t xAutoReload,
-                                void * const pvTimerID,
-                                TimerCallbackFunction_t pxCallbackFunction )
-    {
-        Timer_t * pxNewTimer;
-        
-
-
-        pxNewTimer = ( Timer_t * ) pvPortMalloc( sizeof( Timer_t ) );
-        if( pxNewTimer != NULL )
-        {
-            /* Status is thus far zero as the timer is not created statically
-                * and has not been started.  The auto-reload bit may get set in
-                * InitialiseNewTimer. */
-            pxNewTimer->ucStatus = 0x00;
-            InitialiseNewTimer( pcTimerName, TimerPeriodInTicks, xAutoReload, pvTimerID, pxCallbackFunction, pxNewTimer );
-        }
-        
-        return pxNewTimer;
+TimerHandle_t TimerCreate( const char * const pcTimerName,
+                            const TickType_t TimerPeriodInTicks,
+                            const BaseType_t xAutoReload,
+                            void * const pvTimerID,
+                            TimerCallbackFunction_t pxCallbackFunction )
+{
+    Timer_t * pxNewTimer;
+    pxNewTimer = ( Timer_t * ) pvPortMalloc( sizeof( Timer_t ) );
+    if( pxNewTimer != NULL ) {
+        pxNewTimer->ucStatus = 0x00;
+        InitialiseNewTimer( pcTimerName, TimerPeriodInTicks, xAutoReload, pvTimerID, pxCallbackFunction, pxNewTimer );
     }
-#endif /* configSUPPORT_DYNAMIC_ALLOCATION */
+    
+    return pxNewTimer;
+}
 
-#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
-    TimerHandle_t TimerCreateStatic( const char * const pcTimerName,
-                                        const TickType_t TimerPeriodInTicks,
-                                        const BaseType_t xAutoReload,
-                                        void * const pvTimerID,
-                                        TimerCallbackFunction_t pxCallbackFunction,
-                                        StaticTimer_t * pTimerBuffer )
+TimerHandle_t TimerCreateStatic( const char * const pcTimerName,
+                                    const TickType_t TimerPeriodInTicks,
+                                    const BaseType_t xAutoReload,
+                                    void * const pvTimerID,
+                                    TimerCallbackFunction_t pxCallbackFunction,
+                                    StaticTimer_t * pTimerBuffer )
+{
+    Timer_t * pxNewTimer;
+    
+    #if ( configASSERT_DEFINED == 1 )
     {
-        Timer_t * pxNewTimer;
-        
-        #if ( configASSERT_DEFINED == 1 )
-        {
-            /* Sanity check that the size of the structure used to declare a
-                * variable of type StaticTimer_t equals the size of the real timer
-                * structure. */
-            volatile size_t xSize = sizeof( StaticTimer_t );
-            configASSERT( xSize == sizeof( Timer_t ) );
-            ( void ) xSize; /* Prevent unused variable warning when configASSERT() is not defined. */
-        }
-        #endif /* configASSERT_DEFINED */
-        /* A pointer to a StaticTimer_t structure MUST be provided, use it. */
-        configASSERT( pTimerBuffer );
-
-        pxNewTimer = ( Timer_t * ) pTimerBuffer;
-        if( pxNewTimer != NULL )
-        {
-            /* Timers can be created statically or dynamically so note this
-                * timer was created statically in case it is later deleted.  The
-                * auto-reload bit may get set in InitialiseNewTimer(). */
-            pxNewTimer->ucStatus = ( uint8_t ) tmrSTATUS_IS_STATICALLY_ALLOCATED;
-            InitialiseNewTimer( pcTimerName, TimerPeriodInTicks, xAutoReload, pvTimerID, pxCallbackFunction, pxNewTimer );
-        }
-        
-        return pxNewTimer;
+        configASSERT( sizeof( StaticTimer_t ) == sizeof( Timer_t ) );
     }
-#endif /* configSUPPORT_STATIC_ALLOCATION */
+    #endif /* configASSERT_DEFINED */
+    configASSERT( pTimerBuffer );
+    pxNewTimer = ( Timer_t * ) pTimerBuffer;
+    if( pxNewTimer != NULL )
+    {
+        pxNewTimer->ucStatus = ( uint8_t ) tmrSTATUS_IS_STATICALLY_ALLOCATED;
+        InitialiseNewTimer( pcTimerName, TimerPeriodInTicks, xAutoReload, pvTimerID, pxCallbackFunction, pxNewTimer );
+    }
+    return pxNewTimer;
+}
 
 static void InitialiseNewTimer( const char * const pcTimerName,
                                     const TickType_t TimerPeriodInTicks,
@@ -294,35 +267,22 @@ BaseType_t TimerGenericCommandFromTask( TimerHandle_t Timer,
                                             BaseType_t * const pxHigherPriorityTaskWoken,
                                             const TickType_t xTicksToWait )
 {
-    BaseType_t Return = false;
     DaemonTaskMessage_t xMessage;
     ( void ) pxHigherPriorityTaskWoken;
-    
     configASSERT( Timer );
-    /* Send a message to the timer service task to perform a particular action
-        * on a particular timer definition. */
-    if( TimerQueue != NULL )
+    if( TimerQueue == NULL )
     {
-        /* Send a command to the timer service task to start the Timer timer. */
-        xMessage.xMessageID = xCommandID;
-        xMessage.u.TimerParameters.xMessageValue = xOptionalValue;
-        xMessage.u.TimerParameters.pTimer = Timer;
-        configASSERT( xCommandID < tmrFIRST_FROM_ISR_COMMAND );
-        if( xCommandID < tmrFIRST_FROM_ISR_COMMAND )
-        {
-            if( xTaskGetSchedulerState() == taskSCHEDULER_RUNNING )
-            {
-                Return = xQueueSendToBack( TimerQueue, &xMessage, xTicksToWait );
-            }
-            else
-            {
-                Return = xQueueSendToBack( TimerQueue, &xMessage, tmrNO_DELAY );
-            }
-        }
+        return false;
     }
-
-    
-    return Return;
+    xMessage.xMessageID = xCommandID;
+    xMessage.u.TimerParameters.xMessageValue = xOptionalValue;
+    xMessage.u.TimerParameters.pTimer = Timer;
+    configASSERT( xCommandID < tmrFIRST_FROM_ISR_COMMAND );
+    if( xCommandID < tmrFIRST_FROM_ISR_COMMAND )
+    {
+        return xQueueSendToBack( TimerQueue, &xMessage, xTaskGetSchedulerState() == taskSCHEDULER_RUNNING ? xTicksToWait : tmrNO_DELAY );
+    }
+    return false;
 }
 
 BaseType_t TimerGenericCommandFromISR( TimerHandle_t Timer,
@@ -331,95 +291,66 @@ BaseType_t TimerGenericCommandFromISR( TimerHandle_t Timer,
                                         BaseType_t * const pxHigherPriorityTaskWoken,
                                         const TickType_t xTicksToWait )
 {
-    BaseType_t Return = false;
     DaemonTaskMessage_t xMessage;
     ( void ) xTicksToWait;
-    
     configASSERT( Timer );
-    /* Send a message to the timer service task to perform a particular action
-        * on a particular timer definition. */
-    if( TimerQueue != NULL )
+    if( TimerQueue == NULL )
     {
-        /* Send a command to the timer service task to start the Timer timer. */
-        xMessage.xMessageID = xCommandID;
-        xMessage.u.TimerParameters.xMessageValue = xOptionalValue;
-        xMessage.u.TimerParameters.pTimer = Timer;
-        configASSERT( xCommandID >= tmrFIRST_FROM_ISR_COMMAND );
-        if( xCommandID >= tmrFIRST_FROM_ISR_COMMAND )
-        {
-            Return = xQueueSendToBackFromISR( TimerQueue, &xMessage, pxHigherPriorityTaskWoken );
-        }
+        return false;
     }
-
-    
-    return Return;
+    xMessage.xMessageID = xCommandID;
+    xMessage.u.TimerParameters.xMessageValue = xOptionalValue;
+    xMessage.u.TimerParameters.pTimer = Timer;
+    configASSERT( xCommandID >= tmrFIRST_FROM_ISR_COMMAND );
+    if( xCommandID >= tmrFIRST_FROM_ISR_COMMAND )
+    {
+        return xQueueSendToBackFromISR( TimerQueue, &xMessage, pxHigherPriorityTaskWoken );
+    }
+    return false;
 }
 
 TaskHandle_t TimerGetTimerDaemonTaskHandle( void )
 {
-    
-    /* If TimerGetTimerDaemonTaskHandle() is called before the scheduler has been
-        * started, then TimerTaskHandle will be NULL. */
     configASSERT( ( TimerTaskHandle != NULL ) );
-    
     return TimerTaskHandle;
 }
 
 TickType_t TimerGetPeriod( TimerHandle_t Timer )
 {
-    Timer_t * pTimer = Timer;
-    
     configASSERT( Timer );
-    
-    return pTimer->TimerPeriodInTicks;
+    return Timer->TimerPeriodInTicks;
 }
 
 void vTimerSetReloadMode( TimerHandle_t Timer,
                             const BaseType_t xAutoReload )
 {
-    Timer_t * pTimer = Timer;
-    
     configASSERT( Timer );
     ENTER_CRITICAL();
     {
         if( xAutoReload != false )
         {
-            pTimer->ucStatus |= ( uint8_t ) tmrSTATUS_IS_AUTORELOAD;
+            Timer->ucStatus |= ( uint8_t ) tmrSTATUS_IS_AUTORELOAD;
         } else {
-            pTimer->ucStatus &= ( ( uint8_t ) ~tmrSTATUS_IS_AUTORELOAD );
+            Timer->ucStatus &= ( ( uint8_t ) ~tmrSTATUS_IS_AUTORELOAD );
         }
     }
     EXIT_CRITICAL();
-    
 }
 
 BaseType_t TimerGetReloadMode( TimerHandle_t Timer )
 {
-    Timer_t * pTimer = Timer;
     BaseType_t Return;
     
     configASSERT( Timer );
     ENTER_CRITICAL();
-    {
-        if( ( pTimer->ucStatus & tmrSTATUS_IS_AUTORELOAD ) == 0U )
-        {
-            /* Not an auto-reload timer. */
-            Return = false;
-        } else {
-            /* Is an auto-reload timer. */
-            Return = true;
-        }
-    }
+    Return = (Timer->ucStatus & tmrSTATUS_IS_AUTORELOAD) != 0;
     EXIT_CRITICAL();
-    
     return Return;
 }
 UBaseType_t uTimerGetReloadMode( TimerHandle_t Timer )
 {
     UBaseType_t uReturn;
-    
     uReturn = ( UBaseType_t ) TimerGetReloadMode( Timer );
-    
     return uReturn;
 }
 
@@ -432,33 +363,29 @@ TickType_t TimerGetExpiryTime( TimerHandle_t Timer )
     return pTimer->TimerListItem.Value;
 }
 
-#if ( configSUPPORT_STATIC_ALLOCATION == 1 )
-    BaseType_t TimerGetStaticBuffer( TimerHandle_t Timer,
-                                        StaticTimer_t ** ppTimerBuffer )
+BaseType_t TimerGetStaticBuffer( TimerHandle_t Timer,
+                                    StaticTimer_t ** ppTimerBuffer )
+{
+    BaseType_t Return;
+    Timer_t * pTimer = Timer;
+    
+    configASSERT( ppTimerBuffer != NULL );
+    if( ( pTimer->ucStatus & tmrSTATUS_IS_STATICALLY_ALLOCATED ) != 0U )
     {
-        BaseType_t Return;
-        Timer_t * pTimer = Timer;
-        
-        configASSERT( ppTimerBuffer != NULL );
-        if( ( pTimer->ucStatus & tmrSTATUS_IS_STATICALLY_ALLOCATED ) != 0U )
-        {
 
-            *ppTimerBuffer = ( StaticTimer_t * ) pTimer;
-            Return = true;
-        } else {
-            Return = false;
-        }
-        
-        return Return;
+        *ppTimerBuffer = ( StaticTimer_t * ) pTimer;
+        Return = true;
+    } else {
+        Return = false;
     }
-#endif /* configSUPPORT_STATIC_ALLOCATION */
+    
+    return Return;
+}
 
 const char * pcTimerGetName( TimerHandle_t Timer )
 {
     Timer_t * pTimer = Timer;
-    
     configASSERT( Timer );
-    
     return pTimer->pcTimerName;
 }
 
@@ -466,21 +393,15 @@ static void ReloadTimer( Timer_t * const pTimer,
                             TickType_t xExpiredTime,
                             const TickType_t TimeNow )
 {
-    /* Insert the timer into the appropriate list for the next expiry time.
-        * If the next expiry time has already passed, advance the expiry time,
-        * call the callback function, and try again. */
     while( InsertTimerInActiveList( pTimer, ( xExpiredTime + pTimer->TimerPeriodInTicks ), TimeNow, xExpiredTime ) != false )
     {
-        /* Advance the expiry time. */
         xExpiredTime += pTimer->TimerPeriodInTicks;
-        /* Call the timer callback. */
         pTimer->pxCallbackFunction( ( TimerHandle_t ) pTimer );
     }
 }
 
 static void ProcessExpiredTimer( const TickType_t NextExpireTime, const TickType_t TimeNow )
 {
-
     Timer_t * const pTimer = CurrentTimerList->head()->Owner;
     pTimer->TimerListItem.remove();
     if( ( pTimer->ucStatus & tmrSTATUS_IS_AUTORELOAD ) != 0U )
@@ -491,7 +412,6 @@ static void ProcessExpiredTimer( const TickType_t NextExpireTime, const TickType
     {
         pTimer->ucStatus &= ( ( uint8_t ) ~tmrSTATUS_IS_ACTIVE );
     }
-    /* Call the timer callback. */
     pTimer->pxCallbackFunction( ( TimerHandle_t ) pTimer );
 }
 
@@ -499,63 +419,34 @@ static portTASK_FUNCTION( TimerTask, pvParameters )
 {
     TickType_t NextExpireTime;
     BaseType_t ListWasEmpty;
-    /* Just to avoid compiler warnings. */
     ( void ) pvParameters;
     for( ; configCONTROL_INFINITE_LOOP(); )
     {
-        /* Query the timers list to see if it contains any timers, and if so,
-            * obtain the time at which the next timer will expire. */
         NextExpireTime = GetNextExpireTime( &ListWasEmpty );
-        /* If a timer has expired, process it.  Otherwise, block this task
-            * until either a timer does expire, or a command is received. */
         ProcessTimerOrBlockTask( NextExpireTime, ListWasEmpty );
-        /* Empty the command queue. */
         ProcessReceivedCommands();
     }
 }
 
 static void ProcessTimerOrBlockTask( const TickType_t NextExpireTime,
-                                        BaseType_t ListWasEmpty )
-{
+                                        BaseType_t ListWasEmpty ) {
     TickType_t TimeNow;
     BaseType_t TimerListsWereSwitched;
     vTaskSuspendAll();
+    TimeNow = SampleTimeNow( &TimerListsWereSwitched );
+    if( TimerListsWereSwitched )
     {
-        /* Obtain the time now to make an assessment as to whether the timer
-            * has expired or not.  If obtaining the time causes the lists to switch
-            * then don't process this timer as any timers that remained in the list
-            * when the lists were switched will have been processed within the
-            * SampleTimeNow() function. */
-        TimeNow = SampleTimeNow( &TimerListsWereSwitched );
-        if( TimerListsWereSwitched == false )
-        {
-            /* The tick count has not overflowed, has the timer expired? */
-            if( ( ListWasEmpty == false ) && ( NextExpireTime <= TimeNow ) )
-            {
-                ( void ) TaskResumeAll();
-                ProcessExpiredTimer( NextExpireTime, TimeNow );
-            }
-            else
-            {
-                /* The tick count has not overflowed, and the next expire
-                    * time has not been reached yet.  This task should therefore
-                    * block to wait for the next expire time or a command to be
-                    * received - whichever comes first.  The following line cannot
-                    * be reached unless NextExpireTime > TimeNow, except in the
-                    * case when the current timer list is empty. */
-                ListWasEmpty |= OverflowTimerList->empty();
-                vQueueWaitForMessageRestricted( TimerQueue, ( NextExpireTime - TimeNow ), ListWasEmpty );
-                if( TaskResumeAll() == false )
-                {
-                    /* Yield to wait for either a command to arrive, or the
-                        * block time to expire.  If a command arrived between the
-                        * critical section being exited and this yield then the yield
-                        * will not cause the task to block. */
-                    taskYIELD_WITHIN_API();
-                }
-            }
-        } else {
-            ( void ) TaskResumeAll();
+        TaskResumeAll();
+        return;
+    }
+    if( ( ListWasEmpty == false ) && ( NextExpireTime <= TimeNow ) ) {
+        ( void ) TaskResumeAll();
+        ProcessExpiredTimer( NextExpireTime, TimeNow );
+    } else {
+        ListWasEmpty |= OverflowTimerList->empty();
+        vQueueWaitForMessageRestricted( TimerQueue, ( NextExpireTime - TimeNow ), ListWasEmpty );
+        if( TaskResumeAll() == false ) {
+            taskYIELD_WITHIN_API();
         }
     }
 }
@@ -563,37 +454,17 @@ static void ProcessTimerOrBlockTask( const TickType_t NextExpireTime,
 static TickType_t GetNextExpireTime( BaseType_t * const ListWasEmpty )
 {
     TickType_t NextExpireTime;
-    /* Timers are listed in expiry time order, with the head of the list
-        * referencing the task that will expire first.  Obtain the time at which
-        * the timer with the nearest expiry time will expire.  If there are no
-        * active timers then just set the next expire time to 0.  That will cause
-        * this task to unblock when the tick count overflows, at which point the
-        * timer lists will be switched and the next expiry time can be
-        * re-assessed.  */
     *ListWasEmpty = CurrentTimerList->empty();
-    if( !*ListWasEmpty )
-    {
-        NextExpireTime = CurrentTimerList->head()->Value;
-    }
-    else
-    {
-        NextExpireTime = ( TickType_t ) 0U;
-    }
-    return NextExpireTime;
+    return *ListWasEmpty ? 0 : CurrentTimerList->head()->Value;
 }
 
 static TickType_t SampleTimeNow( BaseType_t * const TimerListsWereSwitched )
 {
     static TickType_t xLastTime = ( TickType_t ) 0U;
     TickType_t TimeNow = GetTickCount();
-    if( TimeNow < xLastTime )
-    {
+    *TimerListsWereSwitched = TimeNow < xLastTime;
+    if(*TimerListsWereSwitched) {
         SwitchTimerLists();
-        *TimerListsWereSwitched = true;
-    }
-    else
-    {
-        *TimerListsWereSwitched = false;
     }
     xLastTime = TimeNow;
     return TimeNow;
@@ -609,12 +480,8 @@ static BaseType_t InsertTimerInActiveList( Timer_t * const pTimer,
     pTimer->TimerListItem.Owner = pTimer;
     if( xNextExpiryTime <= TimeNow )
     {
-        /* Has the expiry time elapsed between the command to start/reset a
-            * timer was issued, and the time the command was processed? */
         if( ( ( TickType_t ) ( TimeNow - xCommandTime ) ) >= pTimer->TimerPeriodInTicks )
         {
-            /* The time between a command being issued and the command being
-                * processed actually exceeds the timers period.  */
             xProcessTimerNow = true;
         } else {
             OverflowTimerList->insert(&( pTimer->TimerListItem ) );
@@ -640,21 +507,12 @@ static void ProcessReceivedCommands( void )
     TickType_t TimeNow;
     while( xQueueReceive( TimerQueue, &xMessage, tmrNO_DELAY ) != false )
     {
-        #if ( INCLUDE_TimerPendFunctionCall == 1 )
+        if( xMessage.xMessageID < ( BaseType_t ) 0 )
         {
-            /* Negative commands are pended function calls rather than timer
-                * commands. */
-            if( xMessage.xMessageID < ( BaseType_t ) 0 )
-            {
-                const CallbackParameters_t * const pxCallback = &( xMessage.u.xCallbackParameters );
-                /* The timer uses the xCallbackParameters member to request a
-                    * callback be executed.  Check the callback is not NULL. */
-                configASSERT( pxCallback );
-                /* Call the function. */
-                pxCallback->pxCallbackFunction( pxCallback->pvParameter1, pxCallback->ulParameter2 );
-            }
+            const CallbackParameters_t * const pxCallback = &( xMessage.u.xCallbackParameters );
+            configASSERT( pxCallback );
+            pxCallback->pxCallbackFunction( pxCallback->pvParameter1, pxCallback->ulParameter2 );
         }
-        #endif /* INCLUDE_TimerPendFunctionCall */
         if( xMessage.xMessageID >= ( BaseType_t ) 0 )
         {
             pTimer = xMessage.u.TimerParameters.pTimer;
@@ -669,12 +527,9 @@ static void ProcessReceivedCommands( void )
                 case tmrCOMMAND_START_FROM_ISR:
                 case tmrCOMMAND_RESET:
                 case tmrCOMMAND_RESET_FROM_ISR:
-                    /* Start or restart a timer. */
                     pTimer->ucStatus |= ( uint8_t ) tmrSTATUS_IS_ACTIVE;
                     if( InsertTimerInActiveList( pTimer, xMessage.u.TimerParameters.xMessageValue + pTimer->TimerPeriodInTicks, TimeNow, xMessage.u.TimerParameters.xMessageValue ) != false )
                     {
-                        /* The timer expired before it was added to the active
-                            * timer list.  Process it now. */
                         if( ( pTimer->ucStatus & tmrSTATUS_IS_AUTORELOAD ) != 0U )
                         {
                             ReloadTimer( pTimer, xMessage.u.TimerParameters.xMessageValue + pTimer->TimerPeriodInTicks, TimeNow );
@@ -683,7 +538,6 @@ static void ProcessReceivedCommands( void )
                         {
                             pTimer->ucStatus &= ( ( uint8_t ) ~tmrSTATUS_IS_ACTIVE );
                         }
-                        /* Call the timer callback. */
                         pTimer->pxCallbackFunction( ( TimerHandle_t ) pTimer );
                     }
                     break;
@@ -697,41 +551,19 @@ static void ProcessReceivedCommands( void )
                     pTimer->ucStatus |= ( uint8_t ) tmrSTATUS_IS_ACTIVE;
                     pTimer->TimerPeriodInTicks = xMessage.u.TimerParameters.xMessageValue;
                     configASSERT( ( pTimer->TimerPeriodInTicks > 0 ) );
-                    /* The new period does not really have a reference, and can
-                        * be longer or shorter than the old one.  The command time is
-                        * therefore set to the current time, and as the period cannot
-                        * be zero the next expiry time can only be in the future,
-                        * meaning (unlike for the TimerStart() case above) there is
-                        * no fail case that needs to be handled here. */
                     ( void ) InsertTimerInActiveList( pTimer, ( TimeNow + pTimer->TimerPeriodInTicks ), TimeNow, TimeNow );
                     break;
                 case tmrCOMMAND_DELETE:
-                    #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+                    if( ( pTimer->ucStatus & tmrSTATUS_IS_STATICALLY_ALLOCATED ) == ( uint8_t ) 0 )
                     {
-                        /* The timer has already been removed from the active list,
-                            * just free up the memory if the memory was dynamically
-                            * allocated. */
-                        if( ( pTimer->ucStatus & tmrSTATUS_IS_STATICALLY_ALLOCATED ) == ( uint8_t ) 0 )
-                        {
-                            vPortFree( pTimer );
-                        }
-                        else
-                        {
-                            pTimer->ucStatus &= ( ( uint8_t ) ~tmrSTATUS_IS_ACTIVE );
-                        }
+                        vPortFree( pTimer );
                     }
-                    #else /* if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) */
+                    else
                     {
-                        /* If dynamic allocation is not enabled, the memory
-                            * could not have been dynamically allocated. So there is
-                            * no need to free the memory - just mark the timer as
-                            * "not active". */
                         pTimer->ucStatus &= ( ( uint8_t ) ~tmrSTATUS_IS_ACTIVE );
                     }
-                    #endif /* configSUPPORT_DYNAMIC_ALLOCATION */
                     break;
                 default:
-                    /* Don't expect to get here. */
                     break;
             }
         }
@@ -753,9 +585,6 @@ static void SwitchTimerLists( void )
 
 static void CheckForValidListAndQueue( void )
 {
-    /* Check that the list from which active timers are referenced, and the
-        * queue used to communicate with the timer service, have been
-        * initialised. */
     ENTER_CRITICAL();
     if( TimerQueue == NULL )
     {
@@ -766,7 +595,6 @@ static void CheckForValidListAndQueue( void )
         static StaticQueue_t StaticTimerQueue;
         static uint8_t StaticTimerQueueStorage[ ( size_t ) configTIMER_QUEUE_LENGTH * sizeof( DaemonTaskMessage_t ) ];
         TimerQueue = xQueueCreateStatic( ( UBaseType_t ) configTIMER_QUEUE_LENGTH, ( UBaseType_t ) sizeof( DaemonTaskMessage_t ), &( StaticTimerQueueStorage[ 0 ] ), &StaticTimerQueue );
-
     }
     EXIT_CRITICAL();
 }
@@ -795,7 +623,6 @@ void SetTimerID( TimerHandle_t Timer, void * pvNewID )
     ENTER_CRITICAL();
     Timer->pvTimerID = pvNewID;
     EXIT_CRITICAL();
-    
 }
 
 BaseType_t TimerPendFunctionCallFromISR( PendedFunction_t xFunctionToPend,
@@ -804,9 +631,6 @@ BaseType_t TimerPendFunctionCallFromISR( PendedFunction_t xFunctionToPend,
                                             BaseType_t * pxHigherPriorityTaskWoken )
 {
     DaemonTaskMessage_t xMessage;
-    
-    /* Complete the message with the function parameters and post it to the
-        * daemon task. */
     xMessage.xMessageID = tmrCOMMAND_EXECUTE_CALLBACK_FROM_ISR;
     xMessage.u.xCallbackParameters.pxCallbackFunction = xFunctionToPend;
     xMessage.u.xCallbackParameters.pvParameter1 = pvParameter1;
@@ -820,13 +644,7 @@ BaseType_t TimerPendFunctionCall( PendedFunction_t xFunctionToPend,
                                     TickType_t xTicksToWait )
 {
     DaemonTaskMessage_t xMessage;
-    
-    /* This function can only be called after a timer has been created or
-        * after the scheduler has been started because, until then, the timer
-        * queue does not exist. */
     configASSERT( TimerQueue );
-    /* Complete the message with the function parameters and post it to the
-        * daemon task. */
     xMessage.xMessageID = tmrCOMMAND_EXECUTE_CALLBACK;
     xMessage.u.xCallbackParameters.pxCallbackFunction = xFunctionToPend;
     xMessage.u.xCallbackParameters.pvParameter1 = pvParameter1;
@@ -834,11 +652,6 @@ BaseType_t TimerPendFunctionCall( PendedFunction_t xFunctionToPend,
     return xQueueSendToBack( TimerQueue, &xMessage, xTicksToWait );
 }
 
-/*
- * Reset the state in this file. This state is normally initialized at start up.
- * This function must be called by the application before restarting the
- * scheduler.
- */
 void TimerResetState( void )
 {
     TimerQueue = NULL;

@@ -1639,7 +1639,7 @@ TickType_t xTaskGetTickCountFromISR( void ) ;
 /**
  * task. h
  * @code{c}
- * uint16_t uxTaskGetNumberOfTasks( void );
+ * uint16_t TaskGetNumberOfTasks( void );
  * @endcode
  *
  * @return The number of tasks that the real time kernel is currently managing.
@@ -1647,10 +1647,10 @@ TickType_t xTaskGetTickCountFromISR( void ) ;
  * has been deleted but not yet freed by the idle task will also be
  * included in the count.
  *
- * \defgroup uxTaskGetNumberOfTasks uxTaskGetNumberOfTasks
+ * \defgroup TaskGetNumberOfTasks TaskGetNumberOfTasks
  * \ingroup TaskUtils
  */
-UBaseType_t uxTaskGetNumberOfTasks( void ) ;
+UBaseType_t TaskGetNumberOfTasks( void ) ;
 /**
  * task. h
  * @code{c}
@@ -1978,7 +1978,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) ;
  * @param pxTaskStatusArray A pointer to an array of TaskStatus_t structures.
  * The array must contain at least one TaskStatus_t structure for each task
  * that is under the control of the RTOS.  The number of tasks under the control
- * of the RTOS can be determined using the uxTaskGetNumberOfTasks() API function.
+ * of the RTOS can be determined using the TaskGetNumberOfTasks() API function.
  *
  * @param uxArraySize The size of the array pointed to by the pxTaskStatusArray
  * parameter.  The size is specified as the number of indexes in the array, or
@@ -1993,7 +1993,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) ;
  *
  * @return The number of TaskStatus_t structures that were populated by
  * uxTaskGetSystemState().  This should equal the number returned by the
- * uxTaskGetNumberOfTasks() API function, but will be zero if the value passed
+ * TaskGetNumberOfTasks() API function, but will be zero if the value passed
  * in the uxArraySize parameter was too small.
  *
  * Example usage:
@@ -2012,7 +2012,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) ;
  *
  *      // Take a snapshot of the number of tasks in case it changes while this
  *      // function is executing.
- *      uxArraySize = uxTaskGetNumberOfTasks();
+ *      uxArraySize = TaskGetNumberOfTasks();
  *
  *      // Allocate a TaskStatus_t structure for each task.  An array could be
  *      // allocated statically at compile time.

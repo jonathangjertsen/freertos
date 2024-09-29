@@ -616,7 +616,7 @@
     UBaseType_t MPU_uxTaskGetNumberOfTasksImpl( void ) /*  */
     {
         UBaseType_t uxReturn;
-        uxReturn = uxTaskGetNumberOfTasks();
+        uxReturn = TaskGetNumberOfTasks();
         return uxReturn;
     }
 

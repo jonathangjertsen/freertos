@@ -35,7 +35,7 @@
 #define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 /* Scheduler includes. */
 #include "FreeRTOS.h"
-#include "task.h"
+#include "task.hpp"
 #include "queue.h"
 #include "timers.h"
 #include "event_groups.h"
@@ -390,14 +390,14 @@
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
-            uxReturn = uxTaskGetNumberOfTasks();
+            uxReturn = TaskGetNumberOfTasks();
             portMEMORY_BARRIER();
             portRESET_PRIVILEGE();
             portMEMORY_BARRIER();
         }
         else
         {
-            uxReturn = uxTaskGetNumberOfTasks();
+            uxReturn = TaskGetNumberOfTasks();
         }
         return uxReturn;
     }
