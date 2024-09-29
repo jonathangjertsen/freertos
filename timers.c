@@ -449,7 +449,7 @@ TickType_t xTimerGetExpiryTime( TimerHandle_t xTimer )
     TickType_t xReturn;
     
     configASSERT( xTimer );
-    xReturn = listGET_LIST_ITEM_VALUE( &( pxTimer->xTimerListItem ) );
+    xReturn = GET_LIST_ITEM_VALUE( &( pxTimer->xTimerListItem ) );
     
     return xReturn;
 }
@@ -506,7 +506,7 @@ static void ProcessExpiredTimer( const TickType_t xNextExpireTime,
                                     const TickType_t xTimeNow )
 {
 
-    Timer_t * const pxTimer = ( Timer_t * ) listGET_OWNER_OF_HEAD_ENTRY( pxCurrentTimerList );
+    Timer_t * const pxTimer = ( Timer_t * ) GET_OWNER_OF_HEAD_ENTRY( pxCurrentTimerList );
     /* Remove the timer from the list of active timers.  A check has already
         * been performed to ensure the list is not empty. */
     ( void ) uxListRemove( &( pxTimer->xTimerListItem ) );
@@ -585,7 +585,7 @@ static void ProcessTimerOrBlockTask( const TickType_t xNextExpireTime,
                 {
                     /* The current timer list is empty - is the overflow list
                         * also empty? */
-                    xListWasEmpty = listLIST_IS_EMPTY( pxOverflowTimerList );
+                    xListWasEmpty = LIST_IS_EMPTY( pxOverflowTimerList );
                 }
                 vQueueWaitForMessageRestricted( xTimerQueue, ( xNextExpireTime - xTimeNow ), xListWasEmpty );
                 if( xTaskResumeAll() == false )
@@ -615,10 +615,10 @@ static TickType_t GetNextExpireTime( BaseType_t * const pxListWasEmpty )
         * this task to unblock when the tick count overflows, at which point the
         * timer lists will be switched and the next expiry time can be
         * re-assessed.  */
-    *pxListWasEmpty = listLIST_IS_EMPTY( pxCurrentTimerList );
+    *pxListWasEmpty = LIST_IS_EMPTY( pxCurrentTimerList );
     if( *pxListWasEmpty == false )
     {
-        xNextExpireTime = listGET_ITEM_VALUE_OF_HEAD_ENTRY( pxCurrentTimerList );
+        xNextExpireTime = GET_ITEM_VALUE_OF_HEAD_ENTRY( pxCurrentTimerList );
     }
     else
     {
@@ -652,8 +652,8 @@ static BaseType_t InsertTimerInActiveList( Timer_t * const pxTimer,
                                                 const TickType_t xCommandTime )
 {
     BaseType_t xProcessTimerNow = false;
-    listSET_LIST_ITEM_VALUE( &( pxTimer->xTimerListItem ), xNextExpiryTime );
-    listSET_LIST_ITEM_OWNER( &( pxTimer->xTimerListItem ), pxTimer );
+    SET_LIST_ITEM_VALUE( &( pxTimer->xTimerListItem ), xNextExpiryTime );
+    SET_LIST_ITEM_OWNER( &( pxTimer->xTimerListItem ), pxTimer );
     if( xNextExpiryTime <= xTimeNow )
     {
         /* Has the expiry time elapsed between the command to start/reset a
@@ -716,7 +716,7 @@ static void ProcessReceivedCommands( void )
             /* The messages uses the xTimerParameters member to work on a
                 * software timer. */
             pxTimer = xMessage.u.xTimerParameters.pxTimer;
-            if( listIS_CONTAINED_WITHIN( NULL, &( pxTimer->xTimerListItem ) ) == false )
+            if( IS_CONTAINED_WITHIN( NULL, &( pxTimer->xTimerListItem ) ) == false )
             {
                 /* The timer is in a list, remove it. */
                 ( void ) uxListRemove( &( pxTimer->xTimerListItem ) );
@@ -811,9 +811,9 @@ static void SwitchTimerLists( void )
         * If there are any timers still referenced from the current timer list
         * then they must have expired and should be processed before the lists
         * are switched. */
-    while( listLIST_IS_EMPTY( pxCurrentTimerList ) == false )
+    while( LIST_IS_EMPTY( pxCurrentTimerList ) == false )
     {
-        xNextExpireTime = listGET_ITEM_VALUE_OF_HEAD_ENTRY( pxCurrentTimerList );
+        xNextExpireTime = GET_ITEM_VALUE_OF_HEAD_ENTRY( pxCurrentTimerList );
         /* Process the expired timer.  For auto-reload timers, be careful to
             * process only expirations that occur on the current list.  Further
             * expirations must wait until after the lists are switched. */

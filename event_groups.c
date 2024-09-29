@@ -364,14 +364,14 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
     pxListEnd = listGET_END_MARKER( pxList );
     vTaskSuspendAll();
     {
-        pxListItem = listGET_HEAD_ENTRY( pxList );
+        pxListItem = GET_HEAD_ENTRY( pxList );
         /* Set the bits. */
         pxEventBits->uxEventBits |= uxBitsToSet;
         /* See if the new bit value should unblock any tasks. */
         while( pxListItem != pxListEnd )
         {
-            pxNext = listGET_NEXT( pxListItem );
-            uxBitsWaitedFor = listGET_LIST_ITEM_VALUE( pxListItem );
+            pxNext = GET_NEXT( pxListItem );
+            uxBitsWaitedFor = GET_LIST_ITEM_VALUE( pxListItem );
             xMatchFound = false;
             /* Split the bits waited for from the control bits. */
             uxControlBits = uxBitsWaitedFor & eventEVENT_BITS_CONTROL_BYTES;

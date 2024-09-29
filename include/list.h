@@ -54,7 +54,7 @@
  */
 
 #ifndef LIST_H
-#define LIST_H
+#define _H
 #ifndef INC_FREERTOS_H
     #error "FreeRTOS.h must be included before list.h"
 #endif
@@ -101,31 +101,31 @@
  * use of FreeRTOS.*/
 #if ( configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES == 0 )
     /* Define the macros to do nothing. */
-    #define listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE
-    #define listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE
-    #define listFIRST_LIST_INTEGRITY_CHECK_VALUE
-    #define listSECOND_LIST_INTEGRITY_CHECK_VALUE
-    #define listSET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )
-    #define listSET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )
-    #define listSET_LIST_INTEGRITY_CHECK_1_VALUE( pxList )
-    #define listSET_LIST_INTEGRITY_CHECK_2_VALUE( pxList )
-    #define listTEST_LIST_ITEM_INTEGRITY( pxItem )
-    #define listTEST_LIST_INTEGRITY( pxList )
+    #define FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE
+    #define SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE
+    #define FIRST_LIST_INTEGRITY_CHECK_VALUE
+    #define SECOND_LIST_INTEGRITY_CHECK_VALUE
+    #define SET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )
+    #define SET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )
+    #define SET_LIST_INTEGRITY_CHECK_1_VALUE( pxList )
+    #define SET_LIST_INTEGRITY_CHECK_2_VALUE( pxList )
+    #define TEST_LIST_ITEM_INTEGRITY( pxItem )
+    #define TEST_LIST_INTEGRITY( pxList )
 #else /* if ( configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES == 0 ) */
     /* Define macros that add new members into the list structures. */
-    #define listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE     TickType_t xListItemIntegrityValue1;
-    #define listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE    TickType_t xListItemIntegrityValue2;
-    #define listFIRST_LIST_INTEGRITY_CHECK_VALUE          TickType_t xListIntegrityValue1;
-    #define listSECOND_LIST_INTEGRITY_CHECK_VALUE         TickType_t xListIntegrityValue2;
+    #define FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE     TickType_t xListItemIntegrityValue1;
+    #define SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE    TickType_t xListItemIntegrityValue2;
+    #define FIRST_LIST_INTEGRITY_CHECK_VALUE          TickType_t xListIntegrityValue1;
+    #define SECOND_LIST_INTEGRITY_CHECK_VALUE         TickType_t xListIntegrityValue2;
 /* Define macros that set the new structure members to known values. */
-    #define listSET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )     ( pxItem )->xListItemIntegrityValue1 = pdINTEGRITY_CHECK_VALUE
-    #define listSET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )    ( pxItem )->xListItemIntegrityValue2 = pdINTEGRITY_CHECK_VALUE
-    #define listSET_LIST_INTEGRITY_CHECK_1_VALUE( pxList )              ( pxList )->xListIntegrityValue1 = pdINTEGRITY_CHECK_VALUE
-    #define listSET_LIST_INTEGRITY_CHECK_2_VALUE( pxList )              ( pxList )->xListIntegrityValue2 = pdINTEGRITY_CHECK_VALUE
+    #define SET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )     ( pxItem )->xListItemIntegrityValue1 = pdINTEGRITY_CHECK_VALUE
+    #define SET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )    ( pxItem )->xListItemIntegrityValue2 = pdINTEGRITY_CHECK_VALUE
+    #define SET_LIST_INTEGRITY_CHECK_1_VALUE( pxList )              ( pxList )->xListIntegrityValue1 = pdINTEGRITY_CHECK_VALUE
+    #define SET_LIST_INTEGRITY_CHECK_2_VALUE( pxList )              ( pxList )->xListIntegrityValue2 = pdINTEGRITY_CHECK_VALUE
 /* Define macros that will assert if one of the structure members does not
  * contain its expected value. */
-    #define listTEST_LIST_ITEM_INTEGRITY( pxItem )                      configASSERT( ( ( pxItem )->xListItemIntegrityValue1 == pdINTEGRITY_CHECK_VALUE ) && ( ( pxItem )->xListItemIntegrityValue2 == pdINTEGRITY_CHECK_VALUE ) )
-    #define listTEST_LIST_INTEGRITY( pxList )                           configASSERT( ( ( pxList )->xListIntegrityValue1 == pdINTEGRITY_CHECK_VALUE ) && ( ( pxList )->xListIntegrityValue2 == pdINTEGRITY_CHECK_VALUE ) )
+    #define TEST_LIST_ITEM_INTEGRITY( pxItem )                      configASSERT( ( ( pxItem )->xListItemIntegrityValue1 == pdINTEGRITY_CHECK_VALUE ) && ( ( pxItem )->xListItemIntegrityValue2 == pdINTEGRITY_CHECK_VALUE ) )
+    #define TEST_LIST_INTEGRITY( pxList )                           configASSERT( ( ( pxList )->xListIntegrityValue1 == pdINTEGRITY_CHECK_VALUE ) && ( ( pxList )->xListIntegrityValue2 == pdINTEGRITY_CHECK_VALUE ) )
 #endif /* configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES */
 
 /*
@@ -134,19 +134,19 @@
 struct xLIST;
 struct xLIST_ITEM
 {
-    listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE           /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+    FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE           /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
     configLIST_VOLATILE TickType_t xItemValue;          /**< The value being listed.  In most cases this is used to sort the list in ascending order. */
     struct xLIST_ITEM * configLIST_VOLATILE pxNext;     /**< Pointer to the next ListItem_t in the list. */
     struct xLIST_ITEM * configLIST_VOLATILE pxPrevious; /**< Pointer to the previous ListItem_t in the list. */
     void * pvOwner;                                     /**< Pointer to the object (normally a TCB) that contains the list item.  There is therefore a two way link between the object containing the list item and the list item itself. */
     struct xLIST * configLIST_VOLATILE pxContainer;     /**< Pointer to the list in which this list item is placed (if any). */
-    listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE          /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+    SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE          /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
 };
 typedef struct xLIST_ITEM ListItem_t;
 #if ( configUSE_MINI_LIST_ITEM == 1 )
     struct xMINI_LIST_ITEM
     {
-        listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+        FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
         configLIST_VOLATILE TickType_t xItemValue;
         struct xLIST_ITEM * configLIST_VOLATILE pxNext;
         struct xLIST_ITEM * configLIST_VOLATILE pxPrevious;
@@ -160,74 +160,74 @@ typedef struct xLIST_ITEM ListItem_t;
  */
 typedef struct xLIST
 {
-    listFIRST_LIST_INTEGRITY_CHECK_VALUE      /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+    FIRST_LIST_INTEGRITY_CHECK_VALUE      /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
     configLIST_VOLATILE UBaseType_t uxNumberOfItems;
-    ListItem_t * configLIST_VOLATILE pxIndex; /**< Used to walk through the list.  Points to the last item returned by a call to listGET_OWNER_OF_NEXT_ENTRY (). */
+    ListItem_t * configLIST_VOLATILE Index; /**< Used to walk through the list.  Points to the last item returned by a call to listGET_OWNER_OF_NEXT_ENTRY (). */
     MiniListItem_t xListEnd;                  /**< List item that contains the maximum possible item value meaning it is always at the end of the list and is therefore used as a marker. */
-    listSECOND_LIST_INTEGRITY_CHECK_VALUE     /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
+    SECOND_LIST_INTEGRITY_CHECK_VALUE     /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
 } List_t;
 /*
  * Access macro to set the owner of a list item.  The owner of a list item
  * is the object (usually a TCB) that contains the list item.
  *
- * \page listSET_LIST_ITEM_OWNER listSET_LIST_ITEM_OWNER
+ * \page SET_LIST_ITEM_OWNER SET_LIST_ITEM_OWNER
  * \ingroup LinkedList
  */
-#define listSET_LIST_ITEM_OWNER( pxListItem, pxOwner )    ( ( pxListItem )->pvOwner = ( void * ) ( pxOwner ) )
+#define SET_LIST_ITEM_OWNER( pxListItem, pxOwner )    ( ( pxListItem )->pvOwner = ( void * ) ( pxOwner ) )
 /*
  * Access macro to get the owner of a list item.  The owner of a list item
  * is the object (usually a TCB) that contains the list item.
  *
- * \page listGET_LIST_ITEM_OWNER listSET_LIST_ITEM_OWNER
+ * \page GET_LIST_ITEM_OWNER SET_LIST_ITEM_OWNER
  * \ingroup LinkedList
  */
-#define listGET_LIST_ITEM_OWNER( pxListItem )             ( ( pxListItem )->pvOwner )
+#define GET_LIST_ITEM_OWNER( pxListItem )             ( ( pxListItem )->pvOwner )
 /*
  * Access macro to set the value of the list item.  In most cases the value is
  * used to sort the list in ascending order.
  *
- * \page listSET_LIST_ITEM_VALUE listSET_LIST_ITEM_VALUE
+ * \page SET_LIST_ITEM_VALUE SET_LIST_ITEM_VALUE
  * \ingroup LinkedList
  */
-#define listSET_LIST_ITEM_VALUE( pxListItem, xValue )     ( ( pxListItem )->xItemValue = ( xValue ) )
+#define SET_LIST_ITEM_VALUE( pxListItem, xValue )     ( ( pxListItem )->xItemValue = ( xValue ) )
 /*
  * Access macro to retrieve the value of the list item.  The value can
  * represent anything - for example the priority of a task, or the time at
  * which a task should be unblocked.
  *
- * \page listGET_LIST_ITEM_VALUE listGET_LIST_ITEM_VALUE
+ * \page GET_LIST_ITEM_VALUE GET_LIST_ITEM_VALUE
  * \ingroup LinkedList
  */
-#define listGET_LIST_ITEM_VALUE( pxListItem )             ( ( pxListItem )->xItemValue )
+#define GET_LIST_ITEM_VALUE( pxListItem )             ( ( pxListItem )->xItemValue )
 /*
  * Access macro to retrieve the value of the list item at the head of a given
  * list.
  *
- * \page listGET_LIST_ITEM_VALUE listGET_LIST_ITEM_VALUE
+ * \page GET_LIST_ITEM_VALUE GET_LIST_ITEM_VALUE
  * \ingroup LinkedList
  */
-#define listGET_ITEM_VALUE_OF_HEAD_ENTRY( pxList )        ( ( ( pxList )->xListEnd ).pxNext->xItemValue )
+#define GET_ITEM_VALUE_OF_HEAD_ENTRY( pxList )        ( ( ( pxList )->xListEnd ).pxNext->xItemValue )
 /*
  * Return the list item at the head of the list.
  *
- * \page listGET_HEAD_ENTRY listGET_HEAD_ENTRY
+ * \page GET_HEAD_ENTRY GET_HEAD_ENTRY
  * \ingroup LinkedList
  */
-#define listGET_HEAD_ENTRY( pxList )                      ( ( ( pxList )->xListEnd ).pxNext )
+#define GET_HEAD_ENTRY( pxList )                      ( ( ( pxList )->xListEnd ).pxNext )
 /*
  * Return the next list item.
  *
- * \page listGET_NEXT listGET_NEXT
+ * \page GET_NEXT GET_NEXT
  * \ingroup LinkedList
  */
-#define listGET_NEXT( pxListItem )                        ( ( pxListItem )->pxNext )
+#define GET_NEXT( pxListItem )                        ( ( pxListItem )->pxNext )
 /*
  * Return the list item that marks the end of the list
  *
  * \page listGET_END_MARKER listGET_END_MARKER
  * \ingroup LinkedList
  */
-#define listGET_END_MARKER( pxList )                      ( ( ListItem_t const * ) ( &( ( pxList )->xListEnd ) ) )
+#define GET_END_MARKER( pxList )                      ( ( ListItem_t const * ) ( &( ( pxList )->xListEnd ) ) )
 /*
  * Access macro to determine if a list contains any items.  The macro will
  * only have the value true if the list is empty.
@@ -235,16 +235,16 @@ typedef struct xLIST
  * \page listLIST_IS_EMPTY listLIST_IS_EMPTY
  * \ingroup LinkedList
  */
-#define listLIST_IS_EMPTY( pxList )                       ( ( ( pxList )->uxNumberOfItems == ( UBaseType_t ) 0 ) ? true : false )
+#define LIST_IS_EMPTY( pxList )                       ( ( ( pxList )->uxNumberOfItems == ( UBaseType_t ) 0 ) ? true : false )
 /*
  * Access macro to return the number of items in the list.
  */
-#define listCURRENT_LIST_LENGTH( pxList )                 ( ( pxList )->uxNumberOfItems )
+#define CURRENT_LIST_LENGTH( pxList )                 ( ( pxList )->uxNumberOfItems )
 /*
  * Access function to obtain the owner of the next entry in a list.
  *
- * The list member pxIndex is used to walk through a list.  Calling
- * listGET_OWNER_OF_NEXT_ENTRY increments pxIndex to the next item in the list
+ * The list member Index is used to walk through a list.  Calling
+ * listGET_OWNER_OF_NEXT_ENTRY increments Index to the next item in the list
  * and returns that entry's pxOwner parameter.  Using multiple calls to this
  * function it is therefore possible to move through every item contained in
  * a list.
@@ -261,22 +261,22 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #if ( configNUMBER_OF_CORES == 1 )
-    #define listGET_OWNER_OF_NEXT_ENTRY( pxTCB, pxList )                                       \
+    #define GET_OWNER_OF_NEXT_ENTRY( pxTCB, pxList )                                       \
     do {                                                                                       \
         List_t * const pxConstList = ( pxList );                                               \
         /* Increment the index to the next item and return the item, ensuring */               \
         /* we don't return the marker used at the end of the list.  */                         \
-        ( pxConstList )->pxIndex = ( pxConstList )->pxIndex->pxNext;                           \
-        if( ( void * ) ( pxConstList )->pxIndex == ( void * ) &( ( pxConstList )->xListEnd ) ) \
+        ( pxConstList )->Index = ( pxConstList )->Index->pxNext;                           \
+        if( ( void * ) ( pxConstList )->Index == ( void * ) &( ( pxConstList )->xListEnd ) ) \
         {                                                                                      \
-            ( pxConstList )->pxIndex = ( pxConstList )->xListEnd.pxNext;                       \
+            ( pxConstList )->Index = ( pxConstList )->xListEnd.pxNext;                       \
         }                                                                                      \
-        ( pxTCB ) = ( pxConstList )->pxIndex->pvOwner;                                         \
+        ( pxTCB ) = ( pxConstList )->Index->pvOwner;                                         \
     } while( 0 )
 #else /* #if ( configNUMBER_OF_CORES == 1 ) */
 /* This function is not required in SMP. FreeRTOS SMP scheduler doesn't use
- * pxIndex and it should always point to the xListEnd. Not defining this macro
- * here to prevent updating pxIndex.
+ * Index and it should always point to the xListEnd. Not defining this macro
+ * here to prevent updating Index.
  */
 #endif /* #if ( configNUMBER_OF_CORES == 1 ) */
 /*
@@ -295,7 +295,7 @@ typedef struct xLIST
  * \page listREMOVE_ITEM listREMOVE_ITEM
  * \ingroup LinkedList
  */
-#define listREMOVE_ITEM( pxItemToRemove ) \
+#define REMOVE_ITEM( pxItemToRemove ) \
     do {                                  \
         /* The list item knows which list it is in.  Obtain the list from the list \
          * item. */                                                                                 \
@@ -304,9 +304,9 @@ typedef struct xLIST
         ( pxItemToRemove )->pxNext->pxPrevious = ( pxItemToRemove )->pxPrevious;                    \
         ( pxItemToRemove )->pxPrevious->pxNext = ( pxItemToRemove )->pxNext;                        \
         /* Make sure the index is left pointing to a valid item. */                                 \
-        if( pxList->pxIndex == ( pxItemToRemove ) )                                                 \
+        if( pxList->Index == ( pxItemToRemove ) )                                                 \
         {                                                                                           \
-            pxList->pxIndex = ( pxItemToRemove )->pxPrevious;                                       \
+            pxList->Index = ( pxItemToRemove )->pxPrevious;                                       \
         }                                                                                           \
                                                                                                     \
         ( pxItemToRemove )->pxContainer = NULL;                                                     \
@@ -320,12 +320,12 @@ typedef struct xLIST
  * such that it will be the last item within the list returned by multiple
  * calls to listGET_OWNER_OF_NEXT_ENTRY.
  *
- * The list member pxIndex is used to walk through a list.  Calling
- * listGET_OWNER_OF_NEXT_ENTRY increments pxIndex to the next item in the list.
+ * The list member Index is used to walk through a list.  Calling
+ * listGET_OWNER_OF_NEXT_ENTRY increments Index to the next item in the list.
  * Placing an item in a list using vListInsertEnd effectively places the item
- * in the list position pointed to by pxIndex.  This means that every other
+ * in the list position pointed to by Index.  This means that every other
  * item within the list will be returned by listGET_OWNER_OF_NEXT_ENTRY before
- * the pxIndex parameter again points to the item being inserted.
+ * the Index parameter again points to the item being inserted.
  *
  * @param pxList The list into which the item is to be inserted.
  *
@@ -334,24 +334,24 @@ typedef struct xLIST
  * \page listINSERT_END listINSERT_END
  * \ingroup LinkedList
  */
-#define listINSERT_END( pxList, pxNewListItem )           \
+#define INSERT_END( pxList, pxNewListItem )           \
     do {                                                  \
-        ListItem_t * const pxIndex = ( pxList )->pxIndex; \
+        ListItem_t * const Index = ( pxList )->Index; \
                                                           \
         /* Only effective when configASSERT() is also defined, these tests may catch \
          * the list data structures being overwritten in memory.  They will not catch \
          * data errors caused by incorrect configuration or use of FreeRTOS. */ \
-        listTEST_LIST_INTEGRITY( ( pxList ) );                                  \
-        listTEST_LIST_ITEM_INTEGRITY( ( pxNewListItem ) );                      \
+        TEST_LIST_INTEGRITY( ( pxList ) );                                  \
+        TEST_LIST_ITEM_INTEGRITY( ( pxNewListItem ) );                      \
                                                                                 \
         /* Insert a new list item into ( pxList ), but rather than sort the list, \
          * makes the new list item the last item to be removed by a call to \
          * listGET_OWNER_OF_NEXT_ENTRY(). */                                                        \
-        ( pxNewListItem )->pxNext = pxIndex;                                                        \
-        ( pxNewListItem )->pxPrevious = pxIndex->pxPrevious;                                        \
+        ( pxNewListItem )->pxNext = Index;                                                        \
+        ( pxNewListItem )->pxPrevious = Index->pxPrevious;                                        \
                                                                                                     \
-        pxIndex->pxPrevious->pxNext = ( pxNewListItem );                                            \
-        pxIndex->pxPrevious = ( pxNewListItem );                                                    \
+        Index->pxPrevious->pxNext = ( pxNewListItem );                                            \
+        Index->pxPrevious = ( pxNewListItem );                                                    \
                                                                                                     \
         /* Remember which list the item is in. */                                                   \
         ( pxNewListItem )->pxContainer = ( pxList );                                                \
@@ -374,7 +374,7 @@ typedef struct xLIST
  * \page listGET_OWNER_OF_HEAD_ENTRY listGET_OWNER_OF_HEAD_ENTRY
  * \ingroup LinkedList
  */
-#define listGET_OWNER_OF_HEAD_ENTRY( pxList )            ( ( &( ( pxList )->xListEnd ) )->pxNext->pvOwner )
+#define GET_OWNER_OF_HEAD_ENTRY( pxList )            ( ( &( ( pxList )->xListEnd ) )->pxNext->pvOwner )
 /*
  * Check to see if a list item is within a list.  The list item maintains a
  * "container" pointer that points to the list it is in.  All this macro does
@@ -384,20 +384,20 @@ typedef struct xLIST
  * @param pxListItem The list item we want to know if is in the list.
  * @return true if the list item is in the list, otherwise false.
  */
-#define listIS_CONTAINED_WITHIN( pxList, pxListItem )    ( ( ( pxListItem )->pxContainer == ( pxList ) ) ? ( true ) : ( false ) )
+#define IS_CONTAINED_WITHIN( pxList, pxListItem )    ( ( ( pxListItem )->pxContainer == ( pxList ) ) ? ( true ) : ( false ) )
 /*
  * Return the list a list item is contained within (referenced from).
  *
  * @param pxListItem The list item being queried.
  * @return A pointer to the List_t object that references the pxListItem
  */
-#define listLIST_ITEM_CONTAINER( pxListItem )            ( ( pxListItem )->pxContainer )
+#define LIST_ITEM_CONTAINER( pxListItem )            ( ( pxListItem )->pxContainer )
 /*
  * This provides a crude means of knowing if a list has been initialised, as
  * pxList->xListEnd.xItemValue is set to portMAX_DELAY by the vListInitialise()
  * function.
  */
-#define listLIST_IS_INITIALISED( pxList )                ( ( pxList )->xListEnd.xItemValue == portMAX_DELAY )
+#define LIST_IS_INITIALISED( pxList )                ( ( pxList )->xListEnd.xItemValue == portMAX_DELAY )
 /*
  * Must be called before a list is used!  This initialises all the members
  * of the list structure and inserts the xListEnd item into the list as a
@@ -437,12 +437,12 @@ void vListInsert( List_t * const pxList,
  * such that it will be the last item within the list returned by multiple
  * calls to listGET_OWNER_OF_NEXT_ENTRY.
  *
- * The list member pxIndex is used to walk through a list.  Calling
- * listGET_OWNER_OF_NEXT_ENTRY increments pxIndex to the next item in the list.
+ * The list member Index is used to walk through a list.  Calling
+ * listGET_OWNER_OF_NEXT_ENTRY increments Index to the next item in the list.
  * Placing an item in a list using vListInsertEnd effectively places the item
- * in the list position pointed to by pxIndex.  This means that every other
+ * in the list position pointed to by Index.  This means that every other
  * item within the list will be returned by listGET_OWNER_OF_NEXT_ENTRY before
- * the pxIndex parameter again points to the item being inserted.
+ * the Index parameter again points to the item being inserted.
  *
  * @param pxList The list into which the item is to be inserted.
  *
