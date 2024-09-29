@@ -7,7 +7,6 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/toolchain.cmake")
 add_library(freertos 
     tasks.cpp
     timers.cpp
-    list.cpp
     queue.cpp
     stream_buffer.cpp
     event_groups.cpp

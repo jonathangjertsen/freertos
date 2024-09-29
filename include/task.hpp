@@ -3356,7 +3356,7 @@ BaseType_t xTaskIncrementTick( void ) ;
  * the delay period expires.
  *
  * The 'unordered' version replaces the event list item value with the
- * xItemValue value, and inserts the list item at the end of the list.
+ * Value value, and inserts the list item at the end of the list.
  *
  * The 'ordered' version uses the existing event list item value (which is the
  * owning task's priority) to insert the list item into the event list in task
@@ -3365,7 +3365,7 @@ BaseType_t xTaskIncrementTick( void ) ;
  * @param pxEventList The list containing tasks that are blocked waiting
  * for the event to occur.
  *
- * @param xItemValue The item value to use for the event list item when the
+ * @param Value The item value to use for the event list item when the
  * event list is not ordered by task priority.
  *
  * @param xTicksToWait The maximum amount of time that the task should wait
@@ -3376,7 +3376,7 @@ BaseType_t xTaskIncrementTick( void ) ;
 void vTaskPlaceOnEventList( List_t<TCB_t> * const pxEventList,
                             const TickType_t xTicksToWait ) ;
 void vTaskPlaceOnUnorderedEventList( List_t<TCB_t> * pxEventList,
-                                     const TickType_t xItemValue,
+                                     const TickType_t Value,
                                      const TickType_t xTicksToWait ) ;
 /*
  * THIS FUNCTION MUST NOT BE USED FROM APPLICATION CODE.  IT IS AN
@@ -3394,8 +3394,8 @@ void vTaskPlaceOnEventListRestricted( List_t<TCB_t> * const pxEventList,
                                       const BaseType_t xWaitIndefinitely ) ;
 
 BaseType_t xTaskRemoveFromEventList( const List_t<TCB_t> * const pxEventList ) ;
-void vTaskRemoveFromUnorderedEventList( ListItem_t<TCB_t> * pxEventListItem,
-                                        const TickType_t xItemValue ) ;
+void vTaskRemoveFromUnorderedEventList( Item_t<TCB_t> * pxEventListItem,
+                                        const TickType_t Value ) ;
 /*
  * THIS FUNCTION MUST NOT BE USED FROM APPLICATION CODE.  IT IS ONLY
  * INTENDED FOR USE WHEN IMPLEMENTING A PORT OF THE SCHEDULER AND IS

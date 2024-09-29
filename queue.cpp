@@ -189,7 +189,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
  * other tasks that are waiting for the same mutex.  This function returns
  * that priority.
  */
-    static UBaseType_t GetHighestPriorityOfWaitToReceiveList( const Queue_t * const pxQueue ) ;
+    static UBaseType_t GetHighestPriorityOfWaitToReceiveList(Queue_t * const pxQueue ) ;
 #endif
 
 /*
@@ -259,12 +259,7 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
             pxQueue->cTxLock = queueUNLOCKED;
             if( xNewQueue == false )
             {
-                /* If there are tasks blocked waiting to read from the queue, then
-                 * the tasks will remain blocked as after this function exits the queue
-                 * will still be empty.  If there are tasks blocked waiting to write to
-                 * the queue, then one should be unblocked as after this function exits
-                 * it will be possible to write to it. */
-                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+                if(pxQueue->xTasksWaitingToSend.Length > 0)
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                     {
@@ -275,8 +270,8 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
             else
             {
                 /* Ensure the event queues start in the correct state. */
-                ListInitialise( &( pxQueue->xTasksWaitingToSend ) );
-                ListInitialise( &( pxQueue->xTasksWaitingToReceive ) );
+                pxQueue->xTasksWaitingToSend.init();
+                pxQueue->xTasksWaitingToReceive.init();
             }
         }
         EXIT_CRITICAL();
@@ -688,77 +683,38 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
              * queue is full. */
             if( ( pxQueue->uxMessagesWaiting < pxQueue->uxLength ) || ( xCopyPosition == queueOVERWRITE ) )
             {
-                #if ( configUSE_QUEUE_SETS == 1 )
+                const UBaseType_t uxPreviousMessagesWaiting = pxQueue->uxMessagesWaiting;
+                xYieldRequired = CopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
+                if( pxQueue->pxQueueSetContainer != NULL )
                 {
-                    const UBaseType_t uxPreviousMessagesWaiting = pxQueue->uxMessagesWaiting;
-                    xYieldRequired = CopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
-                    if( pxQueue->pxQueueSetContainer != NULL )
+                    if( ( xCopyPosition == queueOVERWRITE ) && ( uxPreviousMessagesWaiting != ( UBaseType_t ) 0 ) )
                     {
-                        if( ( xCopyPosition == queueOVERWRITE ) && ( uxPreviousMessagesWaiting != ( UBaseType_t ) 0 ) )
-                        {
-                            /* Do not notify the queue set as an existing item
-                             * was overwritten in the queue so the number of items
-                             * in the queue has not changed. */
-                        }
-                        else if( NotifyQueueSetContainer( pxQueue ) != false )
-                        {
-                            /* The queue is a member of a queue set, and posting
-                             * to the queue set caused a higher priority task to
-                             * unblock. A context switch is required. */
-                            queueYIELD_IF_USING_PREEMPTION();
-                        }
+                        /* Do not notify the queue set as an existing item
+                            * was overwritten in the queue so the number of items
+                            * in the queue has not changed. */
                     }
-                    else
+                    else if( NotifyQueueSetContainer( pxQueue ) != false )
                     {
-                        /* If there was a task waiting for data to arrive on the
-                         * queue then unblock it now. */
-                        if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
-                        {
-                            if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
-                            {
-                                /* The unblocked task has a priority higher than
-                                 * our own so yield immediately.  Yes it is ok to
-                                 * do this from within the critical section - the
-                                 * kernel takes care of that. */
-                                queueYIELD_IF_USING_PREEMPTION();
-                            }
-                        }
-                        else if( xYieldRequired != false )
-                        {
-                            /* This path is a special case that will only get
-                             * executed if the task was holding multiple mutexes
-                             * and the mutexes were given back in an order that is
-                             * different to that in which they were taken. */
-                            queueYIELD_IF_USING_PREEMPTION();
-                        }
+                        /* The queue is a member of a queue set, and posting
+                            * to the queue set caused a higher priority task to
+                            * unblock. A context switch is required. */
+                        queueYIELD_IF_USING_PREEMPTION();
                     }
                 }
-                #else /* configUSE_QUEUE_SETS */
+                else
                 {
-                    xYieldRequired = CopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
-                    /* If there was a task waiting for data to arrive on the
-                     * queue then unblock it now. */
-                    if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                    if(pxQueue->xTasksWaitingToReceive.Length > 0)
                     {
                         if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                         {
-                            /* The unblocked task has a priority higher than
-                             * our own so yield immediately.  Yes it is ok to do
-                             * this from within the critical section - the kernel
-                             * takes care of that. */
                             queueYIELD_IF_USING_PREEMPTION();
                         }
                     }
                     else if( xYieldRequired != false )
                     {
-                        /* This path is a special case that will only get
-                         * executed if the task was holding multiple mutexes and
-                         * the mutexes were given back in an order that is
-                         * different to that in which they were taken. */
                         queueYIELD_IF_USING_PREEMPTION();
                     }
                 }
-                #endif /* configUSE_QUEUE_SETS */
                 EXIT_CRITICAL();
                 return true;
             }
@@ -881,7 +837,7 @@ BaseType_t xQueueGenericSendFromISR( QueueHandle_t xQueue,
                     }
                     else
                     {
-                        if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                        if(pxQueue->xTasksWaitingToReceive.Length > 0)
                         {
                             if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                             {
@@ -989,7 +945,7 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
                     }
                     else
                     {
-                        if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                        if(pxQueue->xTasksWaitingToReceive.Length > 0)
                         {
                             if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                             {
@@ -1067,10 +1023,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
                 /* Data available, remove one item. */
                 CopyDataFromQueue( pxQueue, pvBuffer );
                 pxQueue->uxMessagesWaiting = ( UBaseType_t ) ( uxMessagesWaiting - ( UBaseType_t ) 1 );
-                /* There is now space in the queue, were any tasks waiting to
-                 * post to the queue?  If so, unblock the highest priority waiting
-                 * task. */
-                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+                if(pxQueue->xTasksWaitingToSend.Length > 0)
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                     {
@@ -1190,7 +1143,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                 #endif /* configUSE_MUTEXES */
                 /* Check to see if other tasks are blocked waiting to give the
                  * semaphore, and if so, unblock the highest priority such task. */
-                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+                if(pxQueue->xTasksWaitingToSend.Length > 0)
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                     {
@@ -1286,13 +1239,6 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                              * again, but only as low as the next highest priority
                              * task that is waiting for the same mutex. */
                             uxHighestWaitingPriority = GetHighestPriorityOfWaitToReceiveList( pxQueue );
-                            /* vTaskPriorityDisinheritAfterTimeout uses the uxHighestWaitingPriority
-                             * parameter to index ReadyTasksLists when adding the task holding
-                             * mutex to the ready list for its new priority. Coverity thinks that
-                             * it can result in out-of-bounds access which is not true because
-                             * uxHighestWaitingPriority, as returned by GetHighestPriorityOfWaitToReceiveList,
-                             * is capped at ( configMAX_PRIORITIES - 1 ). */
-                            /* coverity[overrun] */
                             vTaskPriorityDisinheritAfterTimeout( pxQueue->u.xSemaphore.xMutexHolder, uxHighestWaitingPriority );
                         }
                         EXIT_CRITICAL();
@@ -1342,7 +1288,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
                 pxQueue->u.xQueue.pcReadFrom = pcOriginalReadPosition;
                 /* The data is being left in the queue, so see if there are
                  * any other tasks waiting for the data. */
-                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                if(pxQueue->xTasksWaitingToReceive.Length > 0)
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                     {
@@ -1437,7 +1383,7 @@ BaseType_t xQueueReceiveFromISR( QueueHandle_t xQueue,
              * locked. */
             if( cRxLock == queueUNLOCKED )
             {
-                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+                if(pxQueue->xTasksWaitingToSend.Length > 0)
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                     {
@@ -1573,7 +1519,7 @@ UBaseType_t uxQueueGetQueueLength( QueueHandle_t xQueue ) /*  */
 }
 
 #if ( configUSE_MUTEXES == 1 )
-static UBaseType_t GetHighestPriorityOfWaitToReceiveList( const Queue_t * const pxQueue )
+static UBaseType_t GetHighestPriorityOfWaitToReceiveList( Queue_t * const pxQueue )
 {
     UBaseType_t uxHighestPriorityOfWaitingTasks;
     /* If a task waiting for a mutex causes the mutex holder to inherit a
@@ -1582,9 +1528,9 @@ static UBaseType_t GetHighestPriorityOfWaitToReceiveList( const Queue_t * const 
         * other tasks that are waiting for the same mutex.  For this purpose,
         * return the priority of the highest priority task that is waiting for the
         * mutex. */
-    if(CURRENT_LIST_LENGTH(&pxQueue->xTasksWaitingToReceive) > 0U )
+    if(pxQueue->xTasksWaitingToReceive.Length > 0U )
     {
-        uxHighestPriorityOfWaitingTasks = ( UBaseType_t ) ( ( UBaseType_t ) configMAX_PRIORITIES - ( UBaseType_t ) GET_ITEM_VALUE_OF_HEAD_ENTRY( &( pxQueue->xTasksWaitingToReceive ) ) );
+        uxHighestPriorityOfWaitingTasks = ( UBaseType_t ) ( ( UBaseType_t ) configMAX_PRIORITIES - ( UBaseType_t )(pxQueue->xTasksWaitingToReceive.head()->Value));
     }
     else
     {
@@ -1694,7 +1640,7 @@ static void UnlockQueue( Queue_t * const pxQueue )
                     /* Tasks that are removed from the event list will get
                      * added to the pending ready list as the scheduler is still
                      * suspended. */
-                    if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                    if(pxQueue->xTasksWaitingToReceive.Length > 0)
                     {
                         if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                         {
@@ -1739,7 +1685,7 @@ static void UnlockQueue( Queue_t * const pxQueue )
         int8_t cRxLock = pxQueue->cRxLock;
         while( cRxLock > queueLOCKED_UNMODIFIED )
         {
-            if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+            if(pxQueue->xTasksWaitingToSend.Length > 0)
             {
                 if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                 {
@@ -1938,7 +1884,7 @@ BaseType_t xQueueAddToSet( QueueSetMemberHandle_t xQueueOrSemaphore,
             xReturn = CopyDataToQueue( pxQueueSetContainer, &pxQueue, queueSEND_TO_BACK );
             if( cTxLock == queueUNLOCKED )
             {
-                if( LIST_IS_EMPTY( &( pxQueueSetContainer->xTasksWaitingToReceive ) ) == false )
+                if(pxQueueSetContainer->xTasksWaitingToReceive.Length > 0)
                 {
                     if( xTaskRemoveFromEventList( &( pxQueueSetContainer->xTasksWaitingToReceive ) ) != false )
                     {

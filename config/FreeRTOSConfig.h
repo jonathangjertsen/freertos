@@ -37,6 +37,7 @@
 #define configKERNEL_PROVIDED_STATIC_MEMORY 1
 #define INCLUDE_xTaskAbortDelay 1
 #define configUSE_QUEUE_SETS 1
+#define INCLUDE_xTaskDelayUntil 1
 
 void freertos_config_assert_handler(const char* func, size_t line, const char *msg);
 #define configASSERT( x ) \

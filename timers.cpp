@@ -49,7 +49,7 @@
 struct Timer_t                                               /* The old naming convention is used to prevent breaking kernel aware debuggers. */
 {
     const char * pcTimerName;                                                /**< Text name.  This is not used by the kernel, it is included simply to make debugging easier. */
-    ListItem_t<Timer_t> TimerListItem;                                               /**< Standard linked list item as used by all kernel features for event management. */
+    Item_t<Timer_t> TimerListItem;                                               /**< Standard linked list item as used by all kernel features for event management. */
     TickType_t TimerPeriodInTicks;                                          /**< How quickly and often the timer expires. */
     void * pvTimerID;                                                        /**< An ID to identify the timer.  This allows the timer to be identified when the same callback is used for multiple timers. */
     portTIMER_CALLBACK_ATTRIBUTE TimerCallbackFunction_t pxCallbackFunction; /**< The function that will be called when the timer expires. */
@@ -275,18 +275,13 @@ static void InitialiseNewTimer( const char * const pcTimerName,
                                     TimerCallbackFunction_t pxCallbackFunction,
                                     Timer_t * pxNewTimer )
 {
-    /* 0 is not a valid value for TimerPeriodInTicks. */
     configASSERT( ( TimerPeriodInTicks > 0 ) );
-    /* Ensure the infrastructure used by the timer service task has been
-        * created/initialised. */
     CheckForValidListAndQueue();
-    /* Initialise the timer structure members using the function
-        * parameters. */
     pxNewTimer->pcTimerName = pcTimerName;
     pxNewTimer->TimerPeriodInTicks = TimerPeriodInTicks;
     pxNewTimer->pvTimerID = pvTimerID;
     pxNewTimer->pxCallbackFunction = pxCallbackFunction;
-    ListInitialiseItem( &( pxNewTimer->TimerListItem ) );
+    pxNewTimer->TimerListItem.init();
     if( xAutoReload != false )
     {
         pxNewTimer->ucStatus |= ( uint8_t ) tmrSTATUS_IS_AUTORELOAD;
@@ -434,9 +429,7 @@ TickType_t TimerGetExpiryTime( TimerHandle_t Timer )
     TickType_t Return;
     
     configASSERT( Timer );
-    Return = GET_LIST_ITEM_VALUE( &( pTimer->TimerListItem ) );
-    
-    return Return;
+    return pTimer->TimerListItem.Value;
 }
 
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
@@ -485,16 +478,11 @@ static void ReloadTimer( Timer_t * const pTimer,
     }
 }
 
-static void ProcessExpiredTimer( const TickType_t NextExpireTime,
-                                    const TickType_t TimeNow )
+static void ProcessExpiredTimer( const TickType_t NextExpireTime, const TickType_t TimeNow )
 {
 
-    Timer_t * const pTimer = GET_OWNER_OF_HEAD_ENTRY( CurrentTimerList );
-    /* Remove the timer from the list of active timers.  A check has already
-        * been performed to ensure the list is not empty. */
-    ( void ) ListRemove( &( pTimer->TimerListItem ) );
-    /* If the timer is an auto-reload timer then calculate the next
-        * expiry time and re-insert the timer in the list of active timers. */
+    Timer_t * const pTimer = CurrentTimerList->head()->Owner;
+    pTimer->TimerListItem.remove();
     if( ( pTimer->ucStatus & tmrSTATUS_IS_AUTORELOAD ) != 0U )
     {
         ReloadTimer( pTimer, NextExpireTime, TimeNow );
@@ -555,7 +543,7 @@ static void ProcessTimerOrBlockTask( const TickType_t NextExpireTime,
                     * received - whichever comes first.  The following line cannot
                     * be reached unless NextExpireTime > TimeNow, except in the
                     * case when the current timer list is empty. */
-                ListWasEmpty |= LIST_IS_EMPTY( OverflowTimerList );
+                ListWasEmpty |= OverflowTimerList->empty();
                 vQueueWaitForMessageRestricted( TimerQueue, ( NextExpireTime - TimeNow ), ListWasEmpty );
                 if( TaskResumeAll() == false )
                 {
@@ -582,14 +570,13 @@ static TickType_t GetNextExpireTime( BaseType_t * const ListWasEmpty )
         * this task to unblock when the tick count overflows, at which point the
         * timer lists will be switched and the next expiry time can be
         * re-assessed.  */
-    *ListWasEmpty = LIST_IS_EMPTY( CurrentTimerList );
+    *ListWasEmpty = CurrentTimerList->empty();
     if( !*ListWasEmpty )
     {
-        NextExpireTime = GET_ITEM_VALUE_OF_HEAD_ENTRY( CurrentTimerList );
+        NextExpireTime = CurrentTimerList->head()->Value;
     }
     else
     {
-        /* Ensure the task unblocks when the tick count rolls over. */
         NextExpireTime = ( TickType_t ) 0U;
     }
     return NextExpireTime;
@@ -618,8 +605,8 @@ static BaseType_t InsertTimerInActiveList( Timer_t * const pTimer,
                                                 const TickType_t xCommandTime )
 {
     BaseType_t xProcessTimerNow = false;
-    SET_LIST_ITEM_VALUE( &( pTimer->TimerListItem ), xNextExpiryTime );
-    SET_LIST_ITEM_OWNER( &( pTimer->TimerListItem ), pTimer );
+    pTimer->TimerListItem.Value = xNextExpiryTime;
+    pTimer->TimerListItem.Owner = pTimer;
     if( xNextExpiryTime <= TimeNow )
     {
         /* Has the expiry time elapsed between the command to start/reset a
@@ -630,7 +617,7 @@ static BaseType_t InsertTimerInActiveList( Timer_t * const pTimer,
                 * processed actually exceeds the timers period.  */
             xProcessTimerNow = true;
         } else {
-            ListInsert( OverflowTimerList, &( pTimer->TimerListItem ) );
+            OverflowTimerList->insert(&( pTimer->TimerListItem ) );
         }
     } else {
         if( ( TimeNow < xCommandTime ) && ( xNextExpiryTime >= xCommandTime ) ) {
@@ -639,7 +626,7 @@ static BaseType_t InsertTimerInActiveList( Timer_t * const pTimer,
                 * its expiry time and should be processed immediately. */
             xProcessTimerNow = true;
         } else {
-            ListInsert( CurrentTimerList, &( pTimer->TimerListItem ) );
+            CurrentTimerList->insert(&( pTimer->TimerListItem ) );
         }
     }
     return xProcessTimerNow;
@@ -668,24 +655,13 @@ static void ProcessReceivedCommands( void )
             }
         }
         #endif /* INCLUDE_TimerPendFunctionCall */
-        /* Commands that are positive are timer commands rather than pended
-            * function calls. */
         if( xMessage.xMessageID >= ( BaseType_t ) 0 )
         {
-            /* The messages uses the TimerParameters member to work on a
-                * software timer. */
             pTimer = xMessage.u.TimerParameters.pTimer;
-            if( IS_CONTAINED_WITHIN<Timer_t>( nullptr, &( pTimer->TimerListItem ) ) == false )
+            if(pTimer->TimerListItem.Container != nullptr)
             {
-                /* The timer is in a list, remove it. */
-                ( void ) ListRemove( &( pTimer->TimerListItem ) );
+                pTimer->TimerListItem.remove();
             }
-            /* In this case the TimerListsWereSwitched parameter is not used, but
-                *  it must be present in the function call.  SampleTimeNow() must be
-                *  called after the message is received from TimerQueue so there is no
-                *  possibility of a higher priority task adding a message to the message
-                *  queue with a time that is ahead of the timer daemon task (because it
-                *  pre-empted the timer daemon task after the TimeNow value was set). */
             TimeNow = SampleTimeNow( &TimerListsWereSwitched );
             switch( xMessage.xMessageID )
             {
@@ -766,8 +742,8 @@ static void SwitchTimerLists( void )
 {
     TickType_t NextExpireTime;
     List_t<Timer_t> * Temp;
-    while( LIST_IS_EMPTY( CurrentTimerList ) == false ) {
-        NextExpireTime = GET_ITEM_VALUE_OF_HEAD_ENTRY( CurrentTimerList );
+    while(CurrentTimerList->Length > 0) {
+        NextExpireTime = CurrentTimerList->head()->Value;
         ProcessExpiredTimer( NextExpireTime, tmrMAX_TIME_BEFORE_OVERFLOW );
     }
     Temp = CurrentTimerList;
@@ -783,8 +759,8 @@ static void CheckForValidListAndQueue( void )
     ENTER_CRITICAL();
     if( TimerQueue == NULL )
     {
-        ListInitialise( &ActiveTimerList1 );
-        ListInitialise( &ActiveTimerList2 );
+        ActiveTimerList1.init();
+        ActiveTimerList2.init();
         CurrentTimerList = &ActiveTimerList1;
         OverflowTimerList = &ActiveTimerList2;
         static StaticQueue_t StaticTimerQueue;
