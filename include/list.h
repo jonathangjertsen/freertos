@@ -235,7 +235,7 @@ typedef struct xLIST
  * \page listLIST_IS_EMPTY listLIST_IS_EMPTY
  * \ingroup LinkedList
  */
-#define listLIST_IS_EMPTY( pxList )                       ( ( ( pxList )->uxNumberOfItems == ( UBaseType_t ) 0 ) ? pdTRUE : pdFALSE )
+#define listLIST_IS_EMPTY( pxList )                       ( ( ( pxList )->uxNumberOfItems == ( UBaseType_t ) 0 ) ? true : false )
 /*
  * Access macro to return the number of items in the list.
  */
@@ -382,9 +382,9 @@ typedef struct xLIST
  *
  * @param pxList The list we want to know if the list item is within.
  * @param pxListItem The list item we want to know if is in the list.
- * @return pdTRUE if the list item is in the list, otherwise pdFALSE.
+ * @return true if the list item is in the list, otherwise false.
  */
-#define listIS_CONTAINED_WITHIN( pxList, pxListItem )    ( ( ( pxListItem )->pxContainer == ( pxList ) ) ? ( pdTRUE ) : ( pdFALSE ) )
+#define listIS_CONTAINED_WITHIN( pxList, pxListItem )    ( ( ( pxListItem )->pxContainer == ( pxList ) ) ? ( true ) : ( false ) )
 /*
  * Return the list a list item is contained within (referenced from).
  *

@@ -56,7 +56,7 @@
                                     TaskHandle_t * pxCreatedTask ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -85,7 +85,7 @@
                                             StaticTask_t * const pxTaskBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
             TaskHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -107,7 +107,7 @@
     #if ( INCLUDE_vTaskDelete == 1 )
         void MPU_vTaskDelete( TaskHandle_t pxTaskToDelete ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -128,7 +128,7 @@
                                         TickType_t xTimeIncrement ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -149,7 +149,7 @@
         BaseType_t MPU_xTaskAbortDelay( TaskHandle_t xTask ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -169,7 +169,7 @@
     #if ( INCLUDE_vTaskDelay == 1 )
         void MPU_vTaskDelay( TickType_t xTicksToDelay ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -189,7 +189,7 @@
         UBaseType_t MPU_uxTaskPriorityGet( const TaskHandle_t pxTask ) /* FREERTOS_SYSTEM_CALL */
         {
             UBaseType_t uxReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -210,7 +210,7 @@
         void MPU_vTaskPrioritySet( TaskHandle_t pxTask,
                                    UBaseType_t uxNewPriority ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -230,7 +230,7 @@
         eTaskState MPU_eTaskGetState( TaskHandle_t pxTask ) /* FREERTOS_SYSTEM_CALL */
         {
             eTaskState eReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -253,7 +253,7 @@
                                BaseType_t xGetFreeStackSpace,
                                eTaskState eState ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -273,7 +273,7 @@
         TaskHandle_t MPU_xTaskGetIdleTaskHandle( void ) /* FREERTOS_SYSTEM_CALL */
         {
             TaskHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -293,7 +293,7 @@
     #if ( INCLUDE_vTaskSuspend == 1 )
         void MPU_vTaskSuspend( TaskHandle_t pxTaskToSuspend ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -312,7 +312,7 @@
     #if ( INCLUDE_vTaskSuspend == 1 )
         void MPU_vTaskResume( TaskHandle_t pxTaskToResume ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -330,7 +330,7 @@
 
     void MPU_vTaskSuspendAll( void ) /* FREERTOS_SYSTEM_CALL */
     {
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -348,7 +348,7 @@
     BaseType_t MPU_xTaskResumeAll( void ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -367,7 +367,7 @@
     TickType_t MPU_xTaskGetTickCount( void ) /* FREERTOS_SYSTEM_CALL */
     {
         TickType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -386,7 +386,7 @@
     UBaseType_t MPU_uxTaskGetNumberOfTasks( void ) /* FREERTOS_SYSTEM_CALL */
     {
         UBaseType_t uxReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -406,7 +406,7 @@
         TaskHandle_t MPU_xTaskGetHandle( const char * pcNameToQuery ) /* FREERTOS_SYSTEM_CALL */
         {
             TaskHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -426,7 +426,7 @@
     #if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS > 0 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
         void MPU_vTaskList( char * pcWriteBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -445,7 +445,7 @@
     #if ( ( configGENERATE_RUN_TIME_STATS == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS > 0 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
         void MPU_vTaskGetRunTimeStats( char * pcWriteBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -465,7 +465,7 @@
         configRUN_TIME_COUNTER_TYPE MPU_ulTaskGetIdleRunTimePercent( void ) /* FREERTOS_SYSTEM_CALL */
         {
             configRUN_TIME_COUNTER_TYPE xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -486,7 +486,7 @@
         configRUN_TIME_COUNTER_TYPE MPU_ulTaskGetIdleRunTimeCounter( void ) /* FREERTOS_SYSTEM_CALL */
         {
             configRUN_TIME_COUNTER_TYPE xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -507,7 +507,7 @@
         void MPU_vTaskSetApplicationTaskTag( TaskHandle_t xTask,
                                              TaskHookFunction_t pxTagValue ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -527,7 +527,7 @@
         TaskHookFunction_t MPU_xTaskGetApplicationTaskTag( TaskHandle_t xTask ) /* FREERTOS_SYSTEM_CALL */
         {
             TaskHookFunction_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -549,7 +549,7 @@
                                                     BaseType_t xIndex,
                                                     void * pvValue ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -570,7 +570,7 @@
                                                        BaseType_t xIndex ) /* FREERTOS_SYSTEM_CALL */
         {
             void * pvReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -592,7 +592,7 @@
                                                      void * pvParameter ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -615,7 +615,7 @@
                                               configRUN_TIME_COUNTER_TYPE * pulTotalRunTime ) /* FREERTOS_SYSTEM_CALL */
         {
             UBaseType_t uxReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -635,7 +635,7 @@
     BaseType_t MPU_xTaskCatchUpTicks( TickType_t xTicksToCatchUp ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -655,7 +655,7 @@
         UBaseType_t MPU_uxTaskGetStackHighWaterMark( TaskHandle_t xTask ) /* FREERTOS_SYSTEM_CALL */
         {
             UBaseType_t uxReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -676,7 +676,7 @@
         configSTACK_DEPTH_TYPE MPU_uxTaskGetStackHighWaterMark2( TaskHandle_t xTask ) /* FREERTOS_SYSTEM_CALL */
         {
             configSTACK_DEPTH_TYPE uxReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -697,7 +697,7 @@
         TaskHandle_t MPU_xTaskGetCurrentTaskHandle( void ) /* FREERTOS_SYSTEM_CALL */
         {
             TaskHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -718,7 +718,7 @@
         BaseType_t MPU_xTaskGetSchedulerState( void ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -737,7 +737,7 @@
 
     void MPU_vTaskSetTimeOutState( TimeOut_t * const pxTimeOut ) /* FREERTOS_SYSTEM_CALL */
     {
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -756,7 +756,7 @@
                                          TickType_t * const pxTicksToWait ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -780,7 +780,7 @@
                                            uint32_t * pulPreviousNotificationValue ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -805,7 +805,7 @@
                                                TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -828,7 +828,7 @@
                                               TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
         {
             uint32_t ulReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -850,7 +850,7 @@
                                                      UBaseType_t uxIndexToClear ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -873,7 +873,7 @@
                                                     uint32_t ulBitsToClear ) /* FREERTOS_SYSTEM_CALL */
         {
             uint32_t ulReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -896,7 +896,7 @@
                                                uint8_t ucQueueType ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -921,7 +921,7 @@
                                                      const uint8_t ucQueueType ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -942,7 +942,7 @@
                                        BaseType_t xNewQueue ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -964,7 +964,7 @@
                                       BaseType_t xCopyPosition ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -983,7 +983,7 @@
     UBaseType_t MPU_uxQueueMessagesWaiting( const QueueHandle_t pxQueue ) /* FREERTOS_SYSTEM_CALL */
     {
         UBaseType_t uxReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -1002,7 +1002,7 @@
     UBaseType_t MPU_uxQueueSpacesAvailable( const QueueHandle_t xQueue ) /* FREERTOS_SYSTEM_CALL */
     {
         UBaseType_t uxReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -1023,7 +1023,7 @@
                                   TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -1044,7 +1044,7 @@
                                TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -1064,7 +1064,7 @@
                                         TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -1084,7 +1084,7 @@
         TaskHandle_t MPU_xQueueGetMutexHolder( QueueHandle_t xSemaphore ) /* FREERTOS_SYSTEM_CALL */
         {
             void * xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1105,7 +1105,7 @@
         QueueHandle_t MPU_xQueueCreateMutex( const uint8_t ucQueueType ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1127,7 +1127,7 @@
                                                    StaticQueue_t * pxStaticQueue ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1149,7 +1149,7 @@
                                                          UBaseType_t uxInitialCount ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1172,7 +1172,7 @@
                                                                StaticQueue_t * pxStaticQueue ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1194,7 +1194,7 @@
                                                  TickType_t xBlockTime ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1215,7 +1215,7 @@
         BaseType_t MPU_xQueueGiveMutexRecursive( QueueHandle_t xMutex ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1236,7 +1236,7 @@
         QueueSetHandle_t MPU_xQueueCreateSet( UBaseType_t uxEventQueueLength ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueSetHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1258,7 +1258,7 @@
                                                         TickType_t xBlockTimeTicks ) /* FREERTOS_SYSTEM_CALL */
         {
             QueueSetMemberHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1280,7 +1280,7 @@
                                        QueueSetHandle_t xQueueSet ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1302,7 +1302,7 @@
                                             QueueSetHandle_t xQueueSet ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1323,7 +1323,7 @@
         void MPU_vQueueAddToRegistry( QueueHandle_t xQueue,
                                       const char * pcName ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1342,7 +1342,7 @@
     #if configQUEUE_REGISTRY_SIZE > 0
         void MPU_vQueueUnregisterQueue( QueueHandle_t xQueue ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1362,7 +1362,7 @@
         const char * MPU_pcQueueGetName( QueueHandle_t xQueue ) /* FREERTOS_SYSTEM_CALL */
         {
             const char * pcReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1381,7 +1381,7 @@
 
     void MPU_vQueueDelete( QueueHandle_t xQueue ) /* FREERTOS_SYSTEM_CALL */
     {
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -1400,7 +1400,7 @@
         void * MPU_pvTimerGetTimerID( const TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
         {
             void * pvReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1421,7 +1421,7 @@
         void MPU_vTimerSetTimerID( TimerHandle_t xTimer,
                                    void * pvNewID ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1441,7 +1441,7 @@
         BaseType_t MPU_xTimerIsTimerActive( TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1462,7 +1462,7 @@
         TaskHandle_t MPU_xTimerGetTimerDaemonTaskHandle( void ) /* FREERTOS_SYSTEM_CALL */
         {
             TaskHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1483,7 +1483,7 @@
         void MPU_vTimerSetReloadMode( TimerHandle_t xTimer,
                                       const BaseType_t uxAutoReload ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1503,7 +1503,7 @@
         UBaseType_t MPU_uxTimerGetReloadMode( TimerHandle_t xTimer )
         {
             UBaseType_t uxReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1524,7 +1524,7 @@
         const char * MPU_pcTimerGetName( TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
         {
             const char * pcReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1545,7 +1545,7 @@
         TickType_t MPU_xTimerGetPeriod( TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
         {
             TickType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1566,7 +1566,7 @@
         TickType_t MPU_xTimerGetExpiryTime( TimerHandle_t xTimer ) /* FREERTOS_SYSTEM_CALL */
         {
             TickType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1591,7 +1591,7 @@
                                                      const TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1612,7 +1612,7 @@
         EventGroupHandle_t MPU_xEventGroupCreate( void ) /* FREERTOS_SYSTEM_CALL */
         {
             EventGroupHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1633,7 +1633,7 @@
         EventGroupHandle_t MPU_xEventGroupCreateStatic( StaticEventGroup_t * pxEventGroupBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
             EventGroupHandle_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1658,7 +1658,7 @@
                                              TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
         {
             EventBits_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1680,7 +1680,7 @@
                                               const EventBits_t uxBitsToClear ) /* FREERTOS_SYSTEM_CALL */
         {
             EventBits_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1702,7 +1702,7 @@
                                             const EventBits_t uxBitsToSet ) /* FREERTOS_SYSTEM_CALL */
         {
             EventBits_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1726,7 +1726,7 @@
                                          TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
         {
             EventBits_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1746,7 +1746,7 @@
     #if ( configUSE_EVENT_GROUPS == 1 )
         void MPU_vEventGroupDelete( EventGroupHandle_t xEventGroup ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1769,7 +1769,7 @@
                                       TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
         {
             size_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1790,7 +1790,7 @@
         size_t MPU_xStreamBufferNextMessageLengthBytes( StreamBufferHandle_t xStreamBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
             size_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1814,7 +1814,7 @@
                                          TickType_t xTicksToWait ) /* FREERTOS_SYSTEM_CALL */
         {
             size_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1834,7 +1834,7 @@
     #if ( configUSE_STREAM_BUFFERS == 1 )
         void MPU_vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1854,7 +1854,7 @@
         BaseType_t MPU_xStreamBufferIsFull( StreamBufferHandle_t xStreamBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1875,7 +1875,7 @@
         BaseType_t MPU_xStreamBufferIsEmpty( StreamBufferHandle_t xStreamBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1896,7 +1896,7 @@
         BaseType_t MPU_xStreamBufferReset( StreamBufferHandle_t xStreamBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1917,7 +1917,7 @@
         size_t MPU_xStreamBufferSpacesAvailable( StreamBufferHandle_t xStreamBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
             size_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1938,7 +1938,7 @@
         size_t MPU_xStreamBufferBytesAvailable( StreamBufferHandle_t xStreamBuffer ) /* FREERTOS_SYSTEM_CALL */
         {
             size_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1960,7 +1960,7 @@
                                                      size_t xTriggerLevel ) /* FREERTOS_SYSTEM_CALL */
         {
             BaseType_t xReturn;
-            if( portIS_PRIVILEGED() == pdFALSE )
+            if( portIS_PRIVILEGED() == false )
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
@@ -1994,7 +1994,7 @@
             if( ( pxSendCompletedCallback == NULL ) &&
                 ( pxReceiveCompletedCallback == NULL ) )
             {
-                if( portIS_PRIVILEGED() == pdFALSE )
+                if( portIS_PRIVILEGED() == false )
                 {
                     portRAISE_PRIVILEGE();
                     portMEMORY_BARRIER();
@@ -2044,7 +2044,7 @@
             if( ( pxSendCompletedCallback == NULL ) &&
                 ( pxReceiveCompletedCallback == NULL ) )
             {
-                if( portIS_PRIVILEGED() == pdFALSE )
+                if( portIS_PRIVILEGED() == false )
                 {
                     portRAISE_PRIVILEGE();
                     portMEMORY_BARRIER();
@@ -2087,7 +2087,7 @@
  * void MPU_FunctionName( [parameters ] ) FREERTOS_SYSTEM_CALL;
  * void MPU_FunctionName( [parameters ] )
  * {
- *      if( portIS_PRIVILEGED() == pdFALSE )
+ *      if( portIS_PRIVILEGED() == false )
  *      {
  *          portRAISE_PRIVILEGE();
  *          portMEMORY_BARRIER();

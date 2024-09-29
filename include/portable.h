@@ -221,8 +221,8 @@ void vPortEndScheduler( void ) PRIVILEGED_FUNCTION;
  * @param ulBufferLength The length of the pvBuffer.
  * @param ulAccessRequested The permissions that the calling task wants.
  *
- * @return pdTRUE if the calling task is authorized to access the buffer,
- *         pdFALSE otherwise.
+ * @return true if the calling task is authorized to access the buffer,
+ *         false otherwise.
  */
 #if ( portUSING_MPU_WRAPPERS == 1 )
     BaseType_t xPortIsAuthorizedToAccessBuffer( const void * pvBuffer,
@@ -235,8 +235,8 @@ void vPortEndScheduler( void ) PRIVILEGED_FUNCTION;
  * @param lInternalIndexOfKernelObject The index of the kernel object in the kernel
  *                                     object handle pool.
  *
- * @return pdTRUE if the calling task is authorized to access the kernel object,
- *         pdFALSE otherwise.
+ * @return true if the calling task is authorized to access the kernel object,
+ *         false otherwise.
  */
 #if ( ( portUSING_MPU_WRAPPERS == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 0 ) )
     BaseType_t xPortIsAuthorizedToAccessKernelObject( int32_t lInternalIndexOfKernelObject ) PRIVILEGED_FUNCTION;

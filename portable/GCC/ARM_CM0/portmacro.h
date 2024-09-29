@@ -316,7 +316,7 @@ extern void vClearInterruptMask( uint32_t ulMask ) /* __attribute__(( naked )) P
     /**
      * @brief Checks whether or not the calling task is privileged.
      *
-     * @return pdTRUE if the calling task is privileged, pdFALSE otherwise.
+     * @return true if the calling task is privileged, false otherwise.
      */
     #define portIS_TASK_PRIVILEGED()    xPortIsTaskPrivileged()
 #endif /* configENABLE_MPU == 1 */

@@ -27,6 +27,7 @@
  */
 /* Standard includes. */
 #include <string.h>
+#include <stdbool.h>
 /* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
  * all the API functions to use the MPU wrappers.  That should only be done when
  * task.h is included from an application file. */
@@ -79,7 +80,7 @@
     do {                                                                                         \
         if( ( pxStreamBuffer )->pxReceiveCompletedCallback != NULL )                             \
         {                                                                                        \
-            ( pxStreamBuffer )->pxReceiveCompletedCallback( ( pxStreamBuffer ), pdFALSE, NULL ); \
+            ( pxStreamBuffer )->pxReceiveCompletedCallback( ( pxStreamBuffer ), false, NULL ); \
         }                                                                                        \
         else                                                                                     \
         {                                                                                        \
@@ -116,7 +117,7 @@
     do {                                                                                                                 \
         if( ( pxStreamBuffer )->pxReceiveCompletedCallback != NULL )                                                     \
         {                                                                                                                \
-            ( pxStreamBuffer )->pxReceiveCompletedCallback( ( pxStreamBuffer ), pdTRUE, ( pxHigherPriorityTaskWoken ) ); \
+            ( pxStreamBuffer )->pxReceiveCompletedCallback( ( pxStreamBuffer ), true, ( pxHigherPriorityTaskWoken ) ); \
         }                                                                                                                \
         else                                                                                                             \
         {                                                                                                                \
@@ -154,7 +155,7 @@
     do {                                                                                      \
         if( ( pxStreamBuffer )->pxSendCompletedCallback != NULL )                             \
         {                                                                                     \
-            ( pxStreamBuffer )->pxSendCompletedCallback( ( pxStreamBuffer ), pdFALSE, NULL ); \
+            ( pxStreamBuffer )->pxSendCompletedCallback( ( pxStreamBuffer ), false, NULL ); \
         }                                                                                     \
         else                                                                                  \
         {                                                                                     \
@@ -191,7 +192,7 @@
     do {                                                                                                              \
         if( ( pxStreamBuffer )->pxSendCompletedCallback != NULL )                                                     \
         {                                                                                                             \
-            ( pxStreamBuffer )->pxSendCompletedCallback( ( pxStreamBuffer ), pdTRUE, ( pxHigherPriorityTaskWoken ) ); \
+            ( pxStreamBuffer )->pxSendCompletedCallback( ( pxStreamBuffer ), true, ( pxHigherPriorityTaskWoken ) ); \
         }                                                                                                             \
         else                                                                                                          \
         {                                                                                                             \
@@ -466,11 +467,11 @@ static void prvInitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
             *ppucStreamBufferStorageArea = pxStreamBuffer->pucBuffer;
 
             *ppxStaticStreamBuffer = ( StaticStreamBuffer_t * ) pxStreamBuffer;
-            xReturn = pdTRUE;
+            xReturn = true;
         }
         else
         {
-            xReturn = pdFALSE;
+            xReturn = false;
         }
 
         return xReturn;
@@ -481,7 +482,7 @@ void vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer )
 {
     StreamBuffer_t * pxStreamBuffer = xStreamBuffer;
     configASSERT( pxStreamBuffer );
-    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED ) == ( uint8_t ) pdFALSE )
+    if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED ) == ( uint8_t ) false )
     {
         #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
         {
@@ -508,7 +509,7 @@ void vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer )
 BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer ) 
 {
     StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
-    BaseType_t xReturn = pdFAIL;
+    BaseType_t xReturn = false;
     StreamBufferCallbackFunction_t pxSendCallback = NULL, pxReceiveCallback = NULL;
     configASSERT( pxStreamBuffer );
     /* Can only reset a message buffer if there are no tasks blocked on it. */
@@ -529,7 +530,7 @@ BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer )
                                           pxStreamBuffer->ucFlags,
                                           pxSendCallback,
                                           pxReceiveCallback );
-            xReturn = pdPASS;
+            xReturn = true;
         }
     }
     taskEXIT_CRITICAL();
@@ -539,7 +540,7 @@ BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer )
 BaseType_t xStreamBufferResetFromISR( StreamBufferHandle_t xStreamBuffer )
 {
     StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
-    BaseType_t xReturn = pdFAIL;
+    BaseType_t xReturn = false;
     StreamBufferCallbackFunction_t pxSendCallback = NULL, pxReceiveCallback = NULL;
     UBaseType_t uxSavedInterruptStatus;
     configASSERT( pxStreamBuffer );
@@ -561,7 +562,7 @@ BaseType_t xStreamBufferResetFromISR( StreamBufferHandle_t xStreamBuffer )
                                           pxStreamBuffer->ucFlags,
                                           pxSendCallback,
                                           pxReceiveCallback );
-            xReturn = pdPASS;
+            xReturn = true;
         }
     }
     taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
@@ -584,11 +585,11 @@ BaseType_t xStreamBufferSetTriggerLevel( StreamBufferHandle_t xStreamBuffer,
     if( xTriggerLevel < pxStreamBuffer->xLength )
     {
         pxStreamBuffer->xTriggerLevelBytes = xTriggerLevel;
-        xReturn = pdPASS;
+        xReturn = true;
     }
     else
     {
-        xReturn = pdFALSE;
+        xReturn = false;
     }
     return xReturn;
 }
@@ -695,7 +696,7 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
             taskEXIT_CRITICAL();
             ( void ) xTaskNotifyWaitIndexed( pxStreamBuffer->uxNotificationIndex, ( uint32_t ) 0, ( uint32_t ) 0, NULL, xTicksToWait );
             pxStreamBuffer->xTaskWaitingToSend = NULL;
-        } while( xTaskCheckForTimeOut( &xTimeOut, &xTicksToWait ) == pdFALSE );
+        } while( xTaskCheckForTimeOut( &xTimeOut, &xTicksToWait ) == false );
     }
     if( xSpace == ( size_t ) 0 )
     {
@@ -999,11 +1000,11 @@ BaseType_t xStreamBufferIsEmpty( StreamBufferHandle_t xStreamBuffer )
     xTail = pxStreamBuffer->xTail;
     if( pxStreamBuffer->xHead == xTail )
     {
-        xReturn = pdTRUE;
+        xReturn = true;
     }
     else
     {
-        xReturn = pdFALSE;
+        xReturn = false;
     }
     return xReturn;
 }
@@ -1029,11 +1030,11 @@ BaseType_t xStreamBufferIsFull( StreamBufferHandle_t xStreamBuffer )
     /* True if the available space equals zero. */
     if( xStreamBufferSpacesAvailable( xStreamBuffer ) <= xBytesToStoreMessageLength )
     {
-        xReturn = pdTRUE;
+        xReturn = true;
     }
     else
     {
-        xReturn = pdFALSE;
+        xReturn = false;
     }
     return xReturn;
 }
@@ -1057,11 +1058,11 @@ BaseType_t xStreamBufferSendCompletedFromISR( StreamBufferHandle_t xStreamBuffer
                                                 eNoAction,
                                                 pxHigherPriorityTaskWoken );
             ( pxStreamBuffer )->xTaskWaitingToReceive = NULL;
-            xReturn = pdTRUE;
+            xReturn = true;
         }
         else
         {
-            xReturn = pdFALSE;
+            xReturn = false;
         }
     }
     taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
@@ -1087,11 +1088,11 @@ BaseType_t xStreamBufferReceiveCompletedFromISR( StreamBufferHandle_t xStreamBuf
                                                 eNoAction,
                                                 pxHigherPriorityTaskWoken );
             ( pxStreamBuffer )->xTaskWaitingToSend = NULL;
-            xReturn = pdTRUE;
+            xReturn = true;
         }
         else
         {
-            xReturn = pdFALSE;
+            xReturn = false;
         }
     }
     taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );

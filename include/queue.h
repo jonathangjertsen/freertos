@@ -243,7 +243,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * @param ppxStaticQueue Used to return a pointer to the queue's data
  * structure buffer.
  *
- * @return pdTRUE if buffers were retrieved, pdFALSE otherwise.
+ * @return true if buffers were retrieved, false otherwise.
  *
  * \defgroup xQueueGetStaticBuffers xQueueGetStaticBuffers
  * \ingroup QueueManagement
@@ -279,7 +279,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * queue is full.  The time is defined in tick periods so the constant
  * portTICK_PERIOD_MS should be used to convert to real time if this is required.
  *
- * @return pdPASS if the item was successfully posted, otherwise errQUEUE_FULL.
+ * @return true if the item was successfully posted, otherwise errQUEUE_FULL.
  *
  * Example usage:
  * @code{c}
@@ -309,7 +309,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  *  {
  *      // Send an uint32_t.  Wait for 10 ticks for space to become
  *      // available if necessary.
- *      if( xQueueSendToFront( xQueue1, ( void * ) &ulVar, ( TickType_t ) 10 ) != pdPASS )
+ *      if( xQueueSendToFront( xQueue1, ( void * ) &ulVar, ( TickType_t ) 10 ) != true )
  *      {
  *          // Failed to post the message, even after 10 ticks.
  *      }
@@ -361,7 +361,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * is full.  The  time is defined in tick periods so the constant
  * portTICK_PERIOD_MS should be used to convert to real time if this is required.
  *
- * @return pdPASS if the item was successfully posted, otherwise errQUEUE_FULL.
+ * @return true if the item was successfully posted, otherwise errQUEUE_FULL.
  *
  * Example usage:
  * @code{c}
@@ -391,7 +391,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  *  {
  *      // Send an uint32_t.  Wait for 10 ticks for space to become
  *      // available if necessary.
- *      if( xQueueSendToBack( xQueue1, ( void * ) &ulVar, ( TickType_t ) 10 ) != pdPASS )
+ *      if( xQueueSendToBack( xQueue1, ( void * ) &ulVar, ( TickType_t ) 10 ) != true )
  *      {
  *          // Failed to post the message, even after 10 ticks.
  *      }
@@ -445,7 +445,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * queue is full.  The time is defined in tick periods so the constant
  * portTICK_PERIOD_MS should be used to convert to real time if this is required.
  *
- * @return pdPASS if the item was successfully posted, otherwise errQUEUE_FULL.
+ * @return true if the item was successfully posted, otherwise errQUEUE_FULL.
  *
  * Example usage:
  * @code{c}
@@ -475,7 +475,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  *  {
  *      // Send an uint32_t.  Wait for 10 ticks for space to become
  *      // available if necessary.
- *      if( xQueueSend( xQueue1, ( void * ) &ulVar, ( TickType_t ) 10 ) != pdPASS )
+ *      if( xQueueSend( xQueue1, ( void * ) &ulVar, ( TickType_t ) 10 ) != true )
  *      {
  *          // Failed to post the message, even after 10 ticks.
  *      }
@@ -523,7 +523,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * into the queue storage area.
  *
  * @return xQueueOverwrite() is a macro that calls xQueueGenericSend(), and
- * therefore has the same return values as xQueueSendToFront().  However, pdPASS
+ * therefore has the same return values as xQueueSendToFront().  However, true
  * is the only value that can be returned because xQueueOverwrite() will write
  * to the queue even when the queue is already full.
  *
@@ -616,7 +616,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  * item at the back of the queue, or queueSEND_TO_FRONT to place the item
  * at the front of the queue (for high priority messages).
  *
- * @return pdPASS if the item was successfully posted, otherwise errQUEUE_FULL.
+ * @return true if the item was successfully posted, otherwise errQUEUE_FULL.
  *
  * Example usage:
  * @code{c}
@@ -646,7 +646,7 @@ typedef struct QueueDefinition   * QueueSetMemberHandle_t;
  *  {
  *      // Send an uint32_t.  Wait for 10 ticks for space to become
  *      // available if necessary.
- *      if( xQueueGenericSend( xQueue1, ( void * ) &ulVar, ( TickType_t ) 10, queueSEND_TO_BACK ) != pdPASS )
+ *      if( xQueueGenericSend( xQueue1, ( void * ) &ulVar, ( TickType_t ) 10, queueSEND_TO_BACK ) != true )
  *      {
  *          // Failed to post the message, even after 10 ticks.
  *      }
@@ -705,7 +705,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
  * xQueuePeek() will return immediately if xTicksToWait is 0 and the queue
  * is empty.
  *
- * @return pdPASS if an item was successfully received from the queue,
+ * @return true if an item was successfully received from the queue,
  * otherwise errQUEUE_EMPTY.
  *
  * Example usage:
@@ -792,8 +792,8 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
  * @param pvBuffer Pointer to the buffer into which the received item will
  * be copied.
  *
- * @return pdPASS if an item was successfully received from the queue,
- * otherwise pdFAIL.
+ * @return true if an item was successfully received from the queue,
+ * otherwise false.
  *
  * \defgroup xQueuePeekFromISR xQueuePeekFromISR
  * \ingroup QueueManagement
@@ -832,7 +832,7 @@ BaseType_t xQueuePeekFromISR( QueueHandle_t xQueue,
  * constant portTICK_PERIOD_MS should be used to convert to real time if this is
  * required.
  *
- * @return pdPASS if an item was successfully received from the queue,
+ * @return true if an item was successfully received from the queue,
  * otherwise errQUEUE_EMPTY.
  *
  * Example usage:
@@ -969,12 +969,12 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * into the queue storage area.
  *
  * @param pxHigherPriorityTaskWoken xQueueSendToFrontFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if sending to the queue caused a task
+ * *pxHigherPriorityTaskWoken to true if sending to the queue caused a task
  * to unblock, and the unblocked task has a priority higher than the currently
- * running task.  If xQueueSendToFrontFromISR() sets this value to pdTRUE then
+ * running task.  If xQueueSendToFrontFromISR() sets this value to true then
  * a context switch should be requested before the interrupt is exited.
  *
- * @return pdPASS if the data was successfully sent to the queue, otherwise
+ * @return true if the data was successfully sent to the queue, otherwise
  * errQUEUE_FULL.
  *
  * Example usage for buffered IO (where the ISR can obtain more than one value
@@ -986,7 +986,7 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * BaseType_t xHigherPriorityTaskWoken;
  *
  *  // We have not woken a task at the start of the ISR.
- *  xHigherPriorityTaskWoken = pdFALSE;
+ *  xHigherPriorityTaskWoken = false;
  *
  *  // Loop until the buffer is empty.
  *  do
@@ -1040,12 +1040,12 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * into the queue storage area.
  *
  * @param pxHigherPriorityTaskWoken xQueueSendToBackFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if sending to the queue caused a task
+ * *pxHigherPriorityTaskWoken to true if sending to the queue caused a task
  * to unblock, and the unblocked task has a priority higher than the currently
- * running task.  If xQueueSendToBackFromISR() sets this value to pdTRUE then
+ * running task.  If xQueueSendToBackFromISR() sets this value to true then
  * a context switch should be requested before the interrupt is exited.
  *
- * @return pdPASS if the data was successfully sent to the queue, otherwise
+ * @return true if the data was successfully sent to the queue, otherwise
  * errQUEUE_FULL.
  *
  * Example usage for buffered IO (where the ISR can obtain more than one value
@@ -1057,7 +1057,7 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * BaseType_t xHigherPriorityTaskWoken;
  *
  *  // We have not woken a task at the start of the ISR.
- *  xHigherPriorityTaskWoken = pdFALSE;
+ *  xHigherPriorityTaskWoken = false;
  *
  *  // Loop until the buffer is empty.
  *  do
@@ -1110,14 +1110,14 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * into the queue storage area.
  *
  * @param pxHigherPriorityTaskWoken xQueueOverwriteFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if sending to the queue caused a task
+ * *pxHigherPriorityTaskWoken to true if sending to the queue caused a task
  * to unblock, and the unblocked task has a priority higher than the currently
- * running task.  If xQueueOverwriteFromISR() sets this value to pdTRUE then
+ * running task.  If xQueueOverwriteFromISR() sets this value to true then
  * a context switch should be requested before the interrupt is exited.
  *
  * @return xQueueOverwriteFromISR() is a macro that calls
  * xQueueGenericSendFromISR(), and therefore has the same return values as
- * xQueueSendToFrontFromISR().  However, pdPASS is the only value that can be
+ * xQueueSendToFrontFromISR().  However, true is the only value that can be
  * returned because xQueueOverwriteFromISR() will write to the queue even when
  * the queue is already full.
  *
@@ -1137,8 +1137,8 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  *
  * void vAnInterruptHandler( void )
  * {
- * // xHigherPriorityTaskWoken must be set to pdFALSE before it is used.
- * BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+ * // xHigherPriorityTaskWoken must be set to false before it is used.
+ * BaseType_t xHigherPriorityTaskWoken = false;
  * uint32_t ulVarToSend, ulValReceived;
  *
  *  // Write the value 10 to the queue using xQueueOverwriteFromISR().
@@ -1155,7 +1155,7 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  *
  *  // ...
  *
- *  if( xHigherPrioritytaskWoken == pdTRUE )
+ *  if( xHigherPrioritytaskWoken == true )
  *  {
  *      // Writing to the queue caused a task to unblock and the unblocked task
  *      // has a priority higher than or equal to the priority of the currently
@@ -1203,12 +1203,12 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * into the queue storage area.
  *
  * @param pxHigherPriorityTaskWoken xQueueSendFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if sending to the queue caused a task
+ * *pxHigherPriorityTaskWoken to true if sending to the queue caused a task
  * to unblock, and the unblocked task has a priority higher than the currently
- * running task.  If xQueueSendFromISR() sets this value to pdTRUE then
+ * running task.  If xQueueSendFromISR() sets this value to true then
  * a context switch should be requested before the interrupt is exited.
  *
- * @return pdPASS if the data was successfully sent to the queue, otherwise
+ * @return true if the data was successfully sent to the queue, otherwise
  * errQUEUE_FULL.
  *
  * Example usage for buffered IO (where the ISR can obtain more than one value
@@ -1220,7 +1220,7 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * BaseType_t xHigherPriorityTaskWoken;
  *
  *  // We have not woken a task at the start of the ISR.
- *  xHigherPriorityTaskWoken = pdFALSE;
+ *  xHigherPriorityTaskWoken = false;
  *
  *  // Loop until the buffer is empty.
  *  do
@@ -1236,7 +1236,7 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  *  // Now the buffer is empty we can switch context if necessary.
  *  if( xHigherPriorityTaskWoken )
  *  {
- *       // As xHigherPriorityTaskWoken is now set to pdTRUE then a context
+ *       // As xHigherPriorityTaskWoken is now set to true then a context
  *       // switch should be requested. The macro used is port specific and
  *       // will be either portYIELD_FROM_ISR() or portEND_SWITCHING_ISR() -
  *       // refer to the documentation page for the port being used.
@@ -1281,16 +1281,16 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * into the queue storage area.
  *
  * @param pxHigherPriorityTaskWoken xQueueGenericSendFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if sending to the queue caused a task
+ * *pxHigherPriorityTaskWoken to true if sending to the queue caused a task
  * to unblock, and the unblocked task has a priority higher than the currently
- * running task.  If xQueueGenericSendFromISR() sets this value to pdTRUE then
+ * running task.  If xQueueGenericSendFromISR() sets this value to true then
  * a context switch should be requested before the interrupt is exited.
  *
  * @param xCopyPosition Can take the value queueSEND_TO_BACK to place the
  * item at the back of the queue, or queueSEND_TO_FRONT to place the item
  * at the front of the queue (for high priority messages).
  *
- * @return pdPASS if the data was successfully sent to the queue, otherwise
+ * @return true if the data was successfully sent to the queue, otherwise
  * errQUEUE_FULL.
  *
  * Example usage for buffered IO (where the ISR can obtain more than one value
@@ -1302,7 +1302,7 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  * BaseType_t xHigherPriorityTaskWokenByPost;
  *
  *  // We have not woken a task at the start of the ISR.
- *  xHigherPriorityTaskWokenByPost = pdFALSE;
+ *  xHigherPriorityTaskWokenByPost = false;
  *
  *  // Loop until the buffer is empty.
  *  do
@@ -1318,7 +1318,7 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  *  // Now the buffer is empty we can switch context if necessary.
  *  if( xHigherPriorityTaskWokenByPost )
  *  {
- *       // As xHigherPriorityTaskWokenByPost is now set to pdTRUE then a context
+ *       // As xHigherPriorityTaskWokenByPost is now set to true then a context
  *       // switch should be requested. The macro used is port specific and
  *       // will be either portYIELD_FROM_ISR() or portEND_SWITCHING_ISR() -
  *       // refer to the documentation page for the port being used.
@@ -1357,11 +1357,11 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
  *
  * @param pxHigherPriorityTaskWoken A task may be blocked waiting for space to
  * become available on the queue.  If xQueueReceiveFromISR causes such a task
- * to unblock *pxTaskWoken will get set to pdTRUE, otherwise *pxTaskWoken will
+ * to unblock *pxTaskWoken will get set to true, otherwise *pxTaskWoken will
  * remain unchanged.
  *
- * @return pdPASS if an item was successfully received from the queue,
- * otherwise pdFAIL.
+ * @return true if an item was successfully received from the queue,
+ * otherwise false.
  *
  * Example usage:
  * @code{c}
@@ -1400,7 +1400,7 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
  * // ISR that outputs all the characters received on the queue.
  * void vISR_Routine( void )
  * {
- * BaseType_t xTaskWokenByReceive = pdFALSE;
+ * BaseType_t xTaskWokenByReceive = false;
  * char cRxedChar;
  *
  *  while( xQueueReceiveFromISR( xQueue, ( void * ) &cRxedChar, &xTaskWokenByReceive) )
@@ -1410,11 +1410,11 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
  *
  *      // If removing the character from the queue woke the task that was
  *      // posting onto the queue xTaskWokenByReceive will have been set to
- *      // pdTRUE.  No matter how many times this loop iterates only one
+ *      // true.  No matter how many times this loop iterates only one
  *      // task will be woken.
  *  }
  *
- *  if( xTaskWokenByReceive != ( char ) pdFALSE;
+ *  if( xTaskWokenByReceive != ( char ) false;
  *  {
  *      taskYIELD ();
  *  }
@@ -1490,9 +1490,9 @@ BaseType_t xQueueTakeMutexRecursive( QueueHandle_t xMutex,
 BaseType_t xQueueGiveMutexRecursive( QueueHandle_t xMutex ) PRIVILEGED_FUNCTION;
 /*
  * Reset a queue back to its original empty state.  The return value is now
- * obsolete and is always set to pdPASS.
+ * obsolete and is always set to true.
  */
-#define xQueueReset( xQueue )    xQueueGenericReset( ( xQueue ), pdFALSE )
+#define xQueueReset( xQueue )    xQueueGenericReset( ( xQueue ), false )
 /*
  * The registry is provided as a means for kernel aware debuggers to
  * locate queues, semaphores and mutexes.  Call vQueueAddToRegistry() add
@@ -1652,8 +1652,8 @@ BaseType_t xQueueGiveMutexRecursive( QueueHandle_t xMutex ) PRIVILEGED_FUNCTION;
  * is being added.
  *
  * @return If the queue or semaphore was successfully added to the queue set
- * then pdPASS is returned.  If the queue could not be successfully added to the
- * queue set because it is already a member of a different queue set then pdFAIL
+ * then true is returned.  If the queue could not be successfully added to the
+ * queue set because it is already a member of a different queue set then false
  * is returned.
  */
 #if ( configUSE_QUEUE_SETS == 1 )
@@ -1674,8 +1674,8 @@ BaseType_t xQueueGiveMutexRecursive( QueueHandle_t xMutex ) PRIVILEGED_FUNCTION;
  * is included.
  *
  * @return If the queue or semaphore was successfully removed from the queue set
- * then pdPASS is returned.  If the queue was not in the queue set, or the
- * queue (or semaphore) was not empty, then pdFAIL is returned.
+ * then true is returned.  If the queue was not in the queue set, or the
+ * queue (or semaphore) was not empty, then false is returned.
  */
 #if ( configUSE_QUEUE_SETS == 1 )
     BaseType_t xQueueRemoveFromSet( QueueSetMemberHandle_t xQueueOrSemaphore,

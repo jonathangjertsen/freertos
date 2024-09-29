@@ -247,7 +247,7 @@ extern BaseType_t xPortIsTaskPrivileged( void );
 /**
  * @brief Checks whether or not the calling task is privileged.
  *
- * @return pdTRUE if the calling task is privileged, pdFALSE otherwise.
+ * @return true if the calling task is privileged, false otherwise.
  */
 #define portIS_TASK_PRIVILEGED()    xPortIsTaskPrivileged()
 
@@ -259,11 +259,11 @@ portFORCE_INLINE static BaseType_t xPortIsInsideInterrupt( void )
     __asm volatile ( "mrs %0, ipsr" : "=r" ( ulCurrentInterrupt )::"memory" );
     if( ulCurrentInterrupt == 0 )
     {
-        xReturn = pdFALSE;
+        xReturn = false;
     }
     else
     {
-        xReturn = pdTRUE;
+        xReturn = true;
     }
     return xReturn;
 }

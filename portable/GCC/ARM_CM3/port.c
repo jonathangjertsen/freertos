@@ -438,7 +438,7 @@ void xPortSysTickHandler( void )
     traceISR_ENTER();
     {
         /* Increment the RTOS tick. */
-        if( xTaskIncrementTick() != pdFALSE )
+        if( xTaskIncrementTick() != false )
         {
             traceISR_EXIT_TO_SCHEDULER();
             /* A context switch is required.  Context switching is performed in

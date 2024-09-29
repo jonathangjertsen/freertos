@@ -254,7 +254,7 @@ typedef enum
 #define taskSCHEDULER_NOT_STARTED    ( ( BaseType_t ) 1 )
 #define taskSCHEDULER_RUNNING        ( ( BaseType_t ) 2 )
 /* Checks if core ID is valid. */
-#define taskVALID_CORE_ID( xCoreID )    ( ( ( ( ( BaseType_t ) 0 <= ( xCoreID ) ) && ( ( xCoreID ) < ( BaseType_t ) configNUMBER_OF_CORES ) ) ) ? ( pdTRUE ) : ( pdFALSE ) )
+#define taskVALID_CORE_ID( xCoreID )    ( ( ( ( ( BaseType_t ) 0 <= ( xCoreID ) ) && ( ( xCoreID ) < ( BaseType_t ) configNUMBER_OF_CORES ) ) ) ? ( true ) : ( false ) )
 /*-----------------------------------------------------------
 * TASK CREATION API
 *----------------------------------------------------------*/
@@ -315,7 +315,7 @@ typedef enum
  * @param pxCreatedTask Used to pass back a handle by which the created task
  * can be referenced.
  *
- * @return pdPASS if the task was successfully created and added to a ready
+ * @return true if the task was successfully created and added to a ready
  * list, otherwise an error code defined in the file projdefs.h
  *
  * Example usage:
@@ -522,7 +522,7 @@ typedef enum
  * @param pxCreatedTask Used to pass back a handle by which the created task
  * can be referenced.
  *
- * @return pdPASS if the task was successfully created and added to a ready
+ * @return true if the task was successfully created and added to a ready
  * list, otherwise an error code defined in the file projdefs.h
  *
  * Example usage:
@@ -610,7 +610,7 @@ typedef enum
  * @param pxCreatedTask Used to pass back a handle by which the created task
  * can be referenced.
  *
- * @return pdPASS if the task was successfully created and added to a ready
+ * @return true if the task was successfully created and added to a ready
  * list, otherwise an error code defined in the file projdefs.h
  *
  * Example usage:
@@ -855,7 +855,7 @@ void vTaskDelay( const TickType_t xTicksToDelay ) PRIVILEGED_FUNCTION;
  * a fixed interface period.
  *
  * @return Value which can be used to check whether the task was actually delayed.
- * Will be pdTRUE if the task way delayed and pdFALSE otherwise.  A task will not
+ * Will be true if the task way delayed and false otherwise.  A task will not
  * be delayed if the next expected wake time is in the past.
  *
  * Example usage:
@@ -918,7 +918,7 @@ BaseType_t xTaskDelayUntil( TickType_t * const pxPreviousWakeTime,
  * @param xTask The handle of the task to remove from the Blocked state.
  *
  * @return If the task referenced by xTask was not in the Blocked state then
- * pdFAIL is returned.  Otherwise pdPASS is returned.
+ * false is returned.  Otherwise true is returned.
  *
  * \defgroup xTaskAbortDelay xTaskAbortDelay
  * \ingroup TaskCtrl
@@ -1057,7 +1057,7 @@ UBaseType_t uxTaskBasePriorityGetFromISR( const TaskHandle_t xTask ) PRIVILEGED_
  * temporarily unresponsive - so the xGetFreeStackSpace parameter is provided to
  * allow the high water mark checking to be skipped.  The high watermark value
  * will only be written to the TaskStatus_t structure if xGetFreeStackSpace is
- * not set to pdFALSE;
+ * not set to false;
  *
  * @param eState The TaskStatus_t structure contains a member to report the
  * state of the task being queried.  Obtaining the task state is not as fast as
@@ -1082,7 +1082,7 @@ UBaseType_t uxTaskBasePriorityGetFromISR( const TaskHandle_t xTask ) PRIVILEGED_
  *  // Use the handle to obtain further information about the task.
  *  vTaskGetInfo( xHandle,
  *                &xTaskDetails,
- *                pdTRUE, // Include the high water mark in xTaskDetails.
+ *                true, // Include the high water mark in xTaskDetails.
  *                eInvalid ); // Include the task state in xTaskDetails.
  * }
  * @endcode
@@ -1263,8 +1263,8 @@ void vTaskResume( TaskHandle_t xTaskToResume ) PRIVILEGED_FUNCTION;
  *
  * @param xTaskToResume Handle to the task being readied.
  *
- * @return pdTRUE if resuming the task should result in a context switch,
- * otherwise pdFALSE. This is used by the ISR to determine if a context switch
+ * @return true if resuming the task should result in a context switch,
+ * otherwise false. This is used by the ISR to determine if a context switch
  * may be required following the ISR.
  *
  * \defgroup vTaskResumeFromISR vTaskResumeFromISR
@@ -1575,8 +1575,8 @@ void vTaskSuspendAll( void ) PRIVILEGED_FUNCTION;
  * xTaskResumeAll() only resumes the scheduler.  It does not unsuspend tasks
  * that were previously suspended by a call to vTaskSuspend().
  *
- * @return If resuming the scheduler caused a context switch then pdTRUE is
- *         returned, otherwise pdFALSE is returned.
+ * @return If resuming the scheduler caused a context switch then true is
+ *         returned, otherwise false is returned.
  *
  * Example usage:
  * @code{c}
@@ -1717,7 +1717,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) PRIVILEGED_FUNCTION;
  * @param ppxTaskBuffer Used to return a pointer to the task's data structure
  * buffer.
  *
- * @return pdTRUE if buffers were retrieved, pdFALSE otherwise.
+ * @return true if buffers were retrieved, false otherwise.
  *
  * \defgroup xTaskGetStaticBuffers xTaskGetStaticBuffers
  * \ingroup TaskUtils
@@ -2461,29 +2461,29 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery ) PRIVILEGED_FUNCTION;
  *
  * eSetBits -
  * The target notification value is bitwise ORed with ulValue.
- * xTaskNotifyIndexed() always returns pdPASS in this case.
+ * xTaskNotifyIndexed() always returns true in this case.
  *
  * eIncrement -
  * The target notification value is incremented.  ulValue is not used and
- * xTaskNotifyIndexed() always returns pdPASS in this case.
+ * xTaskNotifyIndexed() always returns true in this case.
  *
  * eSetValueWithOverwrite -
  * The target notification value is set to the value of ulValue, even if the
  * task being notified had not yet processed the previous notification at the
  * same array index (the task already had a notification pending at that index).
- * xTaskNotifyIndexed() always returns pdPASS in this case.
+ * xTaskNotifyIndexed() always returns true in this case.
  *
  * eSetValueWithoutOverwrite -
  * If the task being notified did not already have a notification pending at the
  * same array index then the target notification value is set to ulValue and
- * xTaskNotifyIndexed() will return pdPASS.  If the task being notified already
+ * xTaskNotifyIndexed() will return true.  If the task being notified already
  * had a notification pending at the same array index then no action is
- * performed and pdFAIL is returned.
+ * performed and false is returned.
  *
  * eNoAction -
  * The task receives a notification at the specified array index without the
  * notification value at that index being updated.  ulValue is not used and
- * xTaskNotifyIndexed() always returns pdPASS in this case.
+ * xTaskNotifyIndexed() always returns true in this case.
  *
  * pulPreviousNotificationValue -
  * Can be used to pass out the subject task's notification value before any
@@ -2607,34 +2607,34 @@ BaseType_t xTaskGenericNotify( TaskHandle_t xTaskToNotify,
  *
  * eSetBits -
  * The task's notification value is bitwise ORed with ulValue.  xTaskNotify()
- * always returns pdPASS in this case.
+ * always returns true in this case.
  *
  * eIncrement -
  * The task's notification value is incremented.  ulValue is not used and
- * xTaskNotify() always returns pdPASS in this case.
+ * xTaskNotify() always returns true in this case.
  *
  * eSetValueWithOverwrite -
  * The task's notification value is set to the value of ulValue, even if the
  * task being notified had not yet processed the previous notification (the
  * task already had a notification pending).  xTaskNotify() always returns
- * pdPASS in this case.
+ * true in this case.
  *
  * eSetValueWithoutOverwrite -
  * If the task being notified did not already have a notification pending then
  * the task's notification value is set to ulValue and xTaskNotify() will
- * return pdPASS.  If the task being notified already had a notification
- * pending then no action is performed and pdFAIL is returned.
+ * return true.  If the task being notified already had a notification
+ * pending then no action is performed and false is returned.
  *
  * eNoAction -
  * The task receives a notification without its notification value being
- * updated.  ulValue is not used and xTaskNotify() always returns pdPASS in
+ * updated.  ulValue is not used and xTaskNotify() always returns true in
  * this case.
  *
  * @param pxHigherPriorityTaskWoken  xTaskNotifyFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if sending the notification caused the
+ * *pxHigherPriorityTaskWoken to true if sending the notification caused the
  * task to which the notification was sent to leave the Blocked state, and the
  * unblocked task has a priority higher than the currently running task.  If
- * xTaskNotifyFromISR() sets this value to pdTRUE then a context switch should
+ * xTaskNotifyFromISR() sets this value to true then a context switch should
  * be requested before the interrupt is exited.  How a context switch is
  * requested from an ISR is dependent on the port - see the documentation page
  * for the port in use.
@@ -2781,8 +2781,8 @@ BaseType_t xTaskGenericNotifyFromISR( TaskHandle_t xTaskToNotify,
  * ticks.
  *
  * @return If a notification was received (including notifications that were
- * already pending when xTaskNotifyWait was called) then pdPASS is
- * returned.  Otherwise pdFAIL is returned.
+ * already pending when xTaskNotifyWait was called) then true is
+ * returned.  Otherwise false is returned.
  *
  * \defgroup xTaskNotifyWaitIndexed xTaskNotifyWaitIndexed
  * \ingroup TaskNotifications
@@ -2863,7 +2863,7 @@ BaseType_t xTaskGenericNotifyWait( UBaseType_t uxIndexToWaitOn,
  * does not have this parameter and always sends notifications to index 0.
  *
  * @return xTaskNotifyGive() is a macro that calls xTaskNotify() with the
- * eAction parameter set to eIncrement - so pdPASS is always returned.
+ * eAction parameter set to eIncrement - so true is always returned.
  *
  * \defgroup xTaskNotifyGiveIndexed xTaskNotifyGiveIndexed
  * \ingroup TaskNotifications
@@ -2940,10 +2940,10 @@ BaseType_t xTaskGenericNotifyWait( UBaseType_t uxIndexToWaitOn,
  * notifications to index 0.
  *
  * @param pxHigherPriorityTaskWoken  vTaskNotifyGiveFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if sending the notification caused the
+ * *pxHigherPriorityTaskWoken to true if sending the notification caused the
  * task to which the notification was sent to leave the Blocked state, and the
  * unblocked task has a priority higher than the currently running task.  If
- * vTaskNotifyGiveFromISR() sets this value to pdTRUE then a context switch
+ * vTaskNotifyGiveFromISR() sets this value to true then a context switch
  * should be requested before the interrupt is exited.  How a context switch is
  * requested from an ISR is dependent on the port - see the documentation page
  * for the port in use.
@@ -3035,10 +3035,10 @@ void vTaskGenericNotifyGiveFromISR( TaskHandle_t xTaskToNotify,
  * configTASK_NOTIFICATION_ARRAY_ENTRIES.  xTaskNotifyTake() does
  * not have this parameter and always waits for notifications on index 0.
  *
- * @param xClearCountOnExit if xClearCountOnExit is pdFALSE then the task's
+ * @param xClearCountOnExit if xClearCountOnExit is false then the task's
  * notification value is decremented when the function exits.  In this way the
  * notification value acts like a counting semaphore.  If xClearCountOnExit is
- * not pdFALSE then the task's notification value is cleared to zero when the
+ * not false then the task's notification value is cleared to zero when the
  * function exits.  In this way the notification value acts like a binary
  * semaphore.
  *
@@ -3114,8 +3114,8 @@ uint32_t ulTaskGenericNotifyTake( UBaseType_t uxIndexToWaitOn,
  * ulTaskNotifyStateClear() does not have this parameter and always acts on the
  * notification at index 0.
  *
- * @return pdTRUE if the task's notification state was set to
- * eNotWaitingNotification, otherwise pdFALSE.
+ * @return true if the task's notification state was set to
+ * eNotWaitingNotification, otherwise false.
  *
  * \defgroup xTaskNotifyStateClearIndexed xTaskNotifyStateClearIndexed
  * \ingroup TaskNotifications
@@ -3225,7 +3225,7 @@ void vTaskSetTimeOutState( TimeOut_t * const pxTimeOut ) PRIVILEGED_FUNCTION;
  * If the timeout has not occurred, pxTicksToWait is updated to reflect the
  * number of remaining ticks.
  *
- * @return If timeout has occurred, pdTRUE is returned. Otherwise pdFALSE is
+ * @return If timeout has occurred, true is returned. Otherwise false is
  * returned and pxTicksToWait is updated to reflect the number of remaining
  * ticks.
  *
@@ -3264,7 +3264,7 @@ void vTaskSetTimeOutState( TimeOut_t * const pxTimeOut ) PRIVILEGED_FUNCTION;
  *          // any time that has been spent in the Blocked state within this
  *          // function so far to ensure the total amount of time spent in the
  *          // Blocked state does not exceed MAX_TIME_TO_WAIT.
- *          if( xTaskCheckForTimeOut( &xTimeOut, &xTicksToWait ) != pdFALSE )
+ *          if( xTaskCheckForTimeOut( &xTimeOut, &xTicksToWait ) != false )
  *          {
  *              //Timed out before the wanted number of bytes were available,
  *              // exit the loop.
@@ -3273,7 +3273,7 @@ void vTaskSetTimeOutState( TimeOut_t * const pxTimeOut ) PRIVILEGED_FUNCTION;
  *
  *          // Wait for a maximum of xTicksToWait ticks to be notified that the
  *          // receive interrupt has placed more data into the buffer.
- *          ulTaskNotifyTake( pdTRUE, xTicksToWait );
+ *          ulTaskNotifyTake( true, xTicksToWait );
  *      }
  *
  *      // Attempt to read uxWantedBytes from the receive buffer into pucBuffer.
@@ -3311,8 +3311,8 @@ BaseType_t xTaskCheckForTimeOut( TimeOut_t * const pxTimeOut,
  * interrupts being disabled.  Its value is not computed automatically, so must be
  * computed by the application writer.
  *
- * @return pdTRUE if moving the tick count forward resulted in a task leaving the
- * blocked state and a context switch being performed.  Otherwise pdFALSE.
+ * @return true if moving the tick count forward resulted in a task leaving the
+ * blocked state and a context switch being performed.  Otherwise false.
  *
  * \defgroup xTaskCatchUpTicks xTaskCatchUpTicks
  * \ingroup TaskCtrl
@@ -3427,8 +3427,8 @@ void vTaskPlaceOnEventListRestricted( List_t * const pxEventList,
  * priority.  In this case the event list item value is updated to the value
  * passed in the xItemValue parameter.
  *
- * @return pdTRUE if the task being removed has a higher priority than the task
- * making the call, otherwise pdFALSE.
+ * @return true if the task being removed has a higher priority than the task
+ * making the call, otherwise false.
  */
 BaseType_t xTaskRemoveFromEventList( const List_t * const pxEventList ) PRIVILEGED_FUNCTION;
 void vTaskRemoveFromUnorderedEventList( ListItem_t * pxEventListItem,

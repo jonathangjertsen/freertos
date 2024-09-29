@@ -27,6 +27,7 @@
  */
 /* Standard includes. */
 #include <stdio.h>
+#include <stdbool.h>
 /* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -67,7 +68,7 @@ static uint32_t prvProcessTickInterrupt( void );
  * attempt to obtain pvInterruptEventMutex if a critical section is used inside
  * an interrupt handler itself.
  */
-volatile BaseType_t xInsideInterrupt = pdFALSE;
+volatile BaseType_t xInsideInterrupt = false;
 /*
  * Called when the process exits to let Windows know the high timer resolution
  * is no longer required.
@@ -113,7 +114,7 @@ static uint32_t (* ulIsrHandler[ portMAX_INTERRUPTS ])( void ) = { 0 };
 /* Pointer to the TCB of the currently executing task. */
 extern void * volatile pxCurrentTCB;
 /* Used to ensure nothing is processed during the startup sequence. */
-static BaseType_t xPortRunning = pdFALSE;
+static BaseType_t xPortRunning = false;
 
 static DWORD WINAPI prvSimulatedPeripheralTimer( LPVOID lpParameter )
 {
@@ -134,7 +135,7 @@ static DWORD WINAPI prvSimulatedPeripheralTimer( LPVOID lpParameter )
     }
     /* Just to prevent compiler warnings. */
     ( void ) lpParameter;
-    while( xPortRunning == pdTRUE )
+    while( xPortRunning == true )
     {
         /* Wait until the timer expires and we can access the simulated interrupt
          * variables.  *NOTE* this is not a 'real time' way of generating tick
@@ -165,7 +166,7 @@ static BOOL WINAPI prvEndProcess( DWORD dwCtrlType )
          * the process started with a timeEndPeriod() as the process exits. */
         timeEndPeriod( xTimeCaps.wPeriodMin );
     }
-    return pdFALSE;
+    return false;
 }
 
 StackType_t * pxPortInitialiseStack( StackType_t * pxTopOfStack,
@@ -221,11 +222,11 @@ BaseType_t xPortStartScheduler( void )
     if( xSystemInfo.dwNumberOfProcessors <= 1 )
     {
         printf( "This version of the FreeRTOS Windows port can only be used on multi-core hosts.\r\n" );
-        lSuccess = pdFAIL;
+        lSuccess = false;
     }
     else
     {
-        lSuccess = pdPASS;
+        lSuccess = true;
         /* The highest priority class is used to [try to] prevent other Windows
          * activity interfering with FreeRTOS timing too much. */
         if( SetPriorityClass( GetCurrentProcess(), REALTIME_PRIORITY_CLASS ) == 0 )
@@ -241,7 +242,7 @@ BaseType_t xPortStartScheduler( void )
         pvInterruptEvent = CreateEvent( NULL, FALSE, FALSE, NULL );
         if( ( pvInterruptEventMutex == NULL ) || ( pvInterruptEvent == NULL ) )
         {
-            lSuccess = pdFAIL;
+            lSuccess = false;
         }
         /* Set the priority of this thread such that it is above the priority of
          * the threads that run tasks.  This higher priority is required to ensure
@@ -249,19 +250,19 @@ BaseType_t xPortStartScheduler( void )
         pvHandle = GetCurrentThread();
         if( pvHandle == NULL )
         {
-            lSuccess = pdFAIL;
+            lSuccess = false;
         }
     }
-    if( lSuccess == pdPASS )
+    if( lSuccess == true )
     {
         if( SetThreadPriority( pvHandle, portSIMULATED_INTERRUPTS_THREAD_PRIORITY ) == 0 )
         {
-            lSuccess = pdFAIL;
+            lSuccess = false;
         }
         SetThreadPriorityBoost( pvHandle, TRUE );
         SetThreadAffinityMask( pvHandle, 0x01 );
     }
-    if( lSuccess == pdPASS )
+    if( lSuccess == true )
     {
         /* Start the thread that simulates the timer peripheral to generate
          * tick interrupts.  The priority is set below that of the simulated
@@ -280,7 +281,7 @@ BaseType_t xPortStartScheduler( void )
         pxThreadState = ( ThreadState_t * ) *( ( size_t * ) pxCurrentTCB );
         ulCriticalNesting = portNO_CRITICAL_NESTING;
         /* The scheduler is now running. */
-        xPortRunning = pdTRUE;
+        xPortRunning = true;
         /* Start the first task. */
         ResumeThread( pxThreadState->pvThread );
         /* Handle all simulated interrupts - including yield requests and
@@ -295,7 +296,7 @@ BaseType_t xPortStartScheduler( void )
 static uint32_t prvProcessYieldInterrupt( void )
 {
     /* Always return true as this is a yield. */
-    return pdTRUE;
+    return true;
 }
 
 static uint32_t prvProcessTickInterrupt( void )
@@ -324,9 +325,9 @@ static void prvProcessSimulatedInterrupts( void )
      * this thread pends. */
     ulPendingInterrupts |= ( 1 << portINTERRUPT_TICK );
     SetEvent( pvInterruptEvent );
-    while( xPortRunning == pdTRUE )
+    while( xPortRunning == true )
     {
-        xInsideInterrupt = pdFALSE;
+        xInsideInterrupt = false;
         /* Wait with timeout so that we can exit from this loop when
          * the scheduler is stopped by calling vPortEndScheduler. */
         xWinApiResult = WaitForMultipleObjects( sizeof( pvObjectList ) / sizeof( void * ), pvObjectList, TRUE, xTimeoutMilliseconds );
@@ -337,10 +338,10 @@ static void prvProcessSimulatedInterrupts( void )
              * process if an interrupt was set pending while the task was inside the
              * critical section.  xInsideInterrupt prevents interrupts that contain
              * critical sections from doing the same. */
-            xInsideInterrupt = pdTRUE;
+            xInsideInterrupt = true;
             /* Used to indicate whether the simulated interrupt processing has
              * necessitated a context switch to another task/thread. */
-            ulSwitchRequired = pdFALSE;
+            ulSwitchRequired = false;
             /* For each interrupt we are interested in processing, each of which is
              * represented by a bit in the 32bit ulPendingInterrupts variable. */
             for( i = 0; i < portMAX_INTERRUPTS; i++ )
@@ -351,9 +352,9 @@ static void prvProcessSimulatedInterrupts( void )
                     /* Is a handler installed? */
                     if( ulIsrHandler[ i ] != NULL )
                     {
-                        /* Run the actual handler.  Handlers return pdTRUE if they
+                        /* Run the actual handler.  Handlers return true if they
                          * necessitate a context switch. */
-                        if( ulIsrHandler[ i ]() != pdFALSE )
+                        if( ulIsrHandler[ i ]() != false )
                         {
                             /* A bit mask is used purely to help debugging. */
                             ulSwitchRequired |= ( 1 << i );
@@ -363,7 +364,7 @@ static void prvProcessSimulatedInterrupts( void )
                     ulPendingInterrupts &= ~( 1UL << i );
                 }
             }
-            if( ulSwitchRequired != pdFALSE )
+            if( ulSwitchRequired != false )
             {
                 /* Suspend the old thread. */
                 pxThreadState = ( ThreadState_t * ) *( ( size_t * ) pxCurrentTCB );
@@ -447,7 +448,7 @@ void vPortCloseRunningThread( void * pvTaskToDelete,
     SetThreadPriority( pvThread, portDELETE_SELF_THREAD_PRIORITY );
     /* This function will not return, therefore a yield is set as pending to
      * ensure a context switch occurs away from this thread on the next tick. */
-    *pxPendYield = pdTRUE;
+    *pxPendYield = true;
     /* Mark the thread associated with this task as invalid so
      * vPortDeleteThread() does not try to terminate it. */
     pxThreadState->pvThread = NULL;
@@ -475,7 +476,7 @@ void vPortCloseRunningThread( void * pvTaskToDelete,
 
 void vPortEndScheduler( void )
 {
-    xPortRunning = pdFALSE;
+    xPortRunning = false;
 }
 
 void vPortGenerateSimulatedInterrupt( uint32_t ulInterruptNumber )
@@ -513,7 +514,7 @@ void vPortGenerateSimulatedInterrupt( uint32_t ulInterruptNumber )
 
 void vPortGenerateSimulatedInterruptFromWindowsThread( uint32_t ulInterruptNumber )
 {
-    if( xPortRunning == pdTRUE )
+    if( xPortRunning == true )
     {
         /* Can't proceed if in a critical section as pvInterruptEventMutex won't
          * be available. */
@@ -553,7 +554,7 @@ void vPortSetInterruptHandler( uint32_t ulInterruptNumber,
 
 void vPortEnterCritical( void )
 {
-    if( xPortRunning == pdTRUE )
+    if( xPortRunning == true )
     {
         /* The interrupt event mutex is held for the entire critical section,
          * effectively disabling (simulated) interrupts. */
@@ -567,13 +568,13 @@ void vPortExitCritical( void )
     int32_t lMutexNeedsReleasing;
     /* The interrupt event mutex should already be held by this thread as it was
      * obtained on entry to the critical section. */
-    lMutexNeedsReleasing = pdTRUE;
+    lMutexNeedsReleasing = true;
     if( ulCriticalNesting > portNO_CRITICAL_NESTING )
     {
         ulCriticalNesting--;
         /* Don't need to wait for any pending interrupts to execute if the
          * critical section was exited from inside an interrupt. */
-        if( ( ulCriticalNesting == portNO_CRITICAL_NESTING ) && ( xInsideInterrupt == pdFALSE ) )
+        if( ( ulCriticalNesting == portNO_CRITICAL_NESTING ) && ( xInsideInterrupt == false ) )
         {
             /* Were any interrupts set to pending while interrupts were
              * (simulated) disabled? */
@@ -596,7 +597,7 @@ void vPortExitCritical( void )
                 ResetEvent( pxThreadState->pvYieldEvent );
                 /* Mutex will be released now so the (simulated) interrupt can
                  * execute, so does not require releasing on function exit. */
-                lMutexNeedsReleasing = pdFALSE;
+                lMutexNeedsReleasing = false;
                 ReleaseMutex( pvInterruptEventMutex );
                 WaitForSingleObject( pxThreadState->pvYieldEvent, INFINITE );
             }
@@ -604,7 +605,7 @@ void vPortExitCritical( void )
     }
     if( pvInterruptEventMutex != NULL )
     {
-        if( lMutexNeedsReleasing == pdTRUE )
+        if( lMutexNeedsReleasing == true )
         {
             configASSERT( xPortRunning );
             ReleaseMutex( pvInterruptEventMutex );

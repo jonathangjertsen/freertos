@@ -241,7 +241,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * time of portMAX_DELAY can be used to block indefinitely (provided
  * INCLUDE_vTaskSuspend is set to 1 in FreeRTOSConfig.h).
  *
- * @return pdTRUE if the semaphore was obtained.  pdFALSE
+ * @return true if the semaphore was obtained.  false
  * if xBlockTime expired without the semaphore becoming available.
  *
  * Example usage:
@@ -264,7 +264,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *  {
  *      // See if we can obtain the semaphore.  If the semaphore is not available
  *      // wait 10 ticks to see if it becomes free.
- *      if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
+ *      if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == true )
  *      {
  *          // We were able to obtain the semaphore and can now access the
  *          // shared resource.
@@ -321,7 +321,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * the task already owns the semaphore then xSemaphoreTakeRecursive() will
  * return immediately no matter what the value of xBlockTime.
  *
- * @return pdTRUE if the semaphore was obtained.  pdFALSE if xBlockTime
+ * @return true if the semaphore was obtained.  false if xBlockTime
  * expired without the semaphore becoming available.
  *
  * Example usage:
@@ -344,7 +344,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *  {
  *      // See if we can obtain the mutex.  If the mutex is not available
  *      // wait 10 ticks to see if it becomes free.
- *      if( xSemaphoreTakeRecursive( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
+ *      if( xSemaphoreTakeRecursive( xSemaphore, ( TickType_t ) 10 ) == true )
  *      {
  *          // We were able to obtain the mutex and can now access the
  *          // shared resource.
@@ -402,7 +402,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * @param xSemaphore A handle to the semaphore being released.  This is the
  * handle returned when the semaphore was created.
  *
- * @return pdTRUE if the semaphore was released.  pdFALSE if an error occurred.
+ * @return true if the semaphore was released.  false if an error occurred.
  * Semaphores are implemented using queues.  An error can occur if there is
  * no space on the queue to post a message - indicating that the
  * semaphore was not first obtained correctly.
@@ -418,7 +418,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *
  *  if( xSemaphore != NULL )
  *  {
- *      if( xSemaphoreGive( xSemaphore ) != pdTRUE )
+ *      if( xSemaphoreGive( xSemaphore ) != true )
  *      {
  *          // We would expect this call to fail because we cannot give
  *          // a semaphore without first "taking" it!
@@ -434,7 +434,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *
  *          // We have finished accessing the shared resource so can free the
  *          // semaphore.
- *          if( xSemaphoreGive( xSemaphore ) != pdTRUE )
+ *          if( xSemaphoreGive( xSemaphore ) != true )
  *          {
  *              // We would not expect this call to fail because we must have
  *              // obtained the semaphore to get here.
@@ -472,7 +472,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * @param xMutex A handle to the mutex being released, or 'given'.  This is the
  * handle returned by xSemaphoreCreateMutex();
  *
- * @return pdTRUE if the semaphore was given.
+ * @return true if the semaphore was given.
  *
  * Example usage:
  * @code{c}
@@ -494,7 +494,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *  {
  *      // See if we can obtain the mutex.  If the mutex is not available
  *      // wait 10 ticks to see if it becomes free.
- *      if( xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 ) == pdTRUE )
+ *      if( xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 ) == true )
  *      {
  *          // We were able to obtain the mutex and can now access the
  *          // shared resource.
@@ -555,12 +555,12 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * handle returned when the semaphore was created.
  *
  * @param pxHigherPriorityTaskWoken xSemaphoreGiveFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if giving the semaphore caused a task
+ * *pxHigherPriorityTaskWoken to true if giving the semaphore caused a task
  * to unblock, and the unblocked task has a priority higher than the currently
- * running task.  If xSemaphoreGiveFromISR() sets this value to pdTRUE then
+ * running task.  If xSemaphoreGiveFromISR() sets this value to true then
  * a context switch should be requested before the interrupt is exited.
  *
- * @return pdTRUE if the semaphore was successfully given, otherwise errQUEUE_FULL.
+ * @return true if the semaphore was successfully given, otherwise errQUEUE_FULL.
  *
  * Example usage:
  * @code{c}
@@ -577,7 +577,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *      // was created before this task was started.
  *
  *      // Block waiting for the semaphore to become available.
- *      if( xSemaphoreTake( xSemaphore, LONG_TIME ) == pdTRUE )
+ *      if( xSemaphoreTake( xSemaphore, LONG_TIME ) == true )
  *      {
  *          // It is time to execute.
  *
@@ -602,7 +602,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *  // ... Do other time functions.
  *
  *  // Is it time for vATask () to run?
- *  xHigherPriorityTaskWoken = pdFALSE;
+ *  xHigherPriorityTaskWoken = false;
  *  ucLocalTickCount++;
  *  if( ucLocalTickCount >= TICKS_TO_WAIT )
  *  {
@@ -613,7 +613,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *      ucLocalTickCount = 0;
  *  }
  *
- *  if( xHigherPriorityTaskWoken != pdFALSE )
+ *  if( xHigherPriorityTaskWoken != false )
  *  {
  *      // We can force a context switch here.  Context switching from an
  *      // ISR uses port specific syntax.  Check the demo task for your port
@@ -650,13 +650,13 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * handle returned when the semaphore was created.
  *
  * @param pxHigherPriorityTaskWoken xSemaphoreTakeFromISR() will set
- * *pxHigherPriorityTaskWoken to pdTRUE if taking the semaphore caused a task
+ * *pxHigherPriorityTaskWoken to true if taking the semaphore caused a task
  * to unblock, and the unblocked task has a priority higher than the currently
- * running task.  If xSemaphoreTakeFromISR() sets this value to pdTRUE then
+ * running task.  If xSemaphoreTakeFromISR() sets this value to true then
  * a context switch should be requested before the interrupt is exited.
  *
- * @return pdTRUE if the semaphore was successfully taken, otherwise
- * pdFALSE
+ * @return true if the semaphore was successfully taken, otherwise
+ * false
  */
 #define xSemaphoreTakeFromISR( xSemaphore, pxHigherPriorityTaskWoken )    xQueueReceiveFromISR( ( QueueHandle_t ) ( xSemaphore ), NULL, ( pxHigherPriorityTaskWoken ) )
 /**
@@ -1180,7 +1180,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  * @param ppxSemaphoreBuffer Used to return a pointer to the semaphore's
  * data structure buffer.
  *
- * @return pdTRUE if buffer was retrieved, pdFALSE otherwise.
+ * @return true if buffer was retrieved, false otherwise.
  */
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     #define xSemaphoreGetStaticBuffer( xSemaphore, ppxSemaphoreBuffer )    xQueueGenericGetStaticBuffers( ( QueueHandle_t ) ( xSemaphore ), NULL, ( ppxSemaphoreBuffer ) )

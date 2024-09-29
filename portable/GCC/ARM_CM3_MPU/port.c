@@ -212,7 +212,7 @@ void vPortSwitchToUserMode( void );
 /**
  * @brief Checks whether or not the calling task is privileged.
  *
- * @return pdTRUE if the calling task is privileged, pdFALSE otherwise.
+ * @return true if the calling task is privileged, false otherwise.
  */
 BaseType_t xPortIsTaskPrivileged( void ) PRIVILEGED_FUNCTION;
 
@@ -222,9 +222,9 @@ BaseType_t xPortIsTaskPrivileged( void ) PRIVILEGED_FUNCTION;
 static UBaseType_t uxCriticalNesting = 0xaaaaaaaa;
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
 /*
- * This variable is set to pdTRUE when the scheduler is started.
+ * This variable is set to true when the scheduler is started.
  */
-    PRIVILEGED_DATA static BaseType_t xSchedulerRunning = pdFALSE;
+    PRIVILEGED_DATA static BaseType_t xSchedulerRunning = false;
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
 /*
  * Used by the portASSERT_IF_INTERRUPT_PRIORITY_INVALID() macro to ensure
@@ -246,7 +246,7 @@ StackType_t * pxPortInitialiseStack( StackType_t * pxTopOfStack,
                                      BaseType_t xRunPrivileged,
                                      xMPU_SETTINGS * xMPUSettings )
 {
-    if( xRunPrivileged == pdTRUE )
+    if( xRunPrivileged == true )
     {
         xMPUSettings->ulTaskFlags |= portTASK_IS_PRIVILEGED_FLAG;
         xMPUSettings->ulContext[ 0 ] = portINITIAL_CONTROL_IF_PRIVILEGED;
@@ -571,11 +571,11 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
 
 BaseType_t xPortIsTaskPrivileged( void ) /* PRIVILEGED_FUNCTION */
 {
-    BaseType_t xTaskIsPrivileged = pdFALSE;
+    BaseType_t xTaskIsPrivileged = false;
     const xMPU_SETTINGS * xTaskMpuSettings = xTaskGetMPUSettings( NULL ); /* Calling task's MPU settings. */
     if( ( xTaskMpuSettings->ulTaskFlags & portTASK_IS_PRIVILEGED_FLAG ) == portTASK_IS_PRIVILEGED_FLAG )
     {
-        xTaskIsPrivileged = pdTRUE;
+        xTaskIsPrivileged = true;
     }
     return xTaskIsPrivileged;
 }
@@ -754,7 +754,7 @@ BaseType_t xPortStartScheduler( void )
     uxCriticalNesting = 0;
     #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
     {
-        xSchedulerRunning = pdTRUE;
+        xSchedulerRunning = true;
     }
     #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
     /* Start the first task. */
@@ -785,7 +785,7 @@ void vPortEndScheduler( void )
 void vPortEnterCritical( void )
 {
     #if ( configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS == 1 )
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -809,7 +809,7 @@ void vPortEnterCritical( void )
 void vPortExitCritical( void )
 {
     #if ( configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS == 1 )
-        if( portIS_PRIVILEGED() == pdFALSE )
+        if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
@@ -917,7 +917,7 @@ void xPortSysTickHandler( void )
     traceISR_ENTER();
     {
         /* Increment the RTOS tick. */
-        if( xTaskIncrementTick() != pdFALSE )
+        if( xTaskIncrementTick() != false )
         {
             traceISR_EXIT_TO_SCHEDULER();
             /* Pend a context switch. */
@@ -1191,23 +1191,23 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
                                                 uint32_t ulAccessRequested ) /* PRIVILEGED_FUNCTION */
     {
         uint32_t i, ulBufferStartAddress, ulBufferEndAddress;
-        BaseType_t xAccessGranted = pdFALSE;
+        BaseType_t xAccessGranted = false;
         const xMPU_SETTINGS * xTaskMpuSettings = xTaskGetMPUSettings( NULL ); /* Calling task's MPU settings. */
-        if( xSchedulerRunning == pdFALSE )
+        if( xSchedulerRunning == false )
         {
             /* Grant access to all the kernel objects before the scheduler
              * is started. It is necessary because there is no task running
              * yet and therefore, we cannot use the permissions of any
              * task. */
-            xAccessGranted = pdTRUE;
+            xAccessGranted = true;
         }
         else if( ( xTaskMpuSettings->ulTaskFlags & portTASK_IS_PRIVILEGED_FLAG ) == portTASK_IS_PRIVILEGED_FLAG )
         {
-            xAccessGranted = pdTRUE;
+            xAccessGranted = true;
         }
         else
         {
-            if( portADD_UINT32_WILL_OVERFLOW( ( ( uint32_t ) pvBuffer ), ( ulBufferLength - 1UL ) ) == pdFALSE )
+            if( portADD_UINT32_WILL_OVERFLOW( ( ( uint32_t ) pvBuffer ), ( ulBufferLength - 1UL ) ) == false )
             {
                 ulBufferStartAddress = ( uint32_t ) pvBuffer;
                 ulBufferEndAddress = ( ( ( uint32_t ) pvBuffer ) + ulBufferLength - 1UL );
@@ -1221,7 +1221,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
                                                      xTaskMpuSettings->xRegionSettings[ i ].ulRegionEndAddress ) &&
                         portIS_AUTHORIZED( ulAccessRequested, xTaskMpuSettings->xRegionSettings[ i ].ulRegionPermissions ) )
                     {
-                        xAccessGranted = pdTRUE;
+                        xAccessGranted = true;
                         break;
                     }
                 }
@@ -1316,15 +1316,15 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
         BaseType_t xPortIsAuthorizedToAccessKernelObject( int32_t lInternalIndexOfKernelObject ) /* PRIVILEGED_FUNCTION */
         {
             uint32_t ulAccessControlListEntryIndex, ulAccessControlListEntryBit;
-            BaseType_t xAccessGranted = pdFALSE;
+            BaseType_t xAccessGranted = false;
             const xMPU_SETTINGS * xTaskMpuSettings;
-            if( xSchedulerRunning == pdFALSE )
+            if( xSchedulerRunning == false )
             {
                 /* Grant access to all the kernel objects before the scheduler
                  * is started. It is necessary because there is no task running
                  * yet and therefore, we cannot use the permissions of any
                  * task. */
-                xAccessGranted = pdTRUE;
+                xAccessGranted = true;
             }
             else
             {
@@ -1333,13 +1333,13 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
                 ulAccessControlListEntryBit = ( ( uint32_t ) lInternalIndexOfKernelObject % portACL_ENTRY_SIZE_BITS );
                 if( ( xTaskMpuSettings->ulTaskFlags & portTASK_IS_PRIVILEGED_FLAG ) == portTASK_IS_PRIVILEGED_FLAG )
                 {
-                    xAccessGranted = pdTRUE;
+                    xAccessGranted = true;
                 }
                 else
                 {
                     if( ( xTaskMpuSettings->ulAccessControlList[ ulAccessControlListEntryIndex ] & ( 1U << ulAccessControlListEntryBit ) ) != 0 )
                     {
-                        xAccessGranted = pdTRUE;
+                        xAccessGranted = true;
                     }
                 }
             }
@@ -1351,7 +1351,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
             ( void ) lInternalIndexOfKernelObject;
             /* If Access Control List feature is not used, all the tasks have
              * access to all the kernel objects. */
-            return pdTRUE;
+            return true;
         }
     #endif /* #if ( configENABLE_ACCESS_CONTROL_LIST == 1 ) */
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */

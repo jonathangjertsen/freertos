@@ -91,7 +91,7 @@ typedef unsigned long    UBaseType_t;
 #define portEND_SWITCHING_ISR( xSwitchRequired ) \
     do                                           \
     {                                            \
-        if( xSwitchRequired != pdFALSE )         \
+        if( xSwitchRequired != false )         \
         {                                        \
             traceISR_EXIT_TO_SCHEDULER();        \
             portYIELD();                         \
@@ -166,11 +166,11 @@ portFORCE_INLINE static BaseType_t xPortIsInsideInterrupt( void )
     __asm volatile ( "mrs %0, ipsr" : "=r" ( ulCurrentInterrupt )::"memory" );
     if( ulCurrentInterrupt == 0 )
     {
-        xReturn = pdFALSE;
+        xReturn = false;
     }
     else
     {
-        xReturn = pdTRUE;
+        xReturn = true;
     }
     return xReturn;
 }

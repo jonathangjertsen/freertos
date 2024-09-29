@@ -94,7 +94,7 @@ PRIVILEGED_DATA static BlockLink_t xStart, xEnd;
  * fragmentation. */
 PRIVILEGED_DATA static size_t xFreeBytesRemaining = configADJUSTED_HEAP_SIZE;
 /* Indicates whether the heap has been initialised or not. */
-PRIVILEGED_DATA static BaseType_t xHeapHasBeenInitialised = pdFALSE;
+PRIVILEGED_DATA static BaseType_t xHeapHasBeenInitialised = false;
 
 /*
  * Initialises the heap structures before their first use.
@@ -168,10 +168,10 @@ void * pvPortMalloc( size_t xWantedSize )
     {
         /* If this is the first call to malloc then the heap will require
          * initialisation to setup the list of free blocks. */
-        if( xHeapHasBeenInitialised == pdFALSE )
+        if( xHeapHasBeenInitialised == false )
         {
             prvHeapInit();
-            xHeapHasBeenInitialised = pdTRUE;
+            xHeapHasBeenInitialised = true;
         }
         /* Check the block size we are trying to allocate is not so large that the
          * top bit is set.  The top bit of the block size member of the BlockLink_t
@@ -332,5 +332,5 @@ static void prvHeapInit( void ) /* PRIVILEGED_FUNCTION */
 void vPortHeapResetState( void )
 {
     xFreeBytesRemaining = configADJUSTED_HEAP_SIZE;
-    xHeapHasBeenInitialised = pdFALSE;
+    xHeapHasBeenInitialised = false;
 }

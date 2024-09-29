@@ -463,7 +463,7 @@ typedef void (* StreamBufferCallbackFunction_t)( StreamBufferHandle_t xStreamBuf
  * @param ppxStaticStreamBuffer Used to return a pointer to the stream
  * buffer's data structure buffer.
  *
- * @return pdTRUE if buffers were retrieved, pdFALSE otherwise.
+ * @return true if buffers were retrieved, false otherwise.
  *
  * \defgroup xStreamBufferGetStaticBuffers xStreamBufferGetStaticBuffers
  * \ingroup StreamBufferManagement
@@ -623,11 +623,11 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
  * xStreamBufferSendFromISR() causes a task to leave the Blocked state, and the
  * unblocked task has a priority higher than the currently executing task (the
  * task that was interrupted), then, internally, xStreamBufferSendFromISR()
- * will set *pxHigherPriorityTaskWoken to pdTRUE.  If
- * xStreamBufferSendFromISR() sets this value to pdTRUE, then normally a
+ * will set *pxHigherPriorityTaskWoken to true.  If
+ * xStreamBufferSendFromISR() sets this value to true, then normally a
  * context switch should be performed before the interrupt is exited.  This will
  * ensure that the interrupt returns directly to the highest priority Ready
- * state task.  *pxHigherPriorityTaskWoken should be set to pdFALSE before it
+ * state task.  *pxHigherPriorityTaskWoken should be set to false before it
  * is passed into the function.  See the example code below for an example.
  *
  * @return The number of bytes actually written to the stream buffer, which will
@@ -643,7 +643,7 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
  * {
  * size_t xBytesSent;
  * char *pcStringToSend = "String to send";
- * BaseType_t xHigherPriorityTaskWoken = pdFALSE; // Initialised to pdFALSE.
+ * BaseType_t xHigherPriorityTaskWoken = false; // Initialised to false.
  *
  *  // Attempt to send the string to the stream buffer.
  *  xBytesSent = xStreamBufferSendFromISR( xStreamBuffer,
@@ -657,7 +657,7 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
  *      // string to be written, ut xBytesSent bytes were written.
  *  }
  *
- *  // If xHigherPriorityTaskWoken was set to pdTRUE inside
+ *  // If xHigherPriorityTaskWoken was set to true inside
  *  // xStreamBufferSendFromISR() then a task that has a priority above the
  *  // priority of the currently executing task was unblocked and a context
  *  // switch should be performed to ensure the ISR returns to the unblocked
@@ -804,11 +804,11 @@ size_t xStreamBufferReceive( StreamBufferHandle_t xStreamBuffer,
  * xStreamBufferReceiveFromISR() causes a task to leave the Blocked state, and
  * the unblocked task has a priority higher than the currently executing task
  * (the task that was interrupted), then, internally,
- * xStreamBufferReceiveFromISR() will set *pxHigherPriorityTaskWoken to pdTRUE.
- * If xStreamBufferReceiveFromISR() sets this value to pdTRUE, then normally a
+ * xStreamBufferReceiveFromISR() will set *pxHigherPriorityTaskWoken to true.
+ * If xStreamBufferReceiveFromISR() sets this value to true, then normally a
  * context switch should be performed before the interrupt is exited.  That will
  * ensure the interrupt returns directly to the highest priority Ready state
- * task.  *pxHigherPriorityTaskWoken should be set to pdFALSE before it is
+ * task.  *pxHigherPriorityTaskWoken should be set to false before it is
  * passed into the function.  See the code example below for an example.
  *
  * @return The number of bytes read from the stream buffer, if any.
@@ -822,7 +822,7 @@ size_t xStreamBufferReceive( StreamBufferHandle_t xStreamBuffer,
  * {
  * uint8_t ucRxData[ 20 ];
  * size_t xReceivedBytes;
- * BaseType_t xHigherPriorityTaskWoken = pdFALSE;  // Initialised to pdFALSE.
+ * BaseType_t xHigherPriorityTaskWoken = false;  // Initialised to false.
  *
  *  // Receive the next stream from the stream buffer.
  *  xReceivedBytes = xStreamBufferReceiveFromISR( xStreamBuffer,
@@ -836,7 +836,7 @@ size_t xStreamBufferReceive( StreamBufferHandle_t xStreamBuffer,
  *      // Process the stream here....
  *  }
  *
- *  // If xHigherPriorityTaskWoken was set to pdTRUE inside
+ *  // If xHigherPriorityTaskWoken was set to true inside
  *  // xStreamBufferReceiveFromISR() then a task that has a priority above the
  *  // priority of the currently executing task was unblocked and a context
  *  // switch should be performed to ensure the ISR returns to the unblocked
@@ -893,8 +893,8 @@ void vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer ) PRIVILEGED_FUNCTI
  *
  * @param xStreamBuffer The handle of the stream buffer being queried.
  *
- * @return If the stream buffer is full then pdTRUE is returned.  Otherwise
- * pdFALSE is returned.
+ * @return If the stream buffer is full then true is returned.  Otherwise
+ * false is returned.
  *
  * \defgroup xStreamBufferIsFull xStreamBufferIsFull
  * \ingroup StreamBufferManagement
@@ -915,8 +915,8 @@ BaseType_t xStreamBufferIsFull( StreamBufferHandle_t xStreamBuffer ) PRIVILEGED_
  *
  * @param xStreamBuffer The handle of the stream buffer being queried.
  *
- * @return If the stream buffer is empty then pdTRUE is returned.  Otherwise
- * pdFALSE is returned.
+ * @return If the stream buffer is empty then true is returned.  Otherwise
+ * false is returned.
  *
  * \defgroup xStreamBufferIsEmpty xStreamBufferIsEmpty
  * \ingroup StreamBufferManagement
@@ -943,9 +943,9 @@ BaseType_t xStreamBufferIsEmpty( StreamBufferHandle_t xStreamBuffer ) PRIVILEGED
  *
  * @param xStreamBuffer The handle of the stream buffer being reset.
  *
- * @return If the stream buffer is reset then pdPASS is returned.  If there was
+ * @return If the stream buffer is reset then true is returned.  If there was
  * a task blocked waiting to send to or read from the stream buffer then the
- * stream buffer is not reset and pdFAIL is returned.
+ * stream buffer is not reset and false is returned.
  *
  * \defgroup xStreamBufferReset xStreamBufferReset
  * \ingroup StreamBufferManagement
@@ -974,9 +974,9 @@ BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer ) PRIVILEGED_F
  *
  * @param xStreamBuffer The handle of the stream buffer being reset.
  *
- * @return If the stream buffer is reset then pdPASS is returned.  If there was
+ * @return If the stream buffer is reset then true is returned.  If there was
  * a task blocked waiting to send to or read from the stream buffer then the
- * stream buffer is not reset and pdFAIL is returned.
+ * stream buffer is not reset and false is returned.
  *
  * \defgroup xStreamBufferResetFromISR xStreamBufferResetFromISR
  * \ingroup StreamBufferManagement
@@ -1060,8 +1060,8 @@ size_t xStreamBufferBytesAvailable( StreamBufferHandle_t xStreamBuffer ) PRIVILE
  * @param xTriggerLevel The new trigger level for the stream buffer.
  *
  * @return If xTriggerLevel was less than or equal to the stream buffer's length
- * then the trigger level will be updated and pdTRUE is returned.  Otherwise
- * pdFALSE is returned.
+ * then the trigger level will be updated and true is returned.  Otherwise
+ * false is returned.
  *
  * \defgroup xStreamBufferSetTriggerLevel xStreamBufferSetTriggerLevel
  * \ingroup StreamBufferManagement
@@ -1095,15 +1095,15 @@ BaseType_t xStreamBufferSetTriggerLevel( StreamBufferHandle_t xStreamBuffer,
  * written.
  *
  * @param pxHigherPriorityTaskWoken *pxHigherPriorityTaskWoken should be
- * initialised to pdFALSE before it is passed into
+ * initialised to false before it is passed into
  * xStreamBufferSendCompletedFromISR().  If calling
  * xStreamBufferSendCompletedFromISR() removes a task from the Blocked state,
  * and the task has a priority above the priority of the currently running task,
- * then *pxHigherPriorityTaskWoken will get set to pdTRUE indicating that a
+ * then *pxHigherPriorityTaskWoken will get set to true indicating that a
  * context switch should be performed before exiting the ISR.
  *
- * @return If a task was removed from the Blocked state then pdTRUE is returned.
- * Otherwise pdFALSE is returned.
+ * @return If a task was removed from the Blocked state then true is returned.
+ * Otherwise false is returned.
  *
  * \defgroup xStreamBufferSendCompletedFromISR xStreamBufferSendCompletedFromISR
  * \ingroup StreamBufferManagement
@@ -1138,15 +1138,15 @@ BaseType_t xStreamBufferSendCompletedFromISR( StreamBufferHandle_t xStreamBuffer
  * read.
  *
  * @param pxHigherPriorityTaskWoken *pxHigherPriorityTaskWoken should be
- * initialised to pdFALSE before it is passed into
+ * initialised to false before it is passed into
  * xStreamBufferReceiveCompletedFromISR().  If calling
  * xStreamBufferReceiveCompletedFromISR() removes a task from the Blocked state,
  * and the task has a priority above the priority of the currently running task,
- * then *pxHigherPriorityTaskWoken will get set to pdTRUE indicating that a
+ * then *pxHigherPriorityTaskWoken will get set to true indicating that a
  * context switch should be performed before exiting the ISR.
  *
- * @return If a task was removed from the Blocked state then pdTRUE is returned.
- * Otherwise pdFALSE is returned.
+ * @return If a task was removed from the Blocked state then true is returned.
+ * Otherwise false is returned.
  *
  * \defgroup xStreamBufferReceiveCompletedFromISR xStreamBufferReceiveCompletedFromISR
  * \ingroup StreamBufferManagement

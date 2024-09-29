@@ -262,7 +262,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * @param ppxStaticMessageBuffer Used to return a pointer to the message
  * buffer's data structure buffer.
  *
- * @return pdTRUE if buffers were retrieved, pdFALSE otherwise..
+ * @return true if buffers were retrieved, false otherwise..
  *
  * \defgroup xMessageBufferGetStaticBuffers xMessageBufferGetStaticBuffers
  * \ingroup MessageBufferManagement
@@ -430,11 +430,11 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * xMessageBufferSendFromISR() causes a task to leave the Blocked state, and the
  * unblocked task has a priority higher than the currently executing task (the
  * task that was interrupted), then, internally, xMessageBufferSendFromISR()
- * will set *pxHigherPriorityTaskWoken to pdTRUE.  If
- * xMessageBufferSendFromISR() sets this value to pdTRUE, then normally a
+ * will set *pxHigherPriorityTaskWoken to true.  If
+ * xMessageBufferSendFromISR() sets this value to true, then normally a
  * context switch should be performed before the interrupt is exited.  This will
  * ensure that the interrupt returns directly to the highest priority Ready
- * state task.  *pxHigherPriorityTaskWoken should be set to pdFALSE before it
+ * state task.  *pxHigherPriorityTaskWoken should be set to false before it
  * is passed into the function.  See the code example below for an example.
  *
  * @return The number of bytes actually written to the message buffer.  If the
@@ -450,7 +450,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * {
  * size_t xBytesSent;
  * char *pcStringToSend = "String to send";
- * BaseType_t xHigherPriorityTaskWoken = pdFALSE; // Initialised to pdFALSE.
+ * BaseType_t xHigherPriorityTaskWoken = false; // Initialised to false.
  *
  *  // Attempt to send the string to the message buffer.
  *  xBytesSent = xMessageBufferSendFromISR( xMessageBuffer,
@@ -464,7 +464,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  *      // not enough free space in the buffer.
  *  }
  *
- *  // If xHigherPriorityTaskWoken was set to pdTRUE inside
+ *  // If xHigherPriorityTaskWoken was set to true inside
  *  // xMessageBufferSendFromISR() then a task that has a priority above the
  *  // priority of the currently executing task was unblocked and a context
  *  // switch should be performed to ensure the ISR returns to the unblocked
@@ -626,11 +626,11 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * xMessageBufferReceiveFromISR() causes a task to leave the Blocked state, and
  * the unblocked task has a priority higher than the currently executing task
  * (the task that was interrupted), then, internally,
- * xMessageBufferReceiveFromISR() will set *pxHigherPriorityTaskWoken to pdTRUE.
- * If xMessageBufferReceiveFromISR() sets this value to pdTRUE, then normally a
+ * xMessageBufferReceiveFromISR() will set *pxHigherPriorityTaskWoken to true.
+ * If xMessageBufferReceiveFromISR() sets this value to true, then normally a
  * context switch should be performed before the interrupt is exited.  That will
  * ensure the interrupt returns directly to the highest priority Ready state
- * task.  *pxHigherPriorityTaskWoken should be set to pdFALSE before it is
+ * task.  *pxHigherPriorityTaskWoken should be set to false before it is
  * passed into the function.  See the code example below for an example.
  *
  * @return The length, in bytes, of the message read from the message buffer, if
@@ -645,7 +645,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * {
  * uint8_t ucRxData[ 20 ];
  * size_t xReceivedBytes;
- * BaseType_t xHigherPriorityTaskWoken = pdFALSE;  // Initialised to pdFALSE.
+ * BaseType_t xHigherPriorityTaskWoken = false;  // Initialised to false.
  *
  *  // Receive the next message from the message buffer.
  *  xReceivedBytes = xMessageBufferReceiveFromISR( xMessageBuffer,
@@ -659,7 +659,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  *      // the message here....
  *  }
  *
- *  // If xHigherPriorityTaskWoken was set to pdTRUE inside
+ *  // If xHigherPriorityTaskWoken was set to true inside
  *  // xMessageBufferReceiveFromISR() then a task that has a priority above the
  *  // priority of the currently executing task was unblocked and a context
  *  // switch should be performed to ensure the ISR returns to the unblocked
@@ -714,7 +714,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * @param xMessageBuffer The handle of the message buffer being queried.
  *
  * @return If the message buffer referenced by xMessageBuffer is full then
- * pdTRUE is returned.  Otherwise pdFALSE is returned.
+ * true is returned.  Otherwise false is returned.
  */
 #define xMessageBufferIsFull( xMessageBuffer ) \
     xStreamBufferIsFull( xMessageBuffer )
@@ -732,7 +732,7 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * @param xMessageBuffer The handle of the message buffer being queried.
  *
  * @return If the message buffer referenced by xMessageBuffer is empty then
- * pdTRUE is returned.  Otherwise pdFALSE is returned.
+ * true is returned.  Otherwise false is returned.
  *
  */
 #define xMessageBufferIsEmpty( xMessageBuffer ) \
@@ -757,10 +757,10 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  *
  * @param xMessageBuffer The handle of the message buffer being reset.
  *
- * @return If the message buffer was reset then pdPASS is returned.  If the
+ * @return If the message buffer was reset then true is returned.  If the
  * message buffer could not be reset because either there was a task blocked on
  * the message queue to wait for space to become available, or to wait for a
- * a message to be available, then pdFAIL is returned.
+ * a message to be available, then false is returned.
  *
  * \defgroup xMessageBufferReset xMessageBufferReset
  * \ingroup MessageBufferManagement
@@ -789,10 +789,10 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  *
  * @param xMessageBuffer The handle of the message buffer being reset.
  *
- * @return If the message buffer was reset then pdPASS is returned.  If the
+ * @return If the message buffer was reset then true is returned.  If the
  * message buffer could not be reset because either there was a task blocked on
  * the message queue to wait for space to become available, or to wait for a
- * a message to be available, then pdFAIL is returned.
+ * a message to be available, then false is returned.
  *
  * \defgroup xMessageBufferResetFromISR xMessageBufferResetFromISR
  * \ingroup MessageBufferManagement
@@ -874,15 +874,15 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * written.
  *
  * @param pxHigherPriorityTaskWoken *pxHigherPriorityTaskWoken should be
- * initialised to pdFALSE before it is passed into
+ * initialised to false before it is passed into
  * xMessageBufferSendCompletedFromISR().  If calling
  * xMessageBufferSendCompletedFromISR() removes a task from the Blocked state,
  * and the task has a priority above the priority of the currently running task,
- * then *pxHigherPriorityTaskWoken will get set to pdTRUE indicating that a
+ * then *pxHigherPriorityTaskWoken will get set to true indicating that a
  * context switch should be performed before exiting the ISR.
  *
- * @return If a task was removed from the Blocked state then pdTRUE is returned.
- * Otherwise pdFALSE is returned.
+ * @return If a task was removed from the Blocked state then true is returned.
+ * Otherwise false is returned.
  *
  * \defgroup xMessageBufferSendCompletedFromISR xMessageBufferSendCompletedFromISR
  * \ingroup StreamBufferManagement
@@ -917,15 +917,15 @@ typedef StreamBufferHandle_t MessageBufferHandle_t;
  * read.
  *
  * @param pxHigherPriorityTaskWoken *pxHigherPriorityTaskWoken should be
- * initialised to pdFALSE before it is passed into
+ * initialised to false before it is passed into
  * xMessageBufferReceiveCompletedFromISR().  If calling
  * xMessageBufferReceiveCompletedFromISR() removes a task from the Blocked state,
  * and the task has a priority above the priority of the currently running task,
- * then *pxHigherPriorityTaskWoken will get set to pdTRUE indicating that a
+ * then *pxHigherPriorityTaskWoken will get set to true indicating that a
  * context switch should be performed before exiting the ISR.
  *
- * @return If a task was removed from the Blocked state then pdTRUE is returned.
- * Otherwise pdFALSE is returned.
+ * @return If a task was removed from the Blocked state then true is returned.
+ * Otherwise false is returned.
  *
  * \defgroup xMessageBufferReceiveCompletedFromISR xMessageBufferReceiveCompletedFromISR
  * \ingroup StreamBufferManagement

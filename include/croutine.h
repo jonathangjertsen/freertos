@@ -76,7 +76,7 @@ typedef struct corCoRoutineControlBlock
  * execute the same function.  See the example below and the co-routine section
  * of the WEB documentation for further information.
  *
- * @return pdPASS if the co-routine was successfully created and added to a ready
+ * @return true if the co-routine was successfully created and added to a ready
  * list, otherwise an error code defined with ProjDefs.h.
  *
  * Example usage:
@@ -346,7 +346,7 @@ void vCoRoutineSchedule( void );
  * portTICK_PERIOD_MS can be used to convert ticks to milliseconds (see example
  * below).
  *
- * @param pxResult The variable pointed to by pxResult will be set to pdPASS if
+ * @param pxResult The variable pointed to by pxResult will be set to true if
  * data was successfully posted onto the queue, otherwise it will be set to an
  * error defined within ProjDefs.h.
  *
@@ -368,7 +368,7 @@ void vCoRoutineSchedule( void );
  *      // This assumes the queue has already been created.
  *      crQUEUE_SEND( xHandle, xCoRoutineQueue, &xNumberToPost, NO_DELAY, &xResult );
  *
- *      if( xResult != pdPASS )
+ *      if( xResult != true )
  *      {
  *          // The message was not posted!
  *      }
@@ -398,7 +398,7 @@ void vCoRoutineSchedule( void );
         if( *pxResult == errQUEUE_YIELD )                                                 \
         {                                                                                 \
             crSET_STATE1( ( xHandle ) );                                                  \
-            *pxResult = pdPASS;                                                           \
+            *pxResult = true;                                                           \
         }                                                                                 \
     } while( 0 )
 /**
@@ -445,7 +445,7 @@ void vCoRoutineSchedule( void );
  * portTICK_PERIOD_MS can be used to convert ticks to milliseconds (see the
  * crQUEUE_SEND example).
  *
- * @param pxResult The variable pointed to by pxResult will be set to pdPASS if
+ * @param pxResult The variable pointed to by pxResult will be set to true if
  * data was successfully retrieved from the queue, otherwise it will be set to
  * an error code as defined within ProjDefs.h.
  *
@@ -467,7 +467,7 @@ void vCoRoutineSchedule( void );
  *      // Wait for data to become available on the queue.
  *      crQUEUE_RECEIVE( xHandle, xCoRoutineQueue, &uxLEDToFlash, portMAX_DELAY, &xResult );
  *
- *      if( xResult == pdPASS )
+ *      if( xResult == true )
  *      {
  *          // We received the LED to flash - flash it!
  *          vParTestToggleLED( uxLEDToFlash );
@@ -491,7 +491,7 @@ void vCoRoutineSchedule( void );
         if( *( pxResult ) == errQUEUE_YIELD )                                           \
         {                                                                               \
             crSET_STATE1( ( xHandle ) );                                                \
-            *( pxResult ) = pdPASS;                                                     \
+            *( pxResult ) = true;                                                     \
         }                                                                               \
     } while( 0 )
 /**
@@ -529,10 +529,10 @@ void vCoRoutineSchedule( void );
  *
  * @param xCoRoutinePreviouslyWoken This is included so an ISR can post onto
  * the same queue multiple times from a single interrupt.  The first call
- * should always pass in pdFALSE.  Subsequent calls should pass in
+ * should always pass in false.  Subsequent calls should pass in
  * the value returned from the previous call.
  *
- * @return pdTRUE if a co-routine was woken by posting onto the queue.  This is
+ * @return true if a co-routine was woken by posting onto the queue.  This is
  * used by the ISR to determine if a context switch may be required following
  * the ISR.
  *
@@ -554,7 +554,7 @@ void vCoRoutineSchedule( void );
  *       crQUEUE_RECEIVE( xHandle, xCommsRxQueue, &uxLEDToFlash, portMAX_DELAY, &xResult );
  *
  *       // Was a character received?
- *       if( xResult == pdPASS )
+ *       if( xResult == true )
  *       {
  *           // Process the character here.
  *       }
@@ -569,7 +569,7 @@ void vCoRoutineSchedule( void );
  * void vUART_ISR( void )
  * {
  * char cRxedChar;
- * BaseType_t xCRWokenByPost = pdFALSE;
+ * BaseType_t xCRWokenByPost = false;
  *
  *   // We loop around reading characters until there are none left in the UART.
  *   while( UART_RX_REG_NOT_EMPTY() )
@@ -577,9 +577,9 @@ void vCoRoutineSchedule( void );
  *       // Obtain the character from the UART.
  *       cRxedChar = UART_RX_REG;
  *
- *       // Post the character onto a queue.  xCRWokenByPost will be pdFALSE
+ *       // Post the character onto a queue.  xCRWokenByPost will be false
  *       // the first time around the loop.  If the post causes a co-routine
- *       // to be woken (unblocked) then xCRWokenByPost will be set to pdTRUE.
+ *       // to be woken (unblocked) then xCRWokenByPost will be set to true.
  *       // In this manner we can ensure that if more than one co-routine is
  *       // blocked on the queue only one is woken by this ISR no matter how
  *       // many characters are posted to the queue.
@@ -629,11 +629,11 @@ void vCoRoutineSchedule( void );
  *
  * @param pxCoRoutineWoken A co-routine may be blocked waiting for space to become
  * available on the queue.  If crQUEUE_RECEIVE_FROM_ISR causes such a
- * co-routine to unblock *pxCoRoutineWoken will get set to pdTRUE, otherwise
+ * co-routine to unblock *pxCoRoutineWoken will get set to true, otherwise
  * *pxCoRoutineWoken will remain unchanged.
  *
- * @return pdTRUE an item was successfully received from the queue, otherwise
- * pdFALSE.
+ * @return true an item was successfully received from the queue, otherwise
+ * false.
  *
  * Example usage:
  * @code{c}
@@ -654,7 +654,7 @@ void vCoRoutineSchedule( void );
  *       // Send the next character to the queue.
  *       crQUEUE_SEND( xHandle, xCoRoutineQueue, &cCharToTx, NO_DELAY, &xResult );
  *
- *       if( xResult == pdPASS )
+ *       if( xResult == true )
  *       {
  *           // The character was successfully posted to the queue.
  *       }
@@ -687,12 +687,12 @@ void vCoRoutineSchedule( void );
  * void vUART_ISR( void )
  * {
  * char cCharToTx;
- * BaseType_t xCRWokenByPost = pdFALSE;
+ * BaseType_t xCRWokenByPost = false;
  *
  *   while( UART_TX_REG_EMPTY() )
  *   {
  *       // Are there any characters in the queue waiting to be sent?
- *       // xCRWokenByPost will automatically be set to pdTRUE if a co-routine
+ *       // xCRWokenByPost will automatically be set to true if a co-routine
  *       // is woken by the post - ensuring that only a single co-routine is
  *       // woken no matter how many times we go around this loop.
  *       if( crQUEUE_RECEIVE_FROM_ISR( pxQueue, &cCharToTx, &xCRWokenByPost ) )

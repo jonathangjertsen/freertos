@@ -244,17 +244,17 @@ typedef TickType_t               EventBits_t;
  * uxBitsToWaitFor to 0x05.  To wait for bits 0 and/or bit 1 and/or bit 2 set
  * uxBitsToWaitFor to 0x07.  Etc.
  *
- * @param xClearOnExit If xClearOnExit is set to pdTRUE then any bits within
+ * @param xClearOnExit If xClearOnExit is set to true then any bits within
  * uxBitsToWaitFor that are set within the event group will be cleared before
  * xEventGroupWaitBits() returns if the wait condition was met (if the function
  * returns for a reason other than a timeout).  If xClearOnExit is set to
- * pdFALSE then the bits set in the event group are not altered when the call to
+ * false then the bits set in the event group are not altered when the call to
  * xEventGroupWaitBits() returns.
  *
- * @param xWaitForAllBits If xWaitForAllBits is set to pdTRUE then
+ * @param xWaitForAllBits If xWaitForAllBits is set to true then
  * xEventGroupWaitBits() will return when either all the bits in uxBitsToWaitFor
  * are set or the specified block time expires.  If xWaitForAllBits is set to
- * pdFALSE then xEventGroupWaitBits() will return when any one of the bits set
+ * false then xEventGroupWaitBits() will return when any one of the bits set
  * in uxBitsToWaitFor is set or the specified block time expires.  The block
  * time is specified by the xTicksToWait parameter.
  *
@@ -270,7 +270,7 @@ typedef TickType_t               EventBits_t;
  * xEventGroupWaitBits() returned because the bits it was waiting for were set
  * then the returned value is the event group value before any bits were
  * automatically cleared in the case that xClearOnExit parameter was set to
- * pdTRUE.
+ * true.
  *
  * Example usage:
  * @code{c}
@@ -287,8 +287,8 @@ typedef TickType_t               EventBits_t;
  *      uxBits = xEventGroupWaitBits(
  *                  xEventGroup,    // The event group being tested.
  *                  BIT_0 | BIT_4,  // The bits within the event group to wait for.
- *                  pdTRUE,         // BIT_0 and BIT_4 should be cleared before returning.
- *                  pdFALSE,        // Don't wait for both bits, either bit will do.
+ *                  true,         // BIT_0 and BIT_4 should be cleared before returning.
+ *                  false,        // Don't wait for both bits, either bit will do.
  *                  xTicksToWait ); // Wait a maximum of 100ms for either bit to be set.
  *
  *      if( ( uxBits & ( BIT_0 | BIT_4 ) ) == ( BIT_0 | BIT_4 ) )
@@ -396,8 +396,8 @@ EventBits_t xEventGroupClearBits( EventGroupHandle_t xEventGroup,
  * timer task to have the clear operation performed in the context of the timer
  * task.
  *
- * @note If this function returns pdPASS then the timer task is ready to run
- * and a portYIELD_FROM_ISR(pdTRUE) should be executed to perform the needed
+ * @note If this function returns true then the timer task is ready to run
+ * and a portYIELD_FROM_ISR(true) should be executed to perform the needed
  * clear on the event group.  This behavior is different from
  * xEventGroupSetBitsFromISR because the parameter xHigherPriorityTaskWoken is
  * not present.
@@ -409,7 +409,7 @@ EventBits_t xEventGroupClearBits( EventGroupHandle_t xEventGroup,
  * and bit 0 set uxBitsToClear to 0x09.
  *
  * @return If the request to execute the function was posted successfully then
- * pdPASS is returned, otherwise pdFALSE is returned.  pdFALSE will be returned
+ * true is returned, otherwise false is returned.  false will be returned
  * if the timer service queue was full.
  *
  * Example usage:
@@ -428,10 +428,10 @@ EventBits_t xEventGroupClearBits( EventGroupHandle_t xEventGroup,
  *                          xEventGroup,     // The event group being updated.
  *                          BIT_0 | BIT_4 ); // The bits being set.
  *
- *      if( xResult == pdPASS )
+ *      if( xResult == true )
  *      {
  *          // The message was posted successfully.
- *          portYIELD_FROM_ISR(pdTRUE);
+ *          portYIELD_FROM_ISR(true);
  *      }
  * }
  * @endcode
@@ -545,14 +545,14 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
  * will result in a message being sent to the timer daemon task.  If the
  * priority of the timer daemon task is higher than the priority of the
  * currently running task (the task the interrupt interrupted) then
- * *pxHigherPriorityTaskWoken will be set to pdTRUE by
+ * *pxHigherPriorityTaskWoken will be set to true by
  * xEventGroupSetBitsFromISR(), indicating that a context switch should be
  * requested before the interrupt exits.  For that reason
- * *pxHigherPriorityTaskWoken must be initialised to pdFALSE.  See the
+ * *pxHigherPriorityTaskWoken must be initialised to false.  See the
  * example code below.
  *
  * @return If the request to execute the function was posted successfully then
- * pdPASS is returned, otherwise pdFALSE is returned.  pdFALSE will be returned
+ * true is returned, otherwise false is returned.  false will be returned
  * if the timer service queue was full.
  *
  * Example usage:
@@ -568,8 +568,8 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
  * {
  * BaseType_t xHigherPriorityTaskWoken, xResult;
  *
- *      // xHigherPriorityTaskWoken must be initialised to pdFALSE.
- *      xHigherPriorityTaskWoken = pdFALSE;
+ *      // xHigherPriorityTaskWoken must be initialised to false.
+ *      xHigherPriorityTaskWoken = false;
  *
  *      // Set bit 0 and bit 4 in xEventGroup.
  *      xResult = xEventGroupSetBitsFromISR(
@@ -578,9 +578,9 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
  *                          &xHigherPriorityTaskWoken );
  *
  *      // Was the message posted successfully?
- *      if( xResult == pdPASS )
+ *      if( xResult == true )
  *      {
- *          // If xHigherPriorityTaskWoken is now set to pdTRUE then a context
+ *          // If xHigherPriorityTaskWoken is now set to true then a context
  *          // switch should be requested.  The macro used is port specific and
  *          // will be either portYIELD_FROM_ISR() or portEND_SWITCHING_ISR() -
  *          // refer to the documentation page for the port being used.
@@ -804,7 +804,7 @@ void vEventGroupDelete( EventGroupHandle_t xEventGroup ) PRIVILEGED_FUNCTION;
  * @param ppxEventGroupBuffer Used to return a pointer to the event groups's
  * data structure buffer.
  *
- * @return pdTRUE if the buffer was retrieved, pdFALSE otherwise.
+ * @return true if the buffer was retrieved, false otherwise.
  */
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     BaseType_t xEventGroupGetStaticBuffer( EventGroupHandle_t xEventGroup,
