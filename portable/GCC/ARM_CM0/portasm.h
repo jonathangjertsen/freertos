@@ -25,29 +25,23 @@
  * https://github.com/FreeRTOS
  *
  */
-
 #ifndef __PORT_ASM_H__
 #define __PORT_ASM_H__
-
 /* Scheduler includes. */
 #include "FreeRTOS.h"
-
 /* MPU wrappers includes. */
 #include "mpu_wrappers.h"
-
 /**
  * @brief Restore the context of the first task so that the first task starts
  * executing.
  */
 void vRestoreContextOfFirstTask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
-
 /**
  * @brief Checks whether or not the processor is privileged.
  *
  * @return 1 if the processor is already privileged, 0 otherwise.
  */
 BaseType_t xIsPrivileged( void ) __attribute__( ( naked ) );
-
 /**
  * @brief Raises the privilege level by clearing the bit 0 of the CONTROL
  * register.
@@ -60,7 +54,6 @@ BaseType_t xIsPrivileged( void ) __attribute__( ( naked ) );
  *  Bit[0] = 1 --> The processor is running unprivileged.
  */
 void vRaisePrivilege( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
-
 /**
  * @brief Lowers the privilege level by setting the bit 0 of the CONTROL
  * register.
@@ -70,30 +63,24 @@ void vRaisePrivilege( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
  *  Bit[0] = 1 --> The processor is running unprivileged.
  */
 void vResetPrivilege( void ) __attribute__( ( naked ) );
-
 /**
  * @brief Starts the first task.
  */
 void vStartFirstTask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
-
 /**
  * @brief Disables interrupts.
  */
 uint32_t ulSetInterruptMask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
-
 /**
  * @brief Enables interrupts.
  */
 void vClearInterruptMask( uint32_t ulMask ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
-
 /**
  * @brief PendSV Exception handler.
  */
 void PendSV_Handler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
-
 /**
  * @brief SVC Handler.
  */
 void SVC_Handler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
-
 #endif /* __PORT_ASM_H__ */

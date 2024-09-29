@@ -25,19 +25,15 @@
  * https://github.com/FreeRTOS
  *
  */
-
 #ifndef MPU_WRAPPERS_H
 #define MPU_WRAPPERS_H
-
 /* This file redefines API functions to be called through a wrapper macro, but
  * only for ports that are using the MPU. */
 #if ( portUSING_MPU_WRAPPERS == 1 )
-
 /* MPU_WRAPPERS_INCLUDED_FROM_API_FILE will be defined when this file is
  * included from queue.c or task.c to prevent it from having an effect within
  * those files. */
     #ifndef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
-
 /*
  * Map standard (non MPU) API functions to equivalents that start
  * "MPU_".  This will cause the application code to call the MPU_
@@ -45,7 +41,6 @@
  * then demoting code, so the kernel code always runs will full
  * privileges.
  */
-
 /* Map standard task.h API functions to the MPU equivalents. */
         #define vTaskDelay                            MPU_vTaskDelay
         #define xTaskDelayUntil                       MPU_xTaskDelayUntil
@@ -76,12 +71,10 @@
         #define xTaskCheckForTimeOut                  MPU_xTaskCheckForTimeOut
         #define xTaskGetCurrentTaskHandle             MPU_xTaskGetCurrentTaskHandle
         #define xTaskGetSchedulerState                MPU_xTaskGetSchedulerState
-
         #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
             #define ulTaskGetRunTimeCounter           MPU_ulTaskGetRunTimeCounter
             #define ulTaskGetRunTimePercent           MPU_ulTaskGetRunTimePercent
         #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
-
 /* Privileged only wrappers for Task APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
@@ -91,7 +84,6 @@
         #define vTaskPrioritySet                         MPU_vTaskPrioritySet
         #define xTaskGetHandle                           MPU_xTaskGetHandle
         #define xTaskCallApplicationTaskHook             MPU_xTaskCallApplicationTaskHook
-
         #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
             #define pcTaskGetName                        MPU_pcTaskGetName
             #define xTaskCreateRestricted                MPU_xTaskCreateRestricted
@@ -106,7 +98,6 @@
             #define xTaskGenericNotifyFromISR            MPU_xTaskGenericNotifyFromISR
             #define vTaskGenericNotifyGiveFromISR        MPU_vTaskGenericNotifyGiveFromISR
         #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
-
 /* Map standard queue.h API functions to the MPU equivalents. */
         #define xQueueGenericSend            MPU_xQueueGenericSend
         #define xQueueReceive                MPU_xQueueReceive
@@ -119,13 +110,11 @@
         #define xQueueGiveMutexRecursive     MPU_xQueueGiveMutexRecursive
         #define xQueueAddToSet               MPU_xQueueAddToSet
         #define xQueueSelectFromSet          MPU_xQueueSelectFromSet
-
         #if ( configQUEUE_REGISTRY_SIZE > 0 )
             #define vQueueAddToRegistry      MPU_vQueueAddToRegistry
             #define vQueueUnregisterQueue    MPU_vQueueUnregisterQueue
             #define pcQueueGetName           MPU_pcQueueGetName
         #endif /* #if ( configQUEUE_REGISTRY_SIZE > 0 ) */
-
 /* Privileged only wrappers for Queue APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
@@ -139,7 +128,6 @@
         #define xQueueGenericReset                     MPU_xQueueGenericReset
         #define xQueueCreateSet                        MPU_xQueueCreateSet
         #define xQueueRemoveFromSet                    MPU_xQueueRemoveFromSet
-
         #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
             #define xQueueGenericGetStaticBuffers      MPU_xQueueGenericGetStaticBuffers
             #define xQueueGenericSendFromISR           MPU_xQueueGenericSendFromISR
@@ -152,7 +140,6 @@
             #define xQueueGetMutexHolderFromISR        MPU_xQueueGetMutexHolderFromISR
             #define xQueueSelectFromSetFromISR         MPU_xQueueSelectFromSetFromISR
         #endif /* if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
-
 /* Map standard timer.h API functions to the MPU equivalents. */
         #define pvTimerGetTimerID                 MPU_pvTimerGetTimerID
         #define vTimerSetTimerID                  MPU_vTimerSetTimerID
@@ -164,7 +151,6 @@
         #define uxTimerGetReloadMode              MPU_uxTimerGetReloadMode
         #define xTimerGetPeriod                   MPU_xTimerGetPeriod
         #define xTimerGetExpiryTime               MPU_xTimerGetExpiryTime
-
 /* Privileged only wrappers for Timer APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
@@ -175,32 +161,27 @@
             #define xTimerGetStaticBuffer          MPU_xTimerGetStaticBuffer
             #define xTimerGenericCommandFromISR    MPU_xTimerGenericCommandFromISR
         #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
-
 /* Map standard event_group.h API functions to the MPU equivalents. */
         #define xEventGroupWaitBits          MPU_xEventGroupWaitBits
         #define xEventGroupClearBits         MPU_xEventGroupClearBits
         #define xEventGroupSetBits           MPU_xEventGroupSetBits
         #define xEventGroupSync              MPU_xEventGroupSync
-
         #if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 0 ) )
             #define uxEventGroupGetNumber    MPU_uxEventGroupGetNumber
             #define vEventGroupSetNumber     MPU_vEventGroupSetNumber
         #endif /* #if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 0 ) ) */
-
 /* Privileged only wrappers for Event Group APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
         #define xEventGroupCreate                  MPU_xEventGroupCreate
         #define xEventGroupCreateStatic            MPU_xEventGroupCreateStatic
         #define vEventGroupDelete                  MPU_vEventGroupDelete
-
         #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
             #define xEventGroupGetStaticBuffer     MPU_xEventGroupGetStaticBuffer
             #define xEventGroupClearBitsFromISR    MPU_xEventGroupClearBitsFromISR
             #define xEventGroupSetBitsFromISR      MPU_xEventGroupSetBitsFromISR
             #define xEventGroupGetBitsFromISR      MPU_xEventGroupGetBitsFromISR
         #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
-
 /* Map standard message/stream_buffer.h API functions to the MPU
  * equivalents. */
         #define xStreamBufferSend                      MPU_xStreamBufferSend
@@ -211,16 +192,13 @@
         #define xStreamBufferBytesAvailable            MPU_xStreamBufferBytesAvailable
         #define xStreamBufferSetTriggerLevel           MPU_xStreamBufferSetTriggerLevel
         #define xStreamBufferNextMessageLengthBytes    MPU_xStreamBufferNextMessageLengthBytes
-
 /* Privileged only wrappers for Stream Buffer APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
-
         #define xStreamBufferGenericCreate                  MPU_xStreamBufferGenericCreate
         #define xStreamBufferGenericCreateStatic            MPU_xStreamBufferGenericCreateStatic
         #define vStreamBufferDelete                         MPU_vStreamBufferDelete
         #define xStreamBufferReset                          MPU_xStreamBufferReset
-
         #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
             #define xStreamBufferGetStaticBuffers           MPU_xStreamBufferGetStaticBuffers
             #define xStreamBufferSendFromISR                MPU_xStreamBufferSendFromISR
@@ -229,48 +207,32 @@
             #define xStreamBufferReceiveCompletedFromISR    MPU_xStreamBufferReceiveCompletedFromISR
             #define xStreamBufferResetFromISR               MPU_xStreamBufferResetFromISR
         #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
-
         #if ( ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) )
-
             #define vGrantAccessToTask( xTask, xTaskToGrantAccess )                        vGrantAccessToKernelObject( ( xTask ), ( int32_t ) ( xTaskToGrantAccess ) )
             #define vRevokeAccessToTask( xTask, xTaskToRevokeAccess )                      vRevokeAccessToKernelObject( ( xTask ), ( int32_t ) ( xTaskToRevokeAccess ) )
-
             #define vGrantAccessToSemaphore( xTask, xSemaphoreToGrantAccess )              vGrantAccessToKernelObject( ( xTask ), ( int32_t ) ( xSemaphoreToGrantAccess ) )
             #define vRevokeAccessToSemaphore( xTask, xSemaphoreToRevokeAccess )            vRevokeAccessToKernelObject( ( xTask ), ( int32_t ) ( xSemaphoreToRevokeAccess ) )
-
             #define vGrantAccessToQueue( xTask, xQueueToGrantAccess )                      vGrantAccessToKernelObject( ( xTask ), ( int32_t ) ( xQueueToGrantAccess ) )
             #define vRevokeAccessToQueue( xTask, xQueueToRevokeAccess )                    vRevokeAccessToKernelObject( ( xTask ), ( int32_t ) ( xQueueToRevokeAccess ) )
-
             #define vGrantAccessToQueueSet( xTask, xQueueSetToGrantAccess )                vGrantAccessToKernelObject( ( xTask ), ( int32_t ) ( xQueueSetToGrantAccess ) )
             #define vRevokeAccessToQueueSet( xTask, xQueueSetToRevokeAccess )              vRevokeAccessToKernelObject( ( xTask ), ( int32_t ) ( xQueueSetToRevokeAccess ) )
-
             #define vGrantAccessToEventGroup( xTask, xEventGroupToGrantAccess )            vGrantAccessToKernelObject( ( xTask ), ( int32_t ) ( xEventGroupToGrantAccess ) )
             #define vRevokeAccessToEventGroup( xTask, xEventGroupToRevokeAccess )          vRevokeAccessToKernelObject( ( xTask ), ( int32_t ) ( xEventGroupToRevokeAccess ) )
-
             #define vGrantAccessToStreamBuffer( xTask, xStreamBufferToGrantAccess )        vGrantAccessToKernelObject( ( xTask ), ( int32_t ) ( xStreamBufferToGrantAccess ) )
             #define vRevokeAccessToStreamBuffer( xTask, xStreamBufferToRevokeAccess )      vRevokeAccessToKernelObject( ( xTask ), ( int32_t ) ( xStreamBufferToRevokeAccess ) )
-
             #define vGrantAccessToMessageBuffer( xTask, xMessageBufferToGrantAccess )      vGrantAccessToKernelObject( ( xTask ), ( int32_t ) ( xMessageBufferToGrantAccess ) )
             #define vRevokeAccessToMessageBuffer( xTask, xMessageBufferToRevokeAccess )    vRevokeAccessToKernelObject( ( xTask ), ( int32_t ) ( xMessageBufferToRevokeAccess ) )
-
             #define vGrantAccessToTimer( xTask, xTimerToGrantAccess )                      vGrantAccessToKernelObject( ( xTask ), ( int32_t ) ( xTimerToGrantAccess ) )
             #define vRevokeAccessToTimer( xTask, xTimerToRevokeAccess )                    vRevokeAccessToKernelObject( ( xTask ), ( int32_t ) ( xTimerToRevokeAccess ) )
-
         #endif /* #if ( ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) ) */
-
     #endif /* MPU_WRAPPERS_INCLUDED_FROM_API_FILE */
-
     #define PRIVILEGED_FUNCTION     __attribute__( ( section( "privileged_functions" ) ) )
     #define PRIVILEGED_DATA         __attribute__( ( section( "privileged_data" ) ) )
     #define FREERTOS_SYSTEM_CALL    __attribute__( ( section( "freertos_system_calls" ) ) )
-
 #else /* portUSING_MPU_WRAPPERS */
-
     #define PRIVILEGED_FUNCTION
     #define PRIVILEGED_DATA
     #define FREERTOS_SYSTEM_CALL
-
 #endif /* portUSING_MPU_WRAPPERS */
-
 
 #endif /* MPU_WRAPPERS_H */

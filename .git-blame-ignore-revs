@@ -1,9 +1,7 @@
 # Normalize line endings and whitespace
 ddd1e30018e74ad293cda0635018d636a6657f57
-
 # Convert tabs to spaces (4)
 8c77117c32e49a5070cd85e8920c36723997e465
-
 # Apply uncrustify rules
 587a83d647619bb0a508661c7bb4d6df89851582
 2c530ba5c352fdf420d1b13709a3970f04e9e6c6

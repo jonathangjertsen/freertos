@@ -25,10 +25,8 @@
  * https://github.com/FreeRTOS
  *
  */
-
 #ifndef MPU_SYSCALL_NUMBERS_H
 #define MPU_SYSCALL_NUMBERS_H
-
 /* Numbers assigned to various system calls. */
 #define SYSTEM_CALL_xTaskGenericNotify                     0
 #define SYSTEM_CALL_xTaskGenericNotifyWait                 1
@@ -101,5 +99,4 @@
 #define SYSTEM_CALL_xStreamBufferSetTriggerLevel           68
 #define SYSTEM_CALL_xStreamBufferNextMessageLengthBytes    69
 #define NUM_SYSTEM_CALLS                                   70  /* Total number of system calls. */
-
 #endif /* MPU_SYSCALL_NUMBERS_H */

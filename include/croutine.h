@@ -25,31 +25,24 @@
  * https://github.com/FreeRTOS
  *
  */
-
 #ifndef CO_ROUTINE_H
 #define CO_ROUTINE_H
-
 #ifndef INC_FREERTOS_H
     #error "include FreeRTOS.h must appear in source files before include croutine.h"
 #endif
-
 #include "list.h"
-
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     extern "C" {
 #endif
 /* *INDENT-ON* */
-
 /* Used to hide the implementation of the co-routine control block.  The
  * control block structure however has to be included in the header due to
  * the macro implementation of the co-routine functionality. */
 typedef void * CoRoutineHandle_t;
-
 /* Defines the prototype to which co-routine functions must conform. */
 typedef void (* crCOROUTINE_CODE)( CoRoutineHandle_t xHandle,
                                    UBaseType_t uxIndex );
-
 typedef struct corCoRoutineControlBlock
 {
     crCOROUTINE_CODE pxCoRoutineFunction;
@@ -59,7 +52,6 @@ typedef struct corCoRoutineControlBlock
     UBaseType_t uxIndex;         /**< Used to distinguish between co-routines when multiple co-routines use the same co-routine function. */
     uint16_t uxState;            /**< Used internally by the co-routine implementation. */
 } CRCB_t;                        /* Co-routine control block.  Note must be identical in size down to uxPriority with TCB_t. */
-
 /**
  * croutine. h
  * @code{c}
@@ -137,7 +129,6 @@ BaseType_t xCoRoutineCreate( crCOROUTINE_CODE pxCoRoutineCode,
                              UBaseType_t uxPriority,
                              UBaseType_t uxIndex );
 
-
 /**
  * croutine. h
  * @code{c}
@@ -179,7 +170,6 @@ BaseType_t xCoRoutineCreate( crCOROUTINE_CODE pxCoRoutineCode,
  * \ingroup Tasks
  */
 void vCoRoutineSchedule( void );
-
 /**
  * croutine. h
  * @code{c}
@@ -214,7 +204,6 @@ void vCoRoutineSchedule( void );
 #define crSTART( pxCRCB )                            \
     switch( ( ( CRCB_t * ) ( pxCRCB ) )->uxState ) { \
         case 0:
-
 /**
  * croutine. h
  * @code{c}
@@ -247,7 +236,6 @@ void vCoRoutineSchedule( void );
  * \ingroup Tasks
  */
 #define crEND()    }
-
 /*
  * These macros are intended for internal use by the co-routine implementation
  * only.  The macros should not be used directly by application writers.
@@ -258,7 +246,6 @@ void vCoRoutineSchedule( void );
 #define crSET_STATE1( xHandle )                                               \
     ( ( CRCB_t * ) ( xHandle ) )->uxState = ( ( __LINE__ * 2 ) + 1 ); return; \
     case ( ( __LINE__ * 2 ) + 1 ):
-
 /**
  * croutine. h
  * @code{c}
@@ -315,7 +302,6 @@ void vCoRoutineSchedule( void );
         }                                                          \
         crSET_STATE0( ( xHandle ) );                               \
     } while( 0 )
-
 /**
  * @code{c}
  * crQUEUE_SEND(
@@ -415,7 +401,6 @@ void vCoRoutineSchedule( void );
             *pxResult = pdPASS;                                                           \
         }                                                                                 \
     } while( 0 )
-
 /**
  * croutine. h
  * @code{c}
@@ -509,7 +494,6 @@ void vCoRoutineSchedule( void );
             *( pxResult ) = pdPASS;                                                     \
         }                                                                               \
     } while( 0 )
-
 /**
  * croutine. h
  * @code{c}
@@ -608,7 +592,6 @@ void vCoRoutineSchedule( void );
  */
 #define crQUEUE_SEND_FROM_ISR( pxQueue, pvItemToQueue, xCoRoutinePreviouslyWoken ) \
     xQueueCRSendFromISR( ( pxQueue ), ( pvItemToQueue ), ( xCoRoutinePreviouslyWoken ) )
-
 
 /**
  * croutine. h
@@ -724,7 +707,6 @@ void vCoRoutineSchedule( void );
  */
 #define crQUEUE_RECEIVE_FROM_ISR( pxQueue, pvBuffer, pxCoRoutineWoken ) \
     xQueueCRReceiveFromISR( ( pxQueue ), ( pvBuffer ), ( pxCoRoutineWoken ) )
-
 /*
  * This function is intended for internal use by the co-routine macros only.
  * The macro nature of the co-routine implementation requires that the
@@ -736,7 +718,6 @@ void vCoRoutineSchedule( void );
  */
 void vCoRoutineAddToDelayedList( TickType_t xTicksToDelay,
                                  List_t * pxEventList );
-
 /*
  * This function is intended for internal use by the queue implementation only.
  * The function should not be used by application writers.
@@ -746,17 +727,14 @@ void vCoRoutineAddToDelayedList( TickType_t xTicksToDelay,
  */
 BaseType_t xCoRoutineRemoveFromEventList( const List_t * pxEventList );
 
-
 /*
  * This function resets the internal state of the coroutine module. It must be
  * called by the application before restarting the scheduler.
  */
 void vCoRoutineResetState( void ) PRIVILEGED_FUNCTION;
-
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     }
 #endif
 /* *INDENT-ON* */
-
 #endif /* CO_ROUTINE_H */

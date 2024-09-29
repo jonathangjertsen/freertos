@@ -25,7 +25,6 @@
  * https://github.com/FreeRTOS
  *
  */
-
 /*
  * When the MPU is used the standard (non MPU) API functions are mapped to
  * equivalents that start "MPU_", the prototypes for which are defined in this
@@ -34,10 +33,8 @@
  * so the kernel code always runs will full privileges.
  */
 
-
 #ifndef MPU_PROTOTYPES_H
 #define MPU_PROTOTYPES_H
-
 typedef struct xTaskGenericNotifyParams
 {
     TaskHandle_t xTaskToNotify;
@@ -46,7 +43,6 @@ typedef struct xTaskGenericNotifyParams
     eNotifyAction eAction;
     uint32_t * pulPreviousNotificationValue;
 } xTaskGenericNotifyParams_t;
-
 typedef struct xTaskGenericNotifyWaitParams
 {
     UBaseType_t uxIndexToWaitOn;
@@ -55,7 +51,6 @@ typedef struct xTaskGenericNotifyWaitParams
     uint32_t * pulNotificationValue;
     TickType_t xTicksToWait;
 } xTaskGenericNotifyWaitParams_t;
-
 typedef struct xTimerGenericCommandFromTaskParams
 {
     TimerHandle_t xTimer;
@@ -64,7 +59,6 @@ typedef struct xTimerGenericCommandFromTaskParams
     BaseType_t * pxHigherPriorityTaskWoken;
     TickType_t xTicksToWait;
 } xTimerGenericCommandFromTaskParams_t;
-
 typedef struct xEventGroupWaitBitsParams
 {
     EventGroupHandle_t xEventGroup;
@@ -73,7 +67,6 @@ typedef struct xEventGroupWaitBitsParams
     BaseType_t xWaitForAllBits;
     TickType_t xTicksToWait;
 } xEventGroupWaitBitsParams_t;
-
 /* MPU versions of task.h API functions. */
 void MPU_vTaskDelay( const TickType_t xTicksToDelay ) FREERTOS_SYSTEM_CALL;
 BaseType_t MPU_xTaskDelayUntil( TickType_t * const pxPreviousWakeTime,
@@ -132,7 +125,6 @@ BaseType_t MPU_xTaskCheckForTimeOut( TimeOut_t * const pxTimeOut,
                                      TickType_t * const pxTicksToWait ) FREERTOS_SYSTEM_CALL;
 TaskHandle_t MPU_xTaskGetCurrentTaskHandle( void ) FREERTOS_SYSTEM_CALL;
 BaseType_t MPU_xTaskGetSchedulerState( void ) FREERTOS_SYSTEM_CALL;
-
 /* Privileged only wrappers for Task APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
@@ -179,7 +171,6 @@ BaseType_t MPU_xTaskGenericNotifyFromISR( TaskHandle_t xTaskToNotify,
 void MPU_vTaskGenericNotifyGiveFromISR( TaskHandle_t xTaskToNotify,
                                         UBaseType_t uxIndexToNotify,
                                         BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
-
 /* MPU versions of queue.h API functions. */
 BaseType_t MPU_xQueueGenericSend( QueueHandle_t xQueue,
                                   const void * const pvItemToQueue,
@@ -211,7 +202,6 @@ void MPU_vQueueSetQueueNumber( QueueHandle_t xQueue,
                                UBaseType_t uxQueueNumber ) FREERTOS_SYSTEM_CALL;
 UBaseType_t MPU_uxQueueGetQueueNumber( QueueHandle_t xQueue ) FREERTOS_SYSTEM_CALL;
 uint8_t MPU_ucQueueGetQueueType( QueueHandle_t xQueue ) FREERTOS_SYSTEM_CALL;
-
 /* Privileged only wrappers for Queue APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
@@ -256,7 +246,6 @@ BaseType_t MPU_xQueueIsQueueFullFromISR( const QueueHandle_t xQueue ) PRIVILEGED
 UBaseType_t MPU_uxQueueMessagesWaitingFromISR( const QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
 TaskHandle_t MPU_xQueueGetMutexHolderFromISR( QueueHandle_t xSemaphore ) PRIVILEGED_FUNCTION;
 QueueSetMemberHandle_t MPU_xQueueSelectFromSetFromISR( QueueSetHandle_t xQueueSet ) PRIVILEGED_FUNCTION;
-
 /* MPU versions of timers.h API functions. */
 void * MPU_pvTimerGetTimerID( const TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
 void MPU_vTimerSetTimerID( TimerHandle_t xTimer,
@@ -276,7 +265,6 @@ BaseType_t MPU_xTimerGetReloadMode( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
 UBaseType_t MPU_uxTimerGetReloadMode( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
 TickType_t MPU_xTimerGetPeriod( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
 TickType_t MPU_xTimerGetExpiryTime( TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
-
 /* Privileged only wrappers for Timer APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
@@ -298,7 +286,6 @@ BaseType_t MPU_xTimerGenericCommandFromISR( TimerHandle_t xTimer,
                                             const TickType_t xOptionalValue,
                                             BaseType_t * const pxHigherPriorityTaskWoken,
                                             const TickType_t xTicksToWait ) PRIVILEGED_FUNCTION;
-
 /* MPU versions of event_group.h API functions. */
 EventBits_t MPU_xEventGroupWaitBits( EventGroupHandle_t xEventGroup,
                                      const EventBits_t uxBitsToWaitFor,
@@ -319,7 +306,6 @@ EventBits_t MPU_xEventGroupSync( EventGroupHandle_t xEventGroup,
     void MPU_vEventGroupSetNumber( void * xEventGroup,
                                    UBaseType_t uxEventGroupNumber ) FREERTOS_SYSTEM_CALL;
 #endif /* ( configUSE_TRACE_FACILITY == 1 )*/
-
 /* Privileged only wrappers for Event Group APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
@@ -334,7 +320,6 @@ BaseType_t MPU_xEventGroupSetBitsFromISR( EventGroupHandle_t xEventGroup,
                                           const EventBits_t uxBitsToSet,
                                           BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
 EventBits_t MPU_xEventGroupGetBitsFromISR( EventGroupHandle_t xEventGroup ) PRIVILEGED_FUNCTION;
-
 /* MPU versions of message/stream_buffer.h API functions. */
 size_t MPU_xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
                               const void * pvTxData,
@@ -351,7 +336,6 @@ size_t MPU_xStreamBufferBytesAvailable( StreamBufferHandle_t xStreamBuffer ) FRE
 BaseType_t MPU_xStreamBufferSetTriggerLevel( StreamBufferHandle_t xStreamBuffer,
                                              size_t xTriggerLevel ) FREERTOS_SYSTEM_CALL;
 size_t MPU_xStreamBufferNextMessageLengthBytes( StreamBufferHandle_t xStreamBuffer ) FREERTOS_SYSTEM_CALL;
-
 /* Privileged only wrappers for Stream Buffer APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
@@ -385,5 +369,4 @@ BaseType_t MPU_xStreamBufferSendCompletedFromISR( StreamBufferHandle_t xStreamBu
 BaseType_t MPU_xStreamBufferReceiveCompletedFromISR( StreamBufferHandle_t xStreamBuffer,
                                                      BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
 BaseType_t MPU_xStreamBufferResetFromISR( StreamBufferHandle_t xStreamBuffer ) PRIVILEGED_FUNCTION;
-
 #endif /* MPU_PROTOTYPES_H */

@@ -25,7 +25,6 @@
  * https://github.com/FreeRTOS
  *
  */
-
 /*
  * This is the list implementation used by the scheduler.  While it is tailored
  * heavily for the schedulers needs, it is also available for use by
@@ -54,14 +53,11 @@
  * \ingroup FreeRTOSIntro
  */
 
-
 #ifndef LIST_H
 #define LIST_H
-
 #ifndef INC_FREERTOS_H
     #error "FreeRTOS.h must be included before list.h"
 #endif
-
 /*
  * The list structure members are modified from within interrupts, and therefore
  * by rights should be declared volatile.  However, they are only modified in a
@@ -93,13 +89,11 @@
 #ifndef configLIST_VOLATILE
     #define configLIST_VOLATILE
 #endif /* configSUPPORT_CROSS_MODULE_OPTIMISATION */
-
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     extern "C" {
 #endif
 /* *INDENT-ON* */
-
 /* Macros that can be used to place known values within the list structures,
  * then check that the known values do not get corrupted during the execution of
  * the application.   These may catch the list data structures being overwritten in
@@ -123,19 +117,16 @@
     #define listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE    TickType_t xListItemIntegrityValue2;
     #define listFIRST_LIST_INTEGRITY_CHECK_VALUE          TickType_t xListIntegrityValue1;
     #define listSECOND_LIST_INTEGRITY_CHECK_VALUE         TickType_t xListIntegrityValue2;
-
 /* Define macros that set the new structure members to known values. */
     #define listSET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )     ( pxItem )->xListItemIntegrityValue1 = pdINTEGRITY_CHECK_VALUE
     #define listSET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem )    ( pxItem )->xListItemIntegrityValue2 = pdINTEGRITY_CHECK_VALUE
     #define listSET_LIST_INTEGRITY_CHECK_1_VALUE( pxList )              ( pxList )->xListIntegrityValue1 = pdINTEGRITY_CHECK_VALUE
     #define listSET_LIST_INTEGRITY_CHECK_2_VALUE( pxList )              ( pxList )->xListIntegrityValue2 = pdINTEGRITY_CHECK_VALUE
-
 /* Define macros that will assert if one of the structure members does not
  * contain its expected value. */
     #define listTEST_LIST_ITEM_INTEGRITY( pxItem )                      configASSERT( ( ( pxItem )->xListItemIntegrityValue1 == pdINTEGRITY_CHECK_VALUE ) && ( ( pxItem )->xListItemIntegrityValue2 == pdINTEGRITY_CHECK_VALUE ) )
     #define listTEST_LIST_INTEGRITY( pxList )                           configASSERT( ( ( pxList )->xListIntegrityValue1 == pdINTEGRITY_CHECK_VALUE ) && ( ( pxList )->xListIntegrityValue2 == pdINTEGRITY_CHECK_VALUE ) )
 #endif /* configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES */
-
 
 /*
  * Definition of the only type of object that a list can contain.
@@ -152,7 +143,6 @@ struct xLIST_ITEM
     listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE          /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
 };
 typedef struct xLIST_ITEM ListItem_t;
-
 #if ( configUSE_MINI_LIST_ITEM == 1 )
     struct xMINI_LIST_ITEM
     {
@@ -165,7 +155,6 @@ typedef struct xLIST_ITEM ListItem_t;
 #else
     typedef struct xLIST_ITEM      MiniListItem_t;
 #endif
-
 /*
  * Definition of the type of queue used by the scheduler.
  */
@@ -177,7 +166,6 @@ typedef struct xLIST
     MiniListItem_t xListEnd;                  /**< List item that contains the maximum possible item value meaning it is always at the end of the list and is therefore used as a marker. */
     listSECOND_LIST_INTEGRITY_CHECK_VALUE     /**< Set to a known value if configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
 } List_t;
-
 /*
  * Access macro to set the owner of a list item.  The owner of a list item
  * is the object (usually a TCB) that contains the list item.
@@ -186,7 +174,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listSET_LIST_ITEM_OWNER( pxListItem, pxOwner )    ( ( pxListItem )->pvOwner = ( void * ) ( pxOwner ) )
-
 /*
  * Access macro to get the owner of a list item.  The owner of a list item
  * is the object (usually a TCB) that contains the list item.
@@ -195,7 +182,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listGET_LIST_ITEM_OWNER( pxListItem )             ( ( pxListItem )->pvOwner )
-
 /*
  * Access macro to set the value of the list item.  In most cases the value is
  * used to sort the list in ascending order.
@@ -204,7 +190,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listSET_LIST_ITEM_VALUE( pxListItem, xValue )     ( ( pxListItem )->xItemValue = ( xValue ) )
-
 /*
  * Access macro to retrieve the value of the list item.  The value can
  * represent anything - for example the priority of a task, or the time at
@@ -214,7 +199,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listGET_LIST_ITEM_VALUE( pxListItem )             ( ( pxListItem )->xItemValue )
-
 /*
  * Access macro to retrieve the value of the list item at the head of a given
  * list.
@@ -223,7 +207,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listGET_ITEM_VALUE_OF_HEAD_ENTRY( pxList )        ( ( ( pxList )->xListEnd ).pxNext->xItemValue )
-
 /*
  * Return the list item at the head of the list.
  *
@@ -231,7 +214,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listGET_HEAD_ENTRY( pxList )                      ( ( ( pxList )->xListEnd ).pxNext )
-
 /*
  * Return the next list item.
  *
@@ -239,7 +221,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listGET_NEXT( pxListItem )                        ( ( pxListItem )->pxNext )
-
 /*
  * Return the list item that marks the end of the list
  *
@@ -247,7 +228,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listGET_END_MARKER( pxList )                      ( ( ListItem_t const * ) ( &( ( pxList )->xListEnd ) ) )
-
 /*
  * Access macro to determine if a list contains any items.  The macro will
  * only have the value true if the list is empty.
@@ -256,12 +236,10 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listLIST_IS_EMPTY( pxList )                       ( ( ( pxList )->uxNumberOfItems == ( UBaseType_t ) 0 ) ? pdTRUE : pdFALSE )
-
 /*
  * Access macro to return the number of items in the list.
  */
 #define listCURRENT_LIST_LENGTH( pxList )                 ( ( pxList )->uxNumberOfItems )
-
 /*
  * Access function to obtain the owner of the next entry in a list.
  *
@@ -296,13 +274,11 @@ typedef struct xLIST
         ( pxTCB ) = ( pxConstList )->pxIndex->pvOwner;                                         \
     } while( 0 )
 #else /* #if ( configNUMBER_OF_CORES == 1 ) */
-
 /* This function is not required in SMP. FreeRTOS SMP scheduler doesn't use
  * pxIndex and it should always point to the xListEnd. Not defining this macro
  * here to prevent updating pxIndex.
  */
 #endif /* #if ( configNUMBER_OF_CORES == 1 ) */
-
 /*
  * Version of uxListRemove() that does not return a value.  Provided as a slight
  * optimisation for xTaskIncrementTick() by being inline.
@@ -336,7 +312,6 @@ typedef struct xLIST
         ( pxItemToRemove )->pxContainer = NULL;                                                     \
         ( ( pxList )->uxNumberOfItems ) = ( UBaseType_t ) ( ( ( pxList )->uxNumberOfItems ) - 1U ); \
     } while( 0 )
-
 /*
  * Inline version of vListInsertEnd() to provide slight optimisation for
  * xTaskIncrementTick().
@@ -383,7 +358,6 @@ typedef struct xLIST
                                                                                                     \
         ( ( pxList )->uxNumberOfItems ) = ( UBaseType_t ) ( ( ( pxList )->uxNumberOfItems ) + 1U ); \
     } while( 0 )
-
 /*
  * Access function to obtain the owner of the first entry in a list.  Lists
  * are normally sorted in ascending item value order.
@@ -401,7 +375,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 #define listGET_OWNER_OF_HEAD_ENTRY( pxList )            ( ( &( ( pxList )->xListEnd ) )->pxNext->pvOwner )
-
 /*
  * Check to see if a list item is within a list.  The list item maintains a
  * "container" pointer that points to the list it is in.  All this macro does
@@ -412,7 +385,6 @@ typedef struct xLIST
  * @return pdTRUE if the list item is in the list, otherwise pdFALSE.
  */
 #define listIS_CONTAINED_WITHIN( pxList, pxListItem )    ( ( ( pxListItem )->pxContainer == ( pxList ) ) ? ( pdTRUE ) : ( pdFALSE ) )
-
 /*
  * Return the list a list item is contained within (referenced from).
  *
@@ -420,14 +392,12 @@ typedef struct xLIST
  * @return A pointer to the List_t object that references the pxListItem
  */
 #define listLIST_ITEM_CONTAINER( pxListItem )            ( ( pxListItem )->pxContainer )
-
 /*
  * This provides a crude means of knowing if a list has been initialised, as
  * pxList->xListEnd.xItemValue is set to portMAX_DELAY by the vListInitialise()
  * function.
  */
 #define listLIST_IS_INITIALISED( pxList )                ( ( pxList )->xListEnd.xItemValue == portMAX_DELAY )
-
 /*
  * Must be called before a list is used!  This initialises all the members
  * of the list structure and inserts the xListEnd item into the list as a
@@ -439,7 +409,6 @@ typedef struct xLIST
  * \ingroup LinkedList
  */
 void vListInitialise( List_t * const pxList ) PRIVILEGED_FUNCTION;
-
 /*
  * Must be called before a list item is used.  This sets the list container to
  * null so the item does not think that it is already contained in a list.
@@ -450,7 +419,6 @@ void vListInitialise( List_t * const pxList ) PRIVILEGED_FUNCTION;
  * \ingroup LinkedList
  */
 void vListInitialiseItem( ListItem_t * const pxItem ) PRIVILEGED_FUNCTION;
-
 /*
  * Insert a list item into a list.  The item will be inserted into the list in
  * a position determined by its item value (ascending item value order).
@@ -464,7 +432,6 @@ void vListInitialiseItem( ListItem_t * const pxItem ) PRIVILEGED_FUNCTION;
  */
 void vListInsert( List_t * const pxList,
                   ListItem_t * const pxNewListItem ) PRIVILEGED_FUNCTION;
-
 /*
  * Insert a list item into a list.  The item will be inserted in a position
  * such that it will be the last item within the list returned by multiple
@@ -486,7 +453,6 @@ void vListInsert( List_t * const pxList,
  */
 void vListInsertEnd( List_t * const pxList,
                      ListItem_t * const pxNewListItem ) PRIVILEGED_FUNCTION;
-
 /*
  * Remove an item from a list.  The list item has a pointer to the list that
  * it is in, so only the list item need be passed into the function.
@@ -501,11 +467,9 @@ void vListInsertEnd( List_t * const pxList,
  * \ingroup LinkedList
  */
 UBaseType_t uxListRemove( ListItem_t * const pxItemToRemove ) PRIVILEGED_FUNCTION;
-
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     }
 #endif
 /* *INDENT-ON* */
-
 #endif /* ifndef LIST_H */

@@ -25,10 +25,8 @@
  * https://github.com/FreeRTOS
  *
  */
-
 #ifndef STACK_MACROS_H
 #define STACK_MACROS_H
-
 /*
  * Call the stack overflow hook function if the stack of the task being swapped
  * out is currently overflowed, or looks like it might have overflowed in the
@@ -43,8 +41,6 @@
  * stack will always be recognised.
  */
 
-/*-----------------------------------------------------------*/
-
 /*
  * portSTACK_LIMIT_PADDING is a number of extra words to consider to be in
  * use on the stack.
@@ -52,9 +48,7 @@
 #ifndef portSTACK_LIMIT_PADDING
     #define portSTACK_LIMIT_PADDING    0
 #endif
-
 #if ( ( configCHECK_FOR_STACK_OVERFLOW == 1 ) && ( portSTACK_GROWTH < 0 ) )
-
 /* Only the current stack state is to be checked. */
     #define taskCHECK_FOR_STACK_OVERFLOW()                                                      \
     do {                                                                                        \
@@ -65,12 +59,9 @@
             vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, pcOverflowTaskName ); \
         }                                                                                       \
     } while( 0 )
-
 #endif /* configCHECK_FOR_STACK_OVERFLOW == 1 */
-/*-----------------------------------------------------------*/
 
 #if ( ( configCHECK_FOR_STACK_OVERFLOW == 1 ) && ( portSTACK_GROWTH > 0 ) )
-
 /* Only the current stack state is to be checked. */
     #define taskCHECK_FOR_STACK_OVERFLOW()                                                       \
     do {                                                                                         \
@@ -82,12 +73,9 @@
             vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, pcOverflowTaskName );  \
         }                                                                                        \
     } while( 0 )
-
 #endif /* configCHECK_FOR_STACK_OVERFLOW == 1 */
-/*-----------------------------------------------------------*/
 
 #if ( ( configCHECK_FOR_STACK_OVERFLOW > 1 ) && ( portSTACK_GROWTH < 0 ) )
-
     #define taskCHECK_FOR_STACK_OVERFLOW()                                                      \
     do {                                                                                        \
         const uint32_t * const pulStack = ( uint32_t * ) pxCurrentTCB->pxStack;                 \
@@ -102,12 +90,9 @@
             vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, pcOverflowTaskName ); \
         }                                                                                       \
     } while( 0 )
-
 #endif /* #if( configCHECK_FOR_STACK_OVERFLOW > 1 ) */
-/*-----------------------------------------------------------*/
 
 #if ( ( configCHECK_FOR_STACK_OVERFLOW > 1 ) && ( portSTACK_GROWTH > 0 ) )
-
     #define taskCHECK_FOR_STACK_OVERFLOW()                                                                                                \
     do {                                                                                                                                  \
         int8_t * pcEndOfStack = ( int8_t * ) pxCurrentTCB->pxEndOfStack;                                                                  \
@@ -127,15 +112,11 @@
             vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, pcOverflowTaskName );                                           \
         }                                                                                                                                 \
     } while( 0 )
-
 #endif /* #if( configCHECK_FOR_STACK_OVERFLOW > 1 ) */
-/*-----------------------------------------------------------*/
 
 /* Remove stack overflow macro if not being used. */
 #ifndef taskCHECK_FOR_STACK_OVERFLOW
     #define taskCHECK_FOR_STACK_OVERFLOW()
 #endif
-
-
 
 #endif /* STACK_MACROS_H */

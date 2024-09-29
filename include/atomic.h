@@ -25,7 +25,6 @@
  * https://github.com/FreeRTOS
  *
  */
-
 /**
  * @file atomic.h
  * @brief FreeRTOS atomic operation support.
@@ -42,23 +41,18 @@
  * because ISRs on these ports cannot be interrupted and therefore, do not need
  * atomics in ISRs.
  */
-
 #ifndef ATOMIC_H
 #define ATOMIC_H
-
 #ifndef INC_FREERTOS_H
     #error "include FreeRTOS.h must appear in source files before include atomic.h"
 #endif
-
 /* Standard includes. */
 #include <stdint.h>
-
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     extern "C" {
 #endif
 /* *INDENT-ON* */
-
 /*
  * Port specific definitions -- entering/exiting critical section.
  * Refer template -- ./lib/FreeRTOS/portable/Compiler/Arch/portmacro.h
@@ -68,22 +62,16 @@
  *
  */
 #if ( portHAS_NESTED_INTERRUPTS == 1 )
-
 /* Nested interrupt scheme is supported in this port. */
     #define ATOMIC_ENTER_CRITICAL() \
     UBaseType_t uxCriticalSectionType = portSET_INTERRUPT_MASK_FROM_ISR()
-
     #define ATOMIC_EXIT_CRITICAL() \
     portCLEAR_INTERRUPT_MASK_FROM_ISR( uxCriticalSectionType )
-
 #else
-
 /* Nested interrupt scheme is NOT supported in this port. */
     #define ATOMIC_ENTER_CRITICAL()    portENTER_CRITICAL()
     #define ATOMIC_EXIT_CRITICAL()     portEXIT_CRITICAL()
-
 #endif /* portSET_INTERRUPT_MASK_FROM_ISR() */
-
 /*
  * Port specific definition -- "always inline".
  * Inline is compiler specific, and may not always get inlined depending on your
@@ -94,12 +82,9 @@
 #ifndef portFORCE_INLINE
     #define portFORCE_INLINE
 #endif
-
 #define ATOMIC_COMPARE_AND_SWAP_SUCCESS    0x1U     /**< Compare and swap succeeded, swapped. */
 #define ATOMIC_COMPARE_AND_SWAP_FAILURE    0x0U     /**< Compare and swap failed, did not swap. */
-
 /*----------------------------- Swap && CAS ------------------------------*/
-
 /**
  * Atomic compare-and-swap
  *
@@ -120,7 +105,6 @@ static portFORCE_INLINE uint32_t Atomic_CompareAndSwap_u32( uint32_t volatile * 
                                                             uint32_t ulComparand )
 {
     uint32_t ulReturnValue;
-
     ATOMIC_ENTER_CRITICAL();
     {
         if( *pulDestination == ulComparand )
@@ -134,10 +118,8 @@ static portFORCE_INLINE uint32_t Atomic_CompareAndSwap_u32( uint32_t volatile * 
         }
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulReturnValue;
 }
-/*-----------------------------------------------------------*/
 
 /**
  * Atomic swap (pointers)
@@ -155,17 +137,14 @@ static portFORCE_INLINE void * Atomic_SwapPointers_p32( void * volatile * ppvDes
                                                         void * pvExchange )
 {
     void * pReturnValue;
-
     ATOMIC_ENTER_CRITICAL();
     {
         pReturnValue = *ppvDestination;
         *ppvDestination = pvExchange;
     }
     ATOMIC_EXIT_CRITICAL();
-
     return pReturnValue;
 }
-/*-----------------------------------------------------------*/
 
 /**
  * Atomic compare-and-swap (pointers)
@@ -188,7 +167,6 @@ static portFORCE_INLINE uint32_t Atomic_CompareAndSwapPointers_p32( void * volat
                                                                     void * pvComparand )
 {
     uint32_t ulReturnValue = ATOMIC_COMPARE_AND_SWAP_FAILURE;
-
     ATOMIC_ENTER_CRITICAL();
     {
         if( *ppvDestination == pvComparand )
@@ -198,13 +176,10 @@ static portFORCE_INLINE uint32_t Atomic_CompareAndSwapPointers_p32( void * volat
         }
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulReturnValue;
 }
 
-
 /*----------------------------- Arithmetic ------------------------------*/
-
 /**
  * Atomic add
  *
@@ -220,17 +195,14 @@ static portFORCE_INLINE uint32_t Atomic_Add_u32( uint32_t volatile * pulAddend,
                                                  uint32_t ulCount )
 {
     uint32_t ulCurrent;
-
     ATOMIC_ENTER_CRITICAL();
     {
         ulCurrent = *pulAddend;
         *pulAddend += ulCount;
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulCurrent;
 }
-/*-----------------------------------------------------------*/
 
 /**
  * Atomic subtract
@@ -248,17 +220,14 @@ static portFORCE_INLINE uint32_t Atomic_Subtract_u32( uint32_t volatile * pulAdd
                                                       uint32_t ulCount )
 {
     uint32_t ulCurrent;
-
     ATOMIC_ENTER_CRITICAL();
     {
         ulCurrent = *pulAddend;
         *pulAddend -= ulCount;
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulCurrent;
 }
-/*-----------------------------------------------------------*/
 
 /**
  * Atomic increment
@@ -273,17 +242,14 @@ static portFORCE_INLINE uint32_t Atomic_Subtract_u32( uint32_t volatile * pulAdd
 static portFORCE_INLINE uint32_t Atomic_Increment_u32( uint32_t volatile * pulAddend )
 {
     uint32_t ulCurrent;
-
     ATOMIC_ENTER_CRITICAL();
     {
         ulCurrent = *pulAddend;
         *pulAddend += 1;
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulCurrent;
 }
-/*-----------------------------------------------------------*/
 
 /**
  * Atomic decrement
@@ -298,19 +264,15 @@ static portFORCE_INLINE uint32_t Atomic_Increment_u32( uint32_t volatile * pulAd
 static portFORCE_INLINE uint32_t Atomic_Decrement_u32( uint32_t volatile * pulAddend )
 {
     uint32_t ulCurrent;
-
     ATOMIC_ENTER_CRITICAL();
     {
         ulCurrent = *pulAddend;
         *pulAddend -= 1;
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulCurrent;
 }
-
 /*----------------------------- Bitwise Logical ------------------------------*/
-
 /**
  * Atomic OR
  *
@@ -326,17 +288,14 @@ static portFORCE_INLINE uint32_t Atomic_OR_u32( uint32_t volatile * pulDestinati
                                                 uint32_t ulValue )
 {
     uint32_t ulCurrent;
-
     ATOMIC_ENTER_CRITICAL();
     {
         ulCurrent = *pulDestination;
         *pulDestination |= ulValue;
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulCurrent;
 }
-/*-----------------------------------------------------------*/
 
 /**
  * Atomic AND
@@ -353,17 +312,14 @@ static portFORCE_INLINE uint32_t Atomic_AND_u32( uint32_t volatile * pulDestinat
                                                  uint32_t ulValue )
 {
     uint32_t ulCurrent;
-
     ATOMIC_ENTER_CRITICAL();
     {
         ulCurrent = *pulDestination;
         *pulDestination &= ulValue;
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulCurrent;
 }
-/*-----------------------------------------------------------*/
 
 /**
  * Atomic NAND
@@ -380,17 +336,14 @@ static portFORCE_INLINE uint32_t Atomic_NAND_u32( uint32_t volatile * pulDestina
                                                   uint32_t ulValue )
 {
     uint32_t ulCurrent;
-
     ATOMIC_ENTER_CRITICAL();
     {
         ulCurrent = *pulDestination;
         *pulDestination = ~( ulCurrent & ulValue );
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulCurrent;
 }
-/*-----------------------------------------------------------*/
 
 /**
  * Atomic XOR
@@ -407,21 +360,17 @@ static portFORCE_INLINE uint32_t Atomic_XOR_u32( uint32_t volatile * pulDestinat
                                                  uint32_t ulValue )
 {
     uint32_t ulCurrent;
-
     ATOMIC_ENTER_CRITICAL();
     {
         ulCurrent = *pulDestination;
         *pulDestination ^= ulValue;
     }
     ATOMIC_EXIT_CRITICAL();
-
     return ulCurrent;
 }
-
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     }
 #endif
 /* *INDENT-ON* */
-
 #endif /* ATOMIC_H */

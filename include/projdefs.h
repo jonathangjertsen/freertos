@@ -25,52 +25,43 @@
  * https://github.com/FreeRTOS
  *
  */
-
 #ifndef PROJDEFS_H
 #define PROJDEFS_H
-
 /*
  * Defines the prototype to which task functions must conform.  Defined in this
  * file to ensure the type is known before portable.h is included.
  */
 typedef void (* TaskFunction_t)( void * arg );
-
 /* Converts a time in milliseconds to a time in ticks.  This macro can be
  * overridden by a macro of the same name defined in FreeRTOSConfig.h in case the
  * definition here is not suitable for your application. */
 #ifndef pdMS_TO_TICKS
     #define pdMS_TO_TICKS( xTimeInMs )    ( ( TickType_t ) ( ( ( uint64_t ) ( xTimeInMs ) * ( uint64_t ) configTICK_RATE_HZ ) / ( uint64_t ) 1000U ) )
 #endif
-
 /* Converts a time in ticks to a time in milliseconds.  This macro can be
  * overridden by a macro of the same name defined in FreeRTOSConfig.h in case the
  * definition here is not suitable for your application. */
 #ifndef pdTICKS_TO_MS
     #define pdTICKS_TO_MS( xTimeInTicks )    ( ( TickType_t ) ( ( ( uint64_t ) ( xTimeInTicks ) * ( uint64_t ) 1000U ) / ( uint64_t ) configTICK_RATE_HZ ) )
 #endif
-
 #define pdFALSE                                  ( ( BaseType_t ) 0 )
 #define pdTRUE                                   ( ( BaseType_t ) 1 )
 #define pdFALSE_SIGNED                           ( ( BaseType_t ) 0 )
 #define pdTRUE_SIGNED                            ( ( BaseType_t ) 1 )
 #define pdFALSE_UNSIGNED                         ( ( UBaseType_t ) 0 )
 #define pdTRUE_UNSIGNED                          ( ( UBaseType_t ) 1 )
-
 #define pdPASS                                   ( pdTRUE )
 #define pdFAIL                                   ( pdFALSE )
 #define errQUEUE_EMPTY                           ( ( BaseType_t ) 0 )
 #define errQUEUE_FULL                            ( ( BaseType_t ) 0 )
-
 /* FreeRTOS error definitions. */
 #define errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY    ( -1 )
 #define errQUEUE_BLOCKED                         ( -4 )
 #define errQUEUE_YIELD                           ( -5 )
-
 /* Macros used for basic data corruption checks. */
 #ifndef configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES
     #define configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES    0
 #endif
-
 #if ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_16_BITS )
     #define pdINTEGRITY_CHECK_VALUE    0x5a5a
 #elif ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_32_BITS )
@@ -80,7 +71,6 @@ typedef void (* TaskFunction_t)( void * arg );
 #else
     #error configTICK_TYPE_WIDTH_IN_BITS set to unsupported tick type width.
 #endif
-
 /* The following errno values are used by FreeRTOS+ components, not FreeRTOS
  * itself. */
 #define pdFREERTOS_ERRNO_NONE             0   /* No errors */
@@ -124,15 +114,12 @@ typedef void (* TaskFunction_t)( void * arg );
 #define pdFREERTOS_ERRNO_ENOMEDIUM        135 /* No medium inserted */
 #define pdFREERTOS_ERRNO_EILSEQ           138 /* An invalid UTF-16 sequence was encountered. */
 #define pdFREERTOS_ERRNO_ECANCELED        140 /* Operation canceled. */
-
 /* The following endian values are used by FreeRTOS+ components, not FreeRTOS
  * itself. */
 #define pdFREERTOS_LITTLE_ENDIAN          0
 #define pdFREERTOS_BIG_ENDIAN             1
-
 /* Re-defining endian values for generic naming. */
 #define pdLITTLE_ENDIAN                   pdFREERTOS_LITTLE_ENDIAN
 #define pdBIG_ENDIAN                      pdFREERTOS_BIG_ENDIAN
-
 
 #endif /* PROJDEFS_H */
