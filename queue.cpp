@@ -32,51 +32,26 @@
 #include "task.hpp"
 #include "queue.h"
 
-/* Constants used with the cRxLock and cTxLock structure members. */
 #define queueUNLOCKED             ( ( int8_t ) -1 )
 #define queueLOCKED_UNMODIFIED    ( ( int8_t ) 0 )
 #define queueINT8_MAX             ( ( int8_t ) 127 )
-/* When the Queue_t structure is used to represent a base queue its pcHead and
- * pcTail members are used as pointers into the queue storage area.  When the
- * Queue_t structure is used to represent a mutex pcHead and pcTail pointers are
- * not necessary, and the pcHead pointer is set to NULL to indicate that the
- * structure instead holds a pointer to the mutex holder (if any).  Map alternative
- * names to the pcHead and structure member to ensure the readability of the code
- * is maintained.  The QueuePointers_t and SemaphoreData_t types are used to form
- * a union as their usage is mutually exclusive dependent on what the queue is
- * being used for. */
 #define uxQueueType               pcHead
 #define queueQUEUE_IS_MUTEX       NULL
-typedef struct QueuePointers
+struct QueuePointers_t
 {
-    int8_t * pcTail;     /**< Points to the byte at the end of the queue storage area.  Once more byte is allocated than necessary to store the queue items, this is used as a marker. */
-    int8_t * pcReadFrom; /**< Points to the last place that a queued item was read from when the structure is used as a queue. */
-} QueuePointers_t;
-typedef struct SemaphoreData
+    int8_t * pcTail;     
+    int8_t * pcReadFrom; 
+};
+
+struct SemaphoreData_t
 {
-    TaskHandle_t xMutexHolder;        /**< The handle of the task that holds the mutex. */
-    UBaseType_t uxRecursiveCallCount; /**< Maintains a count of the number of times a recursive mutex has been recursively 'taken' when the structure is used as a mutex. */
-} SemaphoreData_t;
-/* Semaphores do not actually store or copy data, so have an item size of
- * zero. */
+    TaskHandle_t MutexHolder;        /**< The handle of the task that holds the mutex. */
+    UBaseType_t RecursiveCallCount; /**< Maintains a count of the number of times a recursive mutex has been recursively 'taken' when the structure is used as a mutex. */
+} ;
 #define queueSEMAPHORE_QUEUE_ITEM_LENGTH    ( ( UBaseType_t ) 0 )
 #define queueMUTEX_GIVE_BLOCK_TIME          ( ( TickType_t ) 0U )
-#if ( configUSE_PREEMPTION == 0 )
-/* If the cooperative scheduler is being used then a yield should not be
- * performed just because a higher priority task has been woken. */
-    #define queueYIELD_IF_USING_PREEMPTION()
-#else
-    #if ( configNUMBER_OF_CORES == 1 )
-        #define queueYIELD_IF_USING_PREEMPTION()    portYIELD_WITHIN_API()
-    #else /* #if ( configNUMBER_OF_CORES == 1 ) */
-        #define queueYIELD_IF_USING_PREEMPTION()    vTaskYieldWithinAPI()
-    #endif /* #if ( configNUMBER_OF_CORES == 1 ) */
-#endif
-/*
- * Definition of the queue used by the scheduler.
- * Items are queued by copy, not reference.  See the following link for the
- * rationale: https://www.FreeRTOS.org/Embedded-RTOS-Queues.html
- */
+#define queueYIELD_IF_USING_PREEMPTION()    portYIELD_WITHIN_API()
+
 typedef struct QueueDefinition /* The old naming convention is used to prevent breaking kernel aware debuggers. */
 {
     int8_t * pcHead;           /**< Points to the beginning of the queue storage area. */
@@ -96,106 +71,24 @@ typedef struct QueueDefinition /* The old naming convention is used to prevent b
     uint8_t StaticallyAllocated; /**< Set to true if the memory used by the queue was statically allocated to ensure no attempt is made to free the memory. */
     struct QueueDefinition * pxQueueSetContainer;
 } xQUEUE;
-/* The old xQUEUE name is maintained above then typedefed to the new Queue_t
- * name below to enable the use of older kernel aware debuggers. */
 typedef xQUEUE Queue_t;
-
-/*
- * The queue registry is just a means for kernel aware debuggers to locate
- * queue structures.  It has no other purpose so is an optional component.
- */
-#if ( configQUEUE_REGISTRY_SIZE > 0 )
-/* The type stored within the queue registry array.  This allows a name
- * to be assigned to each queue making kernel aware debugging a little
- * more user friendly. */
-    typedef struct QUEUE_REGISTRY_ITEM
-    {
-        const char * pcQueueName;
-        QueueHandle_t xHandle;
-    } xQueueRegistryItem;
-/* The old xQueueRegistryItem name is maintained above then typedefed to the
- * new xQueueRegistryItem name below to enable the use of older kernel aware
- * debuggers. */
-    typedef xQueueRegistryItem QueueRegistryItem_t;
-/* The queue registry is simply an array of QueueRegistryItem_t structures.
- * The pcQueueName member of a structure being NULL is indicative of the
- * array position being vacant. */
-
-
-     QueueRegistryItem_t xQueueRegistry[ configQUEUE_REGISTRY_SIZE ];
-#endif /* configQUEUE_REGISTRY_SIZE */
-/*
- * Unlocks a queue locked by a call to LockQueue.  Locking a queue does not
- * prevent an ISR from adding or removing items to the queue, but does prevent
- * an ISR from removing tasks from the queue event lists.  If an ISR finds a
- * queue is locked it will instead increment the appropriate queue lock count
- * to indicate that a task may require unblocking.  When the queue in unlocked
- * these lock counts are inspected, and the appropriate action taken.
- */
 static void UnlockQueue( Queue_t * const pxQueue ) ;
-/*
- * Uses a critical section to determine if there is any data in a queue.
- *
- * @return true if the queue contains no items, otherwise false.
- */
 static BaseType_t IsQueueEmpty( const Queue_t * pxQueue ) ;
-/*
- * Uses a critical section to determine if there is any space in a queue.
- *
- * @return true if there is no space, otherwise false;
- */
 static BaseType_t IsQueueFull( const Queue_t * pxQueue ) ;
-/*
- * Copies an item into the queue, either at the front of the queue or the
- * back of the queue.
- */
 static BaseType_t CopyDataToQueue( Queue_t * const pxQueue,
                                       const void * pvItemToQueue,
                                       const BaseType_t xPosition ) ;
-/*
- * Copies an item out of a queue.
- */
 static void CopyDataFromQueue( Queue_t * const pxQueue,
                                   void * const pvBuffer ) ;
-#if ( configUSE_QUEUE_SETS == 1 )
-/*
- * Checks to see if a queue is a member of a queue set, and if so, notifies
- * the queue set that the queue contains data.
- */
-    static BaseType_t NotifyQueueSetContainer( const Queue_t * const pxQueue ) ;
-#endif
-/*
- * Called after a Queue_t structure has been allocated either statically or
- * dynamically to fill in the structure's members.
- */
+static BaseType_t NotifyQueueSetContainer( const Queue_t * const pxQueue ) ;
 static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
                                    const UBaseType_t uxItemSize,
                                    uint8_t * pucQueueStorage,
                                    const uint8_t ucQueueType,
                                    Queue_t * pxNewQueue ) ;
-/*
- * Mutexes are a special type of queue.  When a mutex is created, first the
- * queue is created, then InitialiseMutex() is called to configure the queue
- * as a mutex.
- */
-#if ( configUSE_MUTEXES == 1 )
-    static void InitialiseMutex( Queue_t * pxNewQueue ) ;
-#endif
-#if ( configUSE_MUTEXES == 1 )
-/*
- * If a task waiting for a mutex causes the mutex holder to inherit a
- * priority, but the waiting task times out, then the holder should
- * disinherit the priority - but only down to the highest priority of any
- * other tasks that are waiting for the same mutex.  This function returns
- * that priority.
- */
-    static UBaseType_t GetHighestPriorityOfWaitToReceiveList(Queue_t * const pxQueue ) ;
-#endif
+static void InitialiseMutex( Queue_t * pxNewQueue ) ;
+static UBaseType_t GetHighestPriorityOfWaitToReceiveList(Queue_t * const pxQueue ) ;
 
-/*
- * Macro to mark a queue as locked.  Locking a queue prevents an ISR from
- * accessing the queue event lists.
- */
 #define LockQueue( pxQueue )                            \
     ENTER_CRITICAL();                                  \
     {                                                      \
@@ -209,11 +102,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
         }                                                  \
     }                                                      \
     EXIT_CRITICAL()
-/*
- * Macro to increment cTxLock member of the queue data structure. It is
- * capped at the number of tasks in the system as we cannot unblock more
- * tasks than the number of tasks in the system.
- */
+
 #define IncrementQueueTxLock( pxQueue, cTxLock )                           \
     do {                                                                      \
         const UBaseType_t uxNumberOfTasks = TaskGetNumberOfTasks();         \
@@ -223,11 +112,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
             ( pxQueue )->cTxLock = ( int8_t ) ( ( cTxLock ) + ( int8_t ) 1 ); \
         }                                                                     \
     } while( 0 )
-/*
- * Macro to increment cRxLock member of the queue data structure. It is
- * capped at the number of tasks in the system as we cannot unblock more
- * tasks than the number of tasks in the system.
- */
+
 #define IncrementQueueRxLock( pxQueue, cRxLock )                           \
     do {                                                                      \
         const UBaseType_t uxNumberOfTasks = TaskGetNumberOfTasks();         \
@@ -269,7 +154,6 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
             }
             else
             {
-                /* Ensure the event queues start in the correct state. */
                 pxQueue->xTasksWaitingToSend.init();
                 pxQueue->xTasksWaitingToReceive.init();
             }
@@ -465,10 +349,10 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
             * correctly for a generic queue, but this function is creating a
             * mutex.  Overwrite those members that need to be set differently -
             * in particular the information required for priority inheritance. */
-            pxNewQueue->u.xSemaphore.xMutexHolder = NULL;
+            pxNewQueue->u.xSemaphore.MutexHolder = NULL;
             pxNewQueue->uxQueueType = queueQUEUE_IS_MUTEX;
             /* In case this is a recursive mutex. */
-            pxNewQueue->u.xSemaphore.uxRecursiveCallCount = 0;
+            pxNewQueue->u.xSemaphore.RecursiveCallCount = 0;
             /* Start with the semaphore in the expected state. */
             ( void ) xQueueGenericSend( pxNewQueue, NULL, ( TickType_t ) 0U, queueSEND_TO_BACK );
         }
@@ -516,7 +400,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
         {
             if( pxSemaphore->uxQueueType == queueQUEUE_IS_MUTEX )
             {
-                pxReturn = pxSemaphore->u.xSemaphore.xMutexHolder;
+                pxReturn = pxSemaphore->u.xSemaphore.MutexHolder;
             }
             else
             {
@@ -538,7 +422,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
          * not required here. */
         if( ( ( Queue_t * ) xSemaphore )->uxQueueType == queueQUEUE_IS_MUTEX )
         {
-            pxReturn = ( ( Queue_t * ) xSemaphore )->u.xSemaphore.xMutexHolder;
+            pxReturn = ( ( Queue_t * ) xSemaphore )->u.xSemaphore.MutexHolder;
         }
         else
         {
@@ -554,22 +438,22 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
         BaseType_t xReturn;
         Queue_t * const pxMutex = ( Queue_t * ) xMutex;
         configASSERT( pxMutex );
-        /* If this is the task that holds the mutex then xMutexHolder will not
+        /* If this is the task that holds the mutex then MutexHolder will not
          * change outside of this task.  If this task does not hold the mutex then
-         * pxMutexHolder can never coincidentally equal the tasks handle, and as
+         * pMutexHolder can never coincidentally equal the tasks handle, and as
          * this is the only condition we are interested in it does not matter if
-         * pxMutexHolder is accessed simultaneously by another task.  Therefore no
-         * mutual exclusion is required to test the pxMutexHolder variable. */
-        if( pxMutex->u.xSemaphore.xMutexHolder == xTaskGetCurrentTaskHandle() )
+         * pMutexHolder is accessed simultaneously by another task.  Therefore no
+         * mutual exclusion is required to test the pMutexHolder variable. */
+        if( pxMutex->u.xSemaphore.MutexHolder == xTaskGetCurrentTaskHandle() )
         {
-            /* uxRecursiveCallCount cannot be zero if xMutexHolder is equal to
+            /* RecursiveCallCount cannot be zero if MutexHolder is equal to
              * the task handle, therefore no underflow check is required.  Also,
-             * uxRecursiveCallCount is only modified by the mutex holder, and as
+             * RecursiveCallCount is only modified by the mutex holder, and as
              * there can only be one, no mutual exclusion is required to modify the
-             * uxRecursiveCallCount member. */
-            ( pxMutex->u.xSemaphore.uxRecursiveCallCount )--;
+             * RecursiveCallCount member. */
+            ( pxMutex->u.xSemaphore.RecursiveCallCount )--;
             /* Has the recursive call count unwound to 0? */
-            if( pxMutex->u.xSemaphore.uxRecursiveCallCount == ( UBaseType_t ) 0 )
+            if( pxMutex->u.xSemaphore.RecursiveCallCount == ( UBaseType_t ) 0 )
             {
                 /* Return the mutex.  This will automatically unblock any other
                  * task that might be waiting to access the mutex. */
@@ -592,9 +476,9 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
         BaseType_t xReturn;
         Queue_t * const pxMutex = ( Queue_t * ) xMutex;
         configASSERT( pxMutex );
-        if( pxMutex->u.xSemaphore.xMutexHolder == xTaskGetCurrentTaskHandle() )
+        if( pxMutex->u.xSemaphore.MutexHolder == xTaskGetCurrentTaskHandle() )
         {
-            ( pxMutex->u.xSemaphore.uxRecursiveCallCount )++;
+            ( pxMutex->u.xSemaphore.RecursiveCallCount )++;
             xReturn = true;
         }
         else
@@ -605,7 +489,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
              * before reaching here. */
             if( xReturn != false )
             {
-                ( pxMutex->u.xSemaphore.uxRecursiveCallCount )++;
+                ( pxMutex->u.xSemaphore.RecursiveCallCount )++;
             }
         }
         return xReturn;
@@ -905,7 +789,7 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
     /* Normally a mutex would not be given from an interrupt, especially if
      * there is a mutex holder, as priority inheritance makes no sense for an
      * interrupts, only tasks. */
-    configASSERT( !( ( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX ) && ( pxQueue->u.xSemaphore.xMutexHolder != NULL ) ) );
+    configASSERT( !( ( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX ) && ( pxQueue->u.xSemaphore.MutexHolder != NULL ) ) );
 
     portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
     uxSavedInterruptStatus = ( UBaseType_t ) ENTER_CRITICAL_FROM_ISR();
@@ -1137,7 +1021,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                     {
                         /* Record the information required to implement
                          * priority inheritance should it become necessary. */
-                        pxQueue->u.xSemaphore.xMutexHolder = pvTaskIncrementMutexHeldCount();
+                        pxQueue->u.xSemaphore.MutexHolder = pvTaskIncrementMutexHeldCount();
                     }
                 }
                 #endif /* configUSE_MUTEXES */
@@ -1191,7 +1075,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                     {
                         ENTER_CRITICAL();
                         {
-                            xInheritanceOccurred = xTaskPriorityInherit( pxQueue->u.xSemaphore.xMutexHolder );
+                            xInheritanceOccurred = xTaskPriorityInherit( pxQueue->u.xSemaphore.MutexHolder );
                         }
                         EXIT_CRITICAL();
                     }
@@ -1239,7 +1123,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                              * again, but only as low as the next highest priority
                              * task that is waiting for the same mutex. */
                             uxHighestWaitingPriority = GetHighestPriorityOfWaitToReceiveList( pxQueue );
-                            vTaskPriorityDisinheritAfterTimeout( pxQueue->u.xSemaphore.xMutexHolder, uxHighestWaitingPriority );
+                            vTaskPriorityDisinheritAfterTimeout( pxQueue->u.xSemaphore.MutexHolder, uxHighestWaitingPriority );
                         }
                         EXIT_CRITICAL();
                     }
@@ -1555,8 +1439,8 @@ static BaseType_t CopyDataToQueue( Queue_t * const pxQueue,
             if( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX )
             {
                 /* The mutex is no longer being held. */
-                xReturn = xTaskPriorityDisinherit( pxQueue->u.xSemaphore.xMutexHolder );
-                pxQueue->u.xSemaphore.xMutexHolder = NULL;
+                xReturn = xTaskPriorityDisinherit( pxQueue->u.xSemaphore.MutexHolder );
+                pxQueue->u.xSemaphore.MutexHolder = NULL;
             }
         }
         #endif /* configUSE_MUTEXES */

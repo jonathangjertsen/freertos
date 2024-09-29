@@ -3433,12 +3433,12 @@ BaseType_t xTaskGetSchedulerState( void ) ;
  * Raises the priority of the mutex holder to that of the calling task should
  * the mutex holder have a priority less than the calling task.
  */
-BaseType_t xTaskPriorityInherit( TaskHandle_t const pxMutexHolder ) ;
+BaseType_t xTaskPriorityInherit( TaskHandle_t const pMutexHolder ) ;
 /*
  * Set the priority of a task back to its proper priority in the case that it
  * inherited a higher priority while it was holding a semaphore.
  */
-BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder ) ;
+BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pMutexHolder ) ;
 /*
  * If a higher priority task attempting to obtain a mutex caused a lower
  * priority task to inherit the higher priority task's priority - but the higher
@@ -3447,7 +3447,7 @@ BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder ) ;
  * the highest priority task that is still waiting for the mutex (if there were
  * more than one task waiting for the mutex).
  */
-void vTaskPriorityDisinheritAfterTimeout( TaskHandle_t const pxMutexHolder,
+void vTaskPriorityDisinheritAfterTimeout( TaskHandle_t const pMutexHolder,
                                           UBaseType_t uxHighestPriorityWaitingTask ) ;
 
 /*

@@ -1944,8 +1944,8 @@
         TaskHandle_t MPU_xQueueGetMutexHolderImpl( QueueHandle_t xSemaphore ) ;
         TaskHandle_t MPU_xQueueGetMutexHolderImpl( QueueHandle_t xSemaphore ) /*  */
         {
-            TaskHandle_t xMutexHolderTaskInternalHandle = NULL;
-            TaskHandle_t xMutexHolderTaskExternalHandle = NULL;
+            TaskHandle_t MutexHolderTaskInternalHandle = NULL;
+            TaskHandle_t MutexHolderTaskExternalHandle = NULL;
             int32_t lIndex, lMutexHolderTaskIndex;
             QueueHandle_t xInternalQueueHandle = NULL;
             BaseType_t xCallingTaskIsAuthorizedToAccessQueue = false;
@@ -1959,19 +1959,19 @@
                     xInternalQueueHandle = MPU_GetQueueHandleAtIndex( CONVERT_TO_INTERNAL_INDEX( lIndex ) );
                     if( xInternalQueueHandle != NULL )
                     {
-                        xMutexHolderTaskInternalHandle = xQueueGetMutexHolder( xInternalQueueHandle );
-                        if( xMutexHolderTaskInternalHandle != NULL )
+                        MutexHolderTaskInternalHandle = xQueueGetMutexHolder( xInternalQueueHandle );
+                        if( MutexHolderTaskInternalHandle != NULL )
                         {
-                            lMutexHolderTaskIndex = MPU_GetIndexForTaskHandle( xMutexHolderTaskInternalHandle );
+                            lMutexHolderTaskIndex = MPU_GetIndexForTaskHandle( MutexHolderTaskInternalHandle );
                             if( lMutexHolderTaskIndex != -1 )
                             {
-                                xMutexHolderTaskExternalHandle = ( TaskHandle_t ) ( CONVERT_TO_EXTERNAL_INDEX( lMutexHolderTaskIndex ) );
+                                MutexHolderTaskExternalHandle = ( TaskHandle_t ) ( CONVERT_TO_EXTERNAL_INDEX( lMutexHolderTaskIndex ) );
                             }
                         }
                     }
                 }
             }
-            return xMutexHolderTaskExternalHandle;
+            return MutexHolderTaskExternalHandle;
         }
     #endif /* if ( ( configUSE_MUTEXES == 1 ) && ( INCLUDE_xSemaphoreGetMutexHolder == 1 ) ) */
 
@@ -2564,8 +2564,8 @@
     #if ( ( configUSE_MUTEXES == 1 ) && ( INCLUDE_xSemaphoreGetMutexHolder == 1 ) )
         TaskHandle_t MPU_xQueueGetMutexHolderFromISR( QueueHandle_t xSemaphore ) /*  */
         {
-            TaskHandle_t xMutexHolderTaskInternalHandle = NULL;
-            TaskHandle_t xMutexHolderTaskExternalHandle = NULL;
+            TaskHandle_t MutexHolderTaskInternalHandle = NULL;
+            TaskHandle_t MutexHolderTaskExternalHandle = NULL;
             int32_t lIndex, lMutexHolderTaskIndex;
             QueueHandle_t xInternalSemaphoreHandle = NULL;
             lIndex = ( int32_t ) xSemaphore;
@@ -2574,18 +2574,18 @@
                 xInternalSemaphoreHandle = MPU_GetQueueHandleAtIndex( CONVERT_TO_INTERNAL_INDEX( lIndex ) );
                 if( xInternalSemaphoreHandle != NULL )
                 {
-                    xMutexHolderTaskInternalHandle = xQueueGetMutexHolder( xInternalSemaphoreHandle );
-                    if( xMutexHolderTaskInternalHandle != NULL )
+                    MutexHolderTaskInternalHandle = xQueueGetMutexHolder( xInternalSemaphoreHandle );
+                    if( MutexHolderTaskInternalHandle != NULL )
                     {
-                        lMutexHolderTaskIndex = MPU_GetIndexForTaskHandle( xMutexHolderTaskInternalHandle );
+                        lMutexHolderTaskIndex = MPU_GetIndexForTaskHandle( MutexHolderTaskInternalHandle );
                         if( lMutexHolderTaskIndex != -1 )
                         {
-                            xMutexHolderTaskExternalHandle = ( TaskHandle_t ) ( CONVERT_TO_EXTERNAL_INDEX( lMutexHolderTaskIndex ) );
+                            MutexHolderTaskExternalHandle = ( TaskHandle_t ) ( CONVERT_TO_EXTERNAL_INDEX( lMutexHolderTaskIndex ) );
                         }
                     }
                 }
             }
-            return xMutexHolderTaskExternalHandle;
+            return MutexHolderTaskExternalHandle;
         }
     #endif /* #if ( ( configUSE_MUTEXES == 1 ) && ( INCLUDE_xSemaphoreGetMutexHolder == 1 ) ) */
 

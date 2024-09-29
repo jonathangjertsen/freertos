@@ -100,7 +100,7 @@ typedef void ( * portISR_t )( void );
  * file is weak to allow application writers to change the timer used to
  * generate the tick interrupt.
  */
-void vPortSetuTimerInterrupt( void );
+void vPortSetupTimerInterrupt( void );
 /*
  * Exception handlers.
  */
@@ -253,7 +253,7 @@ BaseType_t xPortStartScheduler( void )
          * handlers for SVCall and PendSV interrupts. We do not check the
          * installation of the SysTick handler because the application may
          * choose to drive the RTOS tick using a timer other than the SysTick
-         * timer by overriding the weak function vPortSetuTimerInterrupt().
+         * timer by overriding the weak function vPortSetupTimerInterrupt().
          *
          * Assertion failures here indicate incorrect installation of the
          * FreeRTOS handlers. For help installing the FreeRTOS handlers, see
@@ -345,7 +345,7 @@ BaseType_t xPortStartScheduler( void )
     portNVIC_SHPR2_REG = 0;
     /* Start the timer that generates the tick ISR.  Interrupts are disabled
      * here already. */
-    vPortSetuTimerInterrupt();
+    vPortSetupTimerInterrupt();
     /* Initialise the critical nesting count ready for the first task. */
     uxCriticalNesting = 0;
     /* Start the first task. */
@@ -644,7 +644,7 @@ void xPortSysTickHandler( void )
  * Setup the systick timer to generate the tick interrupts at the required
  * frequency.
  */
-__attribute__( ( weak ) ) void vPortSetuTimerInterrupt( void )
+__attribute__( ( weak ) ) void vPortSetupTimerInterrupt( void )
 {
     /* Calculate the constants required to configure the tick interrupt. */
     #if ( configUSE_TICKLESS_IDLE == 1 )

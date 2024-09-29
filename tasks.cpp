@@ -2102,46 +2102,46 @@ TaskHandle_t xTaskGetCurrentTaskHandle( void )
 #endif /* ( ( INCLUDE_xTaskGetSchedulerState == 1 ) || ( configUSE_TIMERS == 1 ) ) */
 
 #if ( configUSE_MUTEXES == 1 )
-    BaseType_t xTaskPriorityInherit( TaskHandle_t const pxMutexHolder )
+    BaseType_t xTaskPriorityInherit( TaskHandle_t const pMutexHolder )
     {
-        TCB_t * const pxMutexHolderTCB = pxMutexHolder;
+        TCB_t * const pMutexHolderTCB = pMutexHolder;
         BaseType_t xReturn = false;
         /* If the mutex is taken by an interrupt, the mutex holder is NULL. Priority
          * inheritance is not applied in this scenario. */
-        if( pxMutexHolder != NULL )
+        if( pMutexHolder != NULL )
         {
             /* If the holder of the mutex has a priority below the priority of
              * the task attempting to obtain the mutex then it will temporarily
              * inherit the priority of the task attempting to obtain the mutex. */
-            if( pxMutexHolderTCB->Priority < CurrentTCB->Priority )
+            if( pMutexHolderTCB->Priority < CurrentTCB->Priority )
             {
                 /* Adjust the mutex holder state to account for its new
                  * priority.  Only reset the event list item value if the value is
                  * not being used for anything else. */
-                if((pxMutexHolderTCB->xEventListItem.Value & taskEVENT_LIST_ITEM_VALUE_IN_USE ) == ( (TickType_t) 0U ) )
+                if((pMutexHolderTCB->xEventListItem.Value & taskEVENT_LIST_ITEM_VALUE_IN_USE ) == ( (TickType_t) 0U ) )
                 {
-                    pxMutexHolderTCB->xEventListItem.Value = (TickType_t) configMAX_PRIORITIES - (TickType_t) CurrentTCB->Priority;
+                    pMutexHolderTCB->xEventListItem.Value = (TickType_t) configMAX_PRIORITIES - (TickType_t) CurrentTCB->Priority;
                 }
-                if( pxMutexHolderTCB->xStateListItem.Container == &(ReadyTasksLists[pxMutexHolderTCB->Priority]))
+                if( pMutexHolderTCB->xStateListItem.Container == &(ReadyTasksLists[pMutexHolderTCB->Priority]))
                 {
-                    if(pxMutexHolderTCB->xStateListItem.remove() == 0)
+                    if(pMutexHolderTCB->xStateListItem.remove() == 0)
                     {
-                        portRESET_READY_PRIORITY( pxMutexHolderTCB->Priority, TopReadyPriority );
+                        portRESET_READY_PRIORITY( pMutexHolderTCB->Priority, TopReadyPriority );
                     }
-                    pxMutexHolderTCB->Priority = CurrentTCB->Priority;
-                    AddTaskToReadyList( pxMutexHolderTCB );
+                    pMutexHolderTCB->Priority = CurrentTCB->Priority;
+                    AddTaskToReadyList( pMutexHolderTCB );
                 }
                 else
                 {
                     /* Just inherit the priority. */
-                    pxMutexHolderTCB->Priority = CurrentTCB->Priority;
+                    pMutexHolderTCB->Priority = CurrentTCB->Priority;
                 }
                 /* Inheritance occurred. */
                 xReturn = true;
             }
             else
             {
-                if( pxMutexHolderTCB->uxBasePriority < CurrentTCB->Priority )
+                if( pMutexHolderTCB->uxBasePriority < CurrentTCB->Priority )
                 {
                     /* The base priority of the mutex holder is lower than the
                      * priority of the task attempting to take the mutex, but the
@@ -2160,11 +2160,11 @@ TaskHandle_t xTaskGetCurrentTaskHandle( void )
 #endif /* configUSE_MUTEXES */
 
 #if ( configUSE_MUTEXES == 1 )
-    BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder )
+    BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pMutexHolder )
     {
-        TCB_t * const pxTCB = pxMutexHolder;
+        TCB_t * const pxTCB = pMutexHolder;
         BaseType_t xReturn = false;
-        if( pxMutexHolder != NULL )
+        if( pMutexHolder != NULL )
         {
             /* A task can only have an inherited priority if it holds the mutex.
              * If the mutex is held by a task then it cannot be given from an
@@ -2208,15 +2208,15 @@ TaskHandle_t xTaskGetCurrentTaskHandle( void )
 #endif /* configUSE_MUTEXES */
 
 #if ( configUSE_MUTEXES == 1 )
-    void vTaskPriorityDisinheritAfterTimeout( TaskHandle_t const pxMutexHolder,
+    void vTaskPriorityDisinheritAfterTimeout( TaskHandle_t const pMutexHolder,
                                               UBaseType_t uxHighestPriorityWaitingTask )
     {
-        TCB_t * const pxTCB = pxMutexHolder;
+        TCB_t * const pxTCB = pMutexHolder;
         UBaseType_t PriorityUsedOnEntry, PriorityToUse;
         const UBaseType_t uxOnlyOneMutexHeld = ( UBaseType_t ) 1;
-        if( pxMutexHolder != NULL )
+        if( pMutexHolder != NULL )
         {
-            /* If pxMutexHolder is not NULL then the holder must hold at least
+            /* If pMutexHolder is not NULL then the holder must hold at least
              * one mutex. */
             configASSERT( pxTCB->uxMutexesHeld );
             /* Determine the priority to which the priority of the task that
