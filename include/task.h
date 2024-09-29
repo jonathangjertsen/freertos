@@ -31,11 +31,8 @@
 #ifndef INC_FREERTOS_H
     #error "include FreeRTOS.h must appear in source files before include task.h"
 #endif
-#include "list.h"
-/* *INDENT-OFF* */
-#ifdef __cplusplus
-    extern "C" {
-#endif
+#include "list.hpp"
+
 /* *INDENT-ON* */
 /*-----------------------------------------------------------
 * MACROS AND DEFINITIONS
@@ -3537,72 +3534,6 @@ void vTaskInternalSetTimeOutState( TimeOut_t * const pxTimeOut ) ;
 #if ( configNUMBER_OF_CORES > 1 )
     void vTaskYieldWithinAPI( void );
 #endif
-/*
- * This function is only intended for use when implementing a port of the scheduler
- * and is only available when portCRITICAL_NESTING_IN_TCB is set to 1 or configNUMBER_OF_CORES
- * is greater than 1. This function can be used in the implementation of portENTER_CRITICAL
- * if port wants to maintain critical nesting count in TCB in single core FreeRTOS.
- * It should be used in the implementation of portENTER_CRITICAL if port is running a
- * multiple core FreeRTOS.
- */
-#if ( ( portCRITICAL_NESTING_IN_TCB == 1 ) || ( configNUMBER_OF_CORES > 1 ) )
-    void vTaskEnterCritical( void );
-#endif
-/*
- * This function is only intended for use when implementing a port of the scheduler
- * and is only available when portCRITICAL_NESTING_IN_TCB is set to 1 or configNUMBER_OF_CORES
- * is greater than 1. This function can be used in the implementation of portEXIT_CRITICAL
- * if port wants to maintain critical nesting count in TCB in single core FreeRTOS.
- * It should be used in the implementation of portEXIT_CRITICAL if port is running a
- * multiple core FreeRTOS.
- */
-#if ( ( portCRITICAL_NESTING_IN_TCB == 1 ) || ( configNUMBER_OF_CORES > 1 ) )
-    void vTaskExitCritical( void );
-#endif
-/*
- * This function is only intended for use when implementing a port of the scheduler
- * and is only available when configNUMBER_OF_CORES is greater than 1. This function
- * should be used in the implementation of portENTER_CRITICAL_FROM_ISR if port is
- * running a multiple core FreeRTOS.
- */
-#if ( configNUMBER_OF_CORES > 1 )
-    UBaseType_t vTaskEnterCriticalFromISR( void );
-#endif
-/*
- * This function is only intended for use when implementing a port of the scheduler
- * and is only available when configNUMBER_OF_CORES is greater than 1. This function
- * should be used in the implementation of portEXIT_CRITICAL_FROM_ISR if port is
- * running a multiple core FreeRTOS.
- */
-#if ( configNUMBER_OF_CORES > 1 )
-    void vTaskExitCriticalFromISR( UBaseType_t uxSavedInterruptStatus );
-#endif
-#if ( portUSING_MPU_WRAPPERS == 1 )
-/*
- * For internal use only.  Get MPU settings associated with a task.
- */
-    xMPU_SETTINGS * xTaskGetMPUSettings( TaskHandle_t xTask ) ;
-#endif /* portUSING_MPU_WRAPPERS */
-
-#if ( ( portUSING_MPU_WRAPPERS == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) )
-/*
- * For internal use only.  Grant/Revoke a task's access to a kernel object.
- */
-    void vGrantAccessToKernelObject( TaskHandle_t xExternalTaskHandle,
-                                     int32_t lExternalKernelObjectHandle ) ;
-    void vRevokeAccessToKernelObject( TaskHandle_t xExternalTaskHandle,
-                                      int32_t lExternalKernelObjectHandle ) ;
-/*
- * For internal use only.  Grant/Revoke a task's access to a kernel object.
- */
-    void vPortGrantAccessToKernelObject( TaskHandle_t xInternalTaskHandle,
-                                         int32_t lInternalIndexOfKernelObject ) ;
-    void vPortRevokeAccessToKernelObject( TaskHandle_t xInternalTaskHandle,
-                                          int32_t lInternalIndexOfKernelObject ) ;
-#endif /* #if ( ( portUSING_MPU_WRAPPERS == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) ) */
-/* *INDENT-OFF* */
-#ifdef __cplusplus
-    }
-#endif
-/* *INDENT-ON* */
+void vTaskEnterCritical( void );
+void vTaskExitCritical( void );
 #endif /* INC_TASK_H */
