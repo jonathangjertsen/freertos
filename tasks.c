@@ -716,7 +716,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
                 if( ( ( pxCurrentTCBs[ portGET_CORE_ID() ]->uxTaskAttributes & taskATTRIBUTE_IS_IDLE ) == 0U ) &&
                     ( pxTCB->uxPriority > pxCurrentTCBs[ portGET_CORE_ID() ]->uxPriority ) )
                 {
-                    configASSERT( ( xYieldPendings[ portGET_CORE_ID() ] == true ) ||
+                    configASSERT( ( xYieldPendings[ portGET_CORE_ID() ]  ) ||
                                   ( taskTASK_IS_RUNNING( pxCurrentTCBs[ portGET_CORE_ID() ] ) == false ) );
                 }
             #endif
@@ -738,7 +738,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
             BaseType_t xPriorityDropped = false;
         #endif
         /* This function should be called when scheduler is running. */
-        configASSERT( xSchedulerRunning == true );
+        configASSERT( xSchedulerRunning  );
         /* A new task is created and a running task with the same priority yields
          * itself to run the new task. When a running task yields itself, it is still
          * in the ready list. This running task will be selected before the new task
@@ -750,7 +750,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
          * To fix these problems, the running task should be put to the end of the
          * ready list before searching for the ready task in the ready list. */
         if( listIS_CONTAINED_WITHIN( &( pxReadyTasksLists[ pxCurrentTCBs[ xCoreID ]->uxPriority ] ),
-                                     &pxCurrentTCBs[ xCoreID ]->xStateListItem ) == true )
+                                     &pxCurrentTCBs[ xCoreID ]->xStateListItem )  )
         {
             ( void ) uxListRemove( &pxCurrentTCBs[ xCoreID ]->xStateListItem );
             vListInsertEnd( &( pxReadyTasksLists[ pxCurrentTCBs[ xCoreID ]->uxPriority ] ),
@@ -864,7 +864,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
         }
         #if ( configRUN_MULTIPLE_PRIORITIES == 0 )
         {
-            if( xTaskScheduled == true )
+            if( xTaskScheduled  )
             {
                 if( xPriorityDropped != false )
                 {
@@ -885,7 +885,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
         #endif /* #if ( configRUN_MULTIPLE_PRIORITIES == 0 ) */
         #if ( configUSE_CORE_AFFINITY == 1 )
         {
-            if( xTaskScheduled == true )
+            if( xTaskScheduled  )
             {
                 if( ( pxPreviousTCB != NULL ) && ( listIS_CONTAINED_WITHIN( &( pxReadyTasksLists[ pxPreviousTCB->uxPriority ] ), &( pxPreviousTCB->xStateListItem ) ) != false ) )
                 {
@@ -1738,7 +1738,7 @@ static void prvInitialiseNewTask( TaskFunction_t pxTaskCode,
                  * ready list. */
                 #if ( configNUMBER_OF_CORES > 1 )
                 {
-                    if( taskTASK_IS_RUNNING( pxTCB ) == true )
+                    if( taskTASK_IS_RUNNING( pxTCB )  )
                     {
                         if( pxTCB->xTaskRunState == ( BaseType_t ) portGET_CORE_ID() )
                         {
@@ -1964,7 +1964,7 @@ static void prvInitialiseNewTask( TaskFunction_t pxTaskCode,
                 }
                 #else /* #if ( configNUMBER_OF_CORES == 1 ) */
                 {
-                    if( taskTASK_IS_RUNNING( pxTCB ) == true )
+                    if( taskTASK_IS_RUNNING( pxTCB )  )
                     {
                         /* Is it actively running on a core? */
                         eReturn = eRunning;
@@ -2089,7 +2089,7 @@ void vTaskPrioritySet( TaskHandle_t xTask,
                         * priority task able to run so no yield is required. */
                 }
             }
-            else if( taskTASK_IS_RUNNING( pxTCB ) == true )
+            else if( taskTASK_IS_RUNNING( pxTCB )  )
             {
                 /* Setting the priority of a running task down means
                     * there may now be another task of higher priority that
@@ -2399,11 +2399,11 @@ void vTaskStartScheduler( void )
 {
     BaseType_t xReturn;
     xReturn = prvCreateIdleTasks();
-    if( xReturn == true )
+    if( xReturn  )
     {
         xReturn = xTimerCreateTimerTask();
     }
-    if( xReturn == true )
+    if( xReturn  )
     {
         /* freertos_tasks_c_additions_init() should only be called if the user
          * definable macro FREERTOS_TASKS_C_ADDITIONS_INIT() is defined, as that is
@@ -2945,7 +2945,7 @@ char * pcTaskGetName( TaskHandle_t xTaskToQuery )
     TaskHandle_t xTaskGetIdleTaskHandleForCore( BaseType_t xCoreID )
     {
         /* Ensure the core ID is valid. */
-        configASSERT( taskVALID_CORE_ID( xCoreID ) == true );
+        configASSERT( taskVALID_CORE_ID( xCoreID )  );
         /* If xTaskGetIdleTaskHandle() is called before the scheduler has been
          * started, then xIdleTaskHandles will be NULL. */
         configASSERT( ( xIdleTaskHandles[ xCoreID ] != NULL ) );
@@ -4223,14 +4223,14 @@ TickType_t uxTaskResetEventItemValue( void )
             /* We are now out of the critical section but the scheduler is still
              * suspended, so we are safe to do non-deterministic operations such
              * as prvAddCurrentTaskToDelayedList. */
-            if( xShouldBlock == true )
+            if( xShouldBlock  )
             {                prvAddCurrentTaskToDelayedList( xTicksToWait, true );
             }
             
         }
         xAlreadyYielded = xTaskResumeAll();
         /* Force a reschedule if xTaskResumeAll has not already done so. */
-        if( ( xShouldBlock == true ) && ( xAlreadyYielded == false ) )
+        if( ( xShouldBlock  ) && ( xAlreadyYielded == false ) )
         {
             taskYIELD_WITHIN_API();
         }
@@ -4293,14 +4293,14 @@ TickType_t uxTaskResetEventItemValue( void )
             /* We are now out of the critical section but the scheduler is still
              * suspended, so we are safe to do non-deterministic operations such
              * as prvAddCurrentTaskToDelayedList. */
-            if( xShouldBlock == true )
+            if( xShouldBlock  )
             {                prvAddCurrentTaskToDelayedList( xTicksToWait, true );
             }
             
         }
         xAlreadyYielded = xTaskResumeAll();
         /* Force a reschedule if xTaskResumeAll has not already done so. */
-        if( ( xShouldBlock == true ) && ( xAlreadyYielded == false ) )
+        if( ( xShouldBlock  ) && ( xAlreadyYielded == false ) )
         {
             taskYIELD_WITHIN_API();
         }

@@ -428,7 +428,7 @@ EventBits_t xEventGroupClearBits( EventGroupHandle_t xEventGroup,
  *                          xEventGroup,     // The event group being updated.
  *                          BIT_0 | BIT_4 ); // The bits being set.
  *
- *      if( xResult == true )
+ *      if( xResult  )
  *      {
  *          // The message was posted successfully.
  *          portYIELD_FROM_ISR(true);
@@ -578,7 +578,7 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
  *                          &xHigherPriorityTaskWoken );
  *
  *      // Was the message posted successfully?
- *      if( xResult == true )
+ *      if( xResult  )
  *      {
  *          // If xHigherPriorityTaskWoken is now set to true then a context
  *          // switch should be requested.  The macro used is port specific and

@@ -941,7 +941,7 @@ void vPortSVCHandler_C( uint32_t * pulCallerStackAddress ) /* PRIVILEGED_FUNCTIO
         xMPUSettings->ulContext[ 14 ] = ( uint32_t ) pxCode;                  /* PC. */
         xMPUSettings->ulContext[ 15 ] = portINITIAL_XPSR;                     /* xPSR. */
         xMPUSettings->ulContext[ 16 ] = ( uint32_t ) ( pxTopOfStack - 8 ); /* PSP with the hardware saved stack. */
-        if( xRunPrivileged == true )
+        if( xRunPrivileged  )
         {
             xMPUSettings->ulTaskFlags |= portTASK_IS_PRIVILEGED_FLAG;
             xMPUSettings->ulContext[ 17 ] = ( uint32_t ) portINITIAL_CONTROL_PRIVILEGED; /* CONTROL. */

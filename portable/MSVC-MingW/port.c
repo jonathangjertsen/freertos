@@ -135,7 +135,7 @@ static DWORD WINAPI prvSimulatedPeripheralTimer( LPVOID lpParameter )
     }
     /* Just to prevent compiler warnings. */
     ( void ) lpParameter;
-    while( xPortRunning == true )
+    while( xPortRunning  )
     {
         /* Wait until the timer expires and we can access the simulated interrupt
          * variables.  *NOTE* this is not a 'real time' way of generating tick
@@ -253,7 +253,7 @@ BaseType_t xPortStartScheduler( void )
             lSuccess = false;
         }
     }
-    if( lSuccess == true )
+    if( lSuccess  )
     {
         if( SetThreadPriority( pvHandle, portSIMULATED_INTERRUPTS_THREAD_PRIORITY ) == 0 )
         {
@@ -262,7 +262,7 @@ BaseType_t xPortStartScheduler( void )
         SetThreadPriorityBoost( pvHandle, TRUE );
         SetThreadAffinityMask( pvHandle, 0x01 );
     }
-    if( lSuccess == true )
+    if( lSuccess  )
     {
         /* Start the thread that simulates the timer peripheral to generate
          * tick interrupts.  The priority is set below that of the simulated
@@ -325,7 +325,7 @@ static void prvProcessSimulatedInterrupts( void )
      * this thread pends. */
     ulPendingInterrupts |= ( 1 << portINTERRUPT_TICK );
     SetEvent( pvInterruptEvent );
-    while( xPortRunning == true )
+    while( xPortRunning  )
     {
         xInsideInterrupt = false;
         /* Wait with timeout so that we can exit from this loop when
@@ -514,7 +514,7 @@ void vPortGenerateSimulatedInterrupt( uint32_t ulInterruptNumber )
 
 void vPortGenerateSimulatedInterruptFromWindowsThread( uint32_t ulInterruptNumber )
 {
-    if( xPortRunning == true )
+    if( xPortRunning  )
     {
         /* Can't proceed if in a critical section as pvInterruptEventMutex won't
          * be available. */
@@ -554,7 +554,7 @@ void vPortSetInterruptHandler( uint32_t ulInterruptNumber,
 
 void vPortEnterCritical( void )
 {
-    if( xPortRunning == true )
+    if( xPortRunning  )
     {
         /* The interrupt event mutex is held for the entire critical section,
          * effectively disabling (simulated) interrupts. */
@@ -605,7 +605,7 @@ void vPortExitCritical( void )
     }
     if( pvInterruptEventMutex != NULL )
     {
-        if( lMutexNeedsReleasing == true )
+        if( lMutexNeedsReleasing  )
         {
             configASSERT( xPortRunning );
             ReleaseMutex( pvInterruptEventMutex );

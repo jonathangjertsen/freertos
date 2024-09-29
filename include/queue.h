@@ -1155,7 +1155,7 @@ void vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
  *
  *  // ...
  *
- *  if( xHigherPrioritytaskWoken == true )
+ *  if( xHigherPrioritytaskWoken  )
  *  {
  *      // Writing to the queue caused a task to unblock and the unblocked task
  *      // has a priority higher than or equal to the priority of the currently

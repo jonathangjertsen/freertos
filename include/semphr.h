@@ -264,7 +264,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *  {
  *      // See if we can obtain the semaphore.  If the semaphore is not available
  *      // wait 10 ticks to see if it becomes free.
- *      if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == true )
+ *      if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 )  )
  *      {
  *          // We were able to obtain the semaphore and can now access the
  *          // shared resource.
@@ -344,7 +344,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *  {
  *      // See if we can obtain the mutex.  If the mutex is not available
  *      // wait 10 ticks to see if it becomes free.
- *      if( xSemaphoreTakeRecursive( xSemaphore, ( TickType_t ) 10 ) == true )
+ *      if( xSemaphoreTakeRecursive( xSemaphore, ( TickType_t ) 10 )  )
  *      {
  *          // We were able to obtain the mutex and can now access the
  *          // shared resource.
@@ -494,7 +494,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *  {
  *      // See if we can obtain the mutex.  If the mutex is not available
  *      // wait 10 ticks to see if it becomes free.
- *      if( xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 ) == true )
+ *      if( xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 )  )
  *      {
  *          // We were able to obtain the mutex and can now access the
  *          // shared resource.
@@ -577,7 +577,7 @@ typedef QueueHandle_t SemaphoreHandle_t;
  *      // was created before this task was started.
  *
  *      // Block waiting for the semaphore to become available.
- *      if( xSemaphoreTake( xSemaphore, LONG_TIME ) == true )
+ *      if( xSemaphoreTake( xSemaphore, LONG_TIME )  )
  *      {
  *          // It is time to execute.
  *

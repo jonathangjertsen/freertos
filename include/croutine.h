@@ -467,7 +467,7 @@ void vCoRoutineSchedule( void );
  *      // Wait for data to become available on the queue.
  *      crQUEUE_RECEIVE( xHandle, xCoRoutineQueue, &uxLEDToFlash, portMAX_DELAY, &xResult );
  *
- *      if( xResult == true )
+ *      if( xResult  )
  *      {
  *          // We received the LED to flash - flash it!
  *          vParTestToggleLED( uxLEDToFlash );
@@ -554,7 +554,7 @@ void vCoRoutineSchedule( void );
  *       crQUEUE_RECEIVE( xHandle, xCommsRxQueue, &uxLEDToFlash, portMAX_DELAY, &xResult );
  *
  *       // Was a character received?
- *       if( xResult == true )
+ *       if( xResult  )
  *       {
  *           // Process the character here.
  *       }
@@ -654,7 +654,7 @@ void vCoRoutineSchedule( void );
  *       // Send the next character to the queue.
  *       crQUEUE_SEND( xHandle, xCoRoutineQueue, &cCharToTx, NO_DELAY, &xResult );
  *
- *       if( xResult == true )
+ *       if( xResult  )
  *       {
  *           // The character was successfully posted to the queue.
  *       }

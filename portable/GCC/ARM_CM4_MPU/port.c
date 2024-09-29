@@ -267,7 +267,7 @@ StackType_t * pxPortInitialiseStack( StackType_t * pxTopOfStack,
                                      BaseType_t xRunPrivileged,
                                      xMPU_SETTINGS * xMPUSettings )
 {
-    if( xRunPrivileged == true )
+    if( xRunPrivileged  )
     {
         xMPUSettings->ulTaskFlags |= portTASK_IS_PRIVILEGED_FLAG;
         xMPUSettings->ulContext[ 0 ] = portINITIAL_CONTROL_IF_PRIVILEGED;
