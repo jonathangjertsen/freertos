@@ -1,16 +1,16 @@
 # Use at least the version provided with Ubuntu focal (20.04LTS)
 cmake_minimum_required(VERSION 3.16.3)
 project(freertos NONE)
-enable_language(C CXX ASM)
+enable_language(CXX ASM)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/toolchain.cmake")
 
 add_library(freertos 
-    tasks.c
-    timers.c
-    list.c
-    queue.c
-    stream_buffer.c
-    event_groups.c
+    tasks.cpp
+    timers.cpp
+    list.cpp
+    queue.cpp
+    stream_buffer.cpp
+    event_groups.cpp
 )
 target_include_directories(freertos PUBLIC include config)
 if (WIN32)
@@ -26,3 +26,4 @@ else()
     target_link_libraries(freertos PUBLIC pthread)
     target_compile_definitions(freertos PUBLIC _POSIX_SOURCE _POSIX_C_SOURCE=200809L)
 endif()
+target_compile_options(freertos PUBLIC -fpermissive)
