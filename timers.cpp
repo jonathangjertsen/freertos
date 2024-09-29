@@ -184,7 +184,7 @@ BaseType_t TimerCreateTimerTask( void )
         StaticTask_t * pTimerTaskTCBBuffer = NULL;
         StackType_t * pTimerTaskStackBuffer = NULL;
         configSTACK_DEPTH_TYPE uTimerTaskStackSize;
-        vApplicationGetTimerTaskMemory( &pTimerTaskTCBBuffer, &pTimerTaskStackBuffer, &uTimerTaskStackSize );
+        ApplicationGetTimerTaskMemory( &pTimerTaskTCBBuffer, &pTimerTaskStackBuffer, &uTimerTaskStackSize );
         TimerTaskHandle = xTaskCreateStatic( TimerTask,
                                                 configTIMER_SERVICE_TASK_NAME,
                                                 uTimerTaskStackSize,

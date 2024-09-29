@@ -998,7 +998,7 @@ BaseType_t TimerGenericCommandFromISR( TimerHandle_t Timer,
 /**
  * task.h
  * @code{c}
- * void vApplicationGetTimerTaskMemory( StaticTask_t ** ppTimerTaskTCBBuffer, StackType_t ** ppTimerTaskStackBuffer, configSTACK_DEPTH_TYPE * puTimerTaskStackSize )
+ * void ApplicationGetTimerTaskMemory( StaticTask_t ** ppTimerTaskTCBBuffer, StackType_t ** ppTimerTaskStackBuffer, configSTACK_DEPTH_TYPE * puTimerTaskStackSize )
  * @endcode
  *
  * This function is used to provide a statically allocated block of memory to FreeRTOS to hold the Timer Task TCB.  This function is required when
@@ -1008,7 +1008,7 @@ BaseType_t TimerGenericCommandFromISR( TimerHandle_t Timer,
  * @param ppTimerTaskStackBuffer A handle to a statically allocated Stack buffer for the idle task
  * @param puTimerTaskStackSize   A pointer to the number of elements that will fit in the allocated stack buffer
  */
-    void vApplicationGetTimerTaskMemory( StaticTask_t ** ppTimerTaskTCBBuffer,
+    void ApplicationGetTimerTaskMemory( StaticTask_t ** ppTimerTaskTCBBuffer,
                                          StackType_t ** ppTimerTaskStackBuffer,
                                          configSTACK_DEPTH_TYPE * puTimerTaskStackSize );
 #endif

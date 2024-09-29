@@ -784,14 +784,14 @@
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xTaskGenericNotify( xTaskToNotify, uxIndexToNotify, ulValue, eAction, pulPreviousNotificationValue );
+                xReturn = TaskGenericNotify( xTaskToNotify, uxIndexToNotify, ulValue, eAction, pulPreviousNotificationValue );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xTaskGenericNotify( xTaskToNotify, uxIndexToNotify, ulValue, eAction, pulPreviousNotificationValue );
+                xReturn = TaskGenericNotify( xTaskToNotify, uxIndexToNotify, ulValue, eAction, pulPreviousNotificationValue );
             }
             return xReturn;
         }
@@ -809,14 +809,14 @@
             {
                 portRAISE_PRIVILEGE();
                 portMEMORY_BARRIER();
-                xReturn = xTaskGenericNotifyWait( uxIndexToWaitOn, ulBitsToClearOnEntry, ulBitsToClearOnExit, pulNotificationValue, xTicksToWait );
+                xReturn = TaskGenericNotifyWait( uxIndexToWaitOn, ulBitsToClearOnEntry, ulBitsToClearOnExit, pulNotificationValue, xTicksToWait );
                 portMEMORY_BARRIER();
                 portRESET_PRIVILEGE();
                 portMEMORY_BARRIER();
             }
             else
             {
-                xReturn = xTaskGenericNotifyWait( uxIndexToWaitOn, ulBitsToClearOnEntry, ulBitsToClearOnExit, pulNotificationValue, xTicksToWait );
+                xReturn = TaskGenericNotifyWait( uxIndexToWaitOn, ulBitsToClearOnEntry, ulBitsToClearOnExit, pulNotificationValue, xTicksToWait );
             }
             return xReturn;
         }

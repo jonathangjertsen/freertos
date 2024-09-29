@@ -6,6 +6,7 @@
         "string.h": "c",
         "stdio.h": "c",
         "task.h": "c",
-        "freertos.h": "c"
+        "freertos.h": "c",
+        "xutility": "cpp"
     }
 }

@@ -1063,7 +1063,7 @@
                                 xInternalTaskHandle = MPU_GetTaskHandleAtIndex( CONVERT_TO_INTERNAL_INDEX( lIndex ) );
                                 if( xInternalTaskHandle != NULL )
                                 {
-                                    xReturn = xTaskGenericNotify( xInternalTaskHandle,
+                                    xReturn = TaskGenericNotify( xInternalTaskHandle,
                                                                   pxParams->uxIndexToNotify,
                                                                   pxParams->ulValue,
                                                                   pxParams->eAction,
@@ -1120,7 +1120,7 @@
                     if( ( pxParams->pulNotificationValue == NULL ) ||
                         ( xIsNotificationValueWritable  ) )
                     {
-                        xReturn = xTaskGenericNotifyWait( pxParams->uxIndexToWaitOn,
+                        xReturn = TaskGenericNotifyWait( pxParams->uxIndexToWaitOn,
                                                           pxParams->ulBitsToClearOnEntry,
                                                           pxParams->ulBitsToClearOnExit,
                                                           pxParams->pulNotificationValue,
@@ -1696,7 +1696,7 @@
                 xInternalTaskHandle = MPU_GetTaskHandleAtIndex( CONVERT_TO_INTERNAL_INDEX( lIndex ) );
                 if( xInternalTaskHandle != NULL )
                 {
-                    xReturn = xTaskGenericNotifyFromISR( xInternalTaskHandle, uxIndexToNotify, ulValue, eAction, pulPreviousNotificationValue, pxHigherPriorityTaskWoken );
+                    xReturn = TaskGenericNotifyFromISR( xInternalTaskHandle, uxIndexToNotify, ulValue, eAction, pulPreviousNotificationValue, pxHigherPriorityTaskWoken );
                 }
             }
             return xReturn;
