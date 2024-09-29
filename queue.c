@@ -1818,86 +1818,9 @@ BaseType_t xQueueIsQueueFullFromISR( const QueueHandle_t xQueue )
     BaseType_t xReturn;
     Queue_t * const pxQueue = xQueue;
     configASSERT( pxQueue );
-    return pxQueue->uxMessagesWaiting == pxQueue->uxLength
+    return pxQueue->uxMessagesWaiting == pxQueue->uxLength;
 }
-#if ( configQUEUE_REGISTRY_SIZE > 0 )
-    void vQueueAddToRegistry( QueueHandle_t xQueue,
-                              const char * pcQueueName )
-    {
-        UBaseType_t ux;
-        QueueRegistryItem_t * pxEntryToWrite = NULL;
-        configASSERT( xQueue );
-        if( pcQueueName != NULL )
-        {
-            /* See if there is an empty space in the registry.  A NULL name denotes
-             * a free slot. */
-            for( ux = ( UBaseType_t ) 0U; ux < ( UBaseType_t ) configQUEUE_REGISTRY_SIZE; ux++ )
-            {
-                /* Replace an existing entry if the queue is already in the registry. */
-                if( xQueue == xQueueRegistry[ ux ].xHandle )
-                {
-                    pxEntryToWrite = &( xQueueRegistry[ ux ] );
-                    break;
-                }
-                /* Otherwise, store in the next empty location */
-                else if( ( pxEntryToWrite == NULL ) && ( xQueueRegistry[ ux ].pcQueueName == NULL ) )
-                {
-                    pxEntryToWrite = &( xQueueRegistry[ ux ] );
-                }
-            }
-        }
-        if( pxEntryToWrite != NULL )
-        {
-            /* Store the information on this queue. */
-            pxEntryToWrite->pcQueueName = pcQueueName;
-            pxEntryToWrite->xHandle = xQueue;
-        }
-    }
-#endif /* configQUEUE_REGISTRY_SIZE */
 
-#if ( configQUEUE_REGISTRY_SIZE > 0 )
-    const char * pcQueueGetName( QueueHandle_t xQueue )
-    {
-        UBaseType_t ux;
-        const char * pcReturn = NULL;
-
-        configASSERT( xQueue );
-        /* Note there is nothing here to protect against another task adding or
-         * removing entries from the registry while it is being searched. */
-        for( ux = ( UBaseType_t ) 0U; ux < ( UBaseType_t ) configQUEUE_REGISTRY_SIZE; ux++ )
-        {
-            if( xQueueRegistry[ ux ].xHandle == xQueue )
-            {
-                pcReturn = xQueueRegistry[ ux ].pcQueueName;
-                break;
-            }
-            
-        }
-        return pcReturn;
-    }
-#endif /* configQUEUE_REGISTRY_SIZE */
-#if ( configQUEUE_REGISTRY_SIZE > 0 )
-    void vQueueUnregisterQueue( QueueHandle_t xQueue )
-    {
-        UBaseType_t ux;
-        configASSERT( xQueue );
-        /* See if the handle of the queue being unregistered in actually in the
-         * registry. */
-        for( ux = ( UBaseType_t ) 0U; ux < ( UBaseType_t ) configQUEUE_REGISTRY_SIZE; ux++ )
-        {
-            if( xQueueRegistry[ ux ].xHandle == xQueue )
-            {
-                /* Set the name to NULL to show that this slot if free again. */
-                xQueueRegistry[ ux ].pcQueueName = NULL;
-                /* Set the handle to NULL to ensure the same queue handle cannot
-                 * appear in the registry twice if it is added, removed, then
-                 * added again. */
-                xQueueRegistry[ ux ].xHandle = ( QueueHandle_t ) 0;
-                break;
-            }
-        }
-    }
-#endif /* configQUEUE_REGISTRY_SIZE */
 #if ( configUSE_TIMERS == 1 )
     void vQueueWaitForMessageRestricted( QueueHandle_t xQueue,
                                          TickType_t xTicksToWait,

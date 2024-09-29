@@ -503,8 +503,9 @@ void vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer )
          * freed - just scrub the structure so future use will assert. */
         ( void ) memset( pxStreamBuffer, 0x00, sizeof( StreamBuffer_t ) );
     }
+}
 
-BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer )
+BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer ) 
 {
     StreamBuffer_t * const pxStreamBuffer = xStreamBuffer;
     BaseType_t xReturn = pdFAIL;
@@ -737,7 +738,6 @@ size_t xStreamBufferSendFromISR( StreamBufferHandle_t xStreamBuffer,
         /* Was a task waiting for the data? */
         if( prvBytesInBuffer( pxStreamBuffer ) >= pxStreamBuffer->xTriggerLevelBytes )
         {
-
             prvSEND_COMPLETE_FROM_ISR( pxStreamBuffer, pxHigherPriorityTaskWoken );
         }
     }
@@ -1206,10 +1206,7 @@ static void prvInitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
     }
     #else
     {
-
         ( void ) pxSendCompletedCallback;
-
-
         ( void ) pxReceiveCompletedCallback;
     }
     #endif /* if ( configUSE_SB_COMPLETED_CALLBACK == 1 ) */
@@ -1233,8 +1230,5 @@ void vStreamBufferSetStreamBufferNotificationIndex( StreamBufferHandle_t xStream
     /* Check that the task notification index is valid. */
     configASSERT( uxNotificationIndex < configTASK_NOTIFICATION_ARRAY_ENTRIES );
     pxStreamBuffer->uxNotificationIndex = uxNotificationIndex;
-/* This entire source file will be skipped if the application is not configured
- * to include stream buffer functionality. This #if is closed at the very bottom
- * of this file. If you want to include stream buffers then ensure
- * configUSE_STREAM_BUFFERS is set to 1 in FreeRTOSConfig.h. */
+}
 #endif /* configUSE_STREAM_BUFFERS == 1 */
