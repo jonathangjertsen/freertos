@@ -345,21 +345,21 @@
         }
     }
 
-    BaseType_t MPU_xTaskResumeAll( void ) /* FREERTOS_SYSTEM_CALL */
+    BaseType_t MPU_TaskResumeAll( void ) /* FREERTOS_SYSTEM_CALL */
     {
         BaseType_t xReturn;
         if( portIS_PRIVILEGED() == false )
         {
             portRAISE_PRIVILEGE();
             portMEMORY_BARRIER();
-            xReturn = xTaskResumeAll();
+            xReturn = TaskResumeAll();
             portMEMORY_BARRIER();
             portRESET_PRIVILEGE();
             portMEMORY_BARRIER();
         }
         else
         {
-            xReturn = xTaskResumeAll();
+            xReturn = TaskResumeAll();
         }
         return xReturn;
     }
@@ -2080,7 +2080,7 @@
     #endif /* #if ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configUSE_STREAM_BUFFERS == 1 ) ) */
 
 /* Functions that the application writer wants to execute in privileged mode
- * can be defined in application_defined_privileged_functions.h.  The functions
+ * can be defined in application_defined_s.h.  The functions
  * must take the same format as those above whereby the privilege state on exit
  * equals the privilege state on entry.  For example:
  *
@@ -2104,8 +2104,8 @@
  *      }
  * }
  */
-    #if configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS == 1
-        #include "application_defined_privileged_functions.h"
+    #if configINCLUDE_APPLICATION_DEFINED_S == 1
+        #include "application_defined_s.h"
     #endif
 
 #endif /* #if ( ( portUSING_MPU_WRAPPERS == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 1 ) ) */

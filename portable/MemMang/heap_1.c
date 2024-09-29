@@ -105,7 +105,7 @@ void * pvPortMalloc( size_t xWantedSize )
         }
         traceMALLOC( pvReturn, xWantedSize );
     }
-    ( void ) xTaskResumeAll();
+    ( void ) TaskResumeAll();
     #if ( configUSE_MALLOC_FAILED_HOOK == 1 )
     {
         if( pvReturn == NULL )

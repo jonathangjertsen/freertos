@@ -463,7 +463,7 @@ void xPortSysTickHandler( void )
         {
             xExpectedIdleTime = xMaximumPossibleSuppressedTicks;
         }
-        /* Enter a critical section but don't use the taskENTER_CRITICAL()
+        /* Enter a critical section but don't use the ENTER_CRITICAL()
          * method as that will mask interrupts that should exit sleep mode. */
         __asm volatile ( "cpsid i" ::: "memory" );
         __asm volatile ( "dsb" );

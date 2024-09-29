@@ -137,7 +137,7 @@ typedef xQUEUE Queue_t;
  * array position being vacant. */
 
 
-    PRIVILEGED_DATA QueueRegistryItem_t xQueueRegistry[ configQUEUE_REGISTRY_SIZE ];
+     QueueRegistryItem_t xQueueRegistry[ configQUEUE_REGISTRY_SIZE ];
 #endif /* configQUEUE_REGISTRY_SIZE */
 /*
  * Unlocks a queue locked by a call to LockQueue.  Locking a queue does not
@@ -147,37 +147,37 @@ typedef xQUEUE Queue_t;
  * to indicate that a task may require unblocking.  When the queue in unlocked
  * these lock counts are inspected, and the appropriate action taken.
  */
-static void UnlockQueue( Queue_t * const pxQueue ) PRIVILEGED_FUNCTION;
+static void UnlockQueue( Queue_t * const pxQueue ) ;
 /*
  * Uses a critical section to determine if there is any data in a queue.
  *
  * @return true if the queue contains no items, otherwise false.
  */
-static BaseType_t IsQueueEmpty( const Queue_t * pxQueue ) PRIVILEGED_FUNCTION;
+static BaseType_t IsQueueEmpty( const Queue_t * pxQueue ) ;
 /*
  * Uses a critical section to determine if there is any space in a queue.
  *
  * @return true if there is no space, otherwise false;
  */
-static BaseType_t IsQueueFull( const Queue_t * pxQueue ) PRIVILEGED_FUNCTION;
+static BaseType_t IsQueueFull( const Queue_t * pxQueue ) ;
 /*
  * Copies an item into the queue, either at the front of the queue or the
  * back of the queue.
  */
 static BaseType_t CopyDataToQueue( Queue_t * const pxQueue,
                                       const void * pvItemToQueue,
-                                      const BaseType_t xPosition ) PRIVILEGED_FUNCTION;
+                                      const BaseType_t xPosition ) ;
 /*
  * Copies an item out of a queue.
  */
 static void CopyDataFromQueue( Queue_t * const pxQueue,
-                                  void * const pvBuffer ) PRIVILEGED_FUNCTION;
+                                  void * const pvBuffer ) ;
 #if ( configUSE_QUEUE_SETS == 1 )
 /*
  * Checks to see if a queue is a member of a queue set, and if so, notifies
  * the queue set that the queue contains data.
  */
-    static BaseType_t NotifyQueueSetContainer( const Queue_t * const pxQueue ) PRIVILEGED_FUNCTION;
+    static BaseType_t NotifyQueueSetContainer( const Queue_t * const pxQueue ) ;
 #endif
 /*
  * Called after a Queue_t structure has been allocated either statically or
@@ -187,14 +187,14 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
                                    const UBaseType_t uxItemSize,
                                    uint8_t * pucQueueStorage,
                                    const uint8_t ucQueueType,
-                                   Queue_t * pxNewQueue ) PRIVILEGED_FUNCTION;
+                                   Queue_t * pxNewQueue ) ;
 /*
  * Mutexes are a special type of queue.  When a mutex is created, first the
  * queue is created, then InitialiseMutex() is called to configure the queue
  * as a mutex.
  */
 #if ( configUSE_MUTEXES == 1 )
-    static void InitialiseMutex( Queue_t * pxNewQueue ) PRIVILEGED_FUNCTION;
+    static void InitialiseMutex( Queue_t * pxNewQueue ) ;
 #endif
 #if ( configUSE_MUTEXES == 1 )
 /*
@@ -204,7 +204,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
  * other tasks that are waiting for the same mutex.  This function returns
  * that priority.
  */
-    static UBaseType_t GetHighestPriorityOfWaitToReceiveList( const Queue_t * const pxQueue ) PRIVILEGED_FUNCTION;
+    static UBaseType_t GetHighestPriorityOfWaitToReceiveList( const Queue_t * const pxQueue ) ;
 #endif
 
 /*
@@ -212,7 +212,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
  * accessing the queue event lists.
  */
 #define LockQueue( pxQueue )                            \
-    taskENTER_CRITICAL();                                  \
+    ENTER_CRITICAL();                                  \
     {                                                      \
         if( ( pxQueue )->cRxLock == queueUNLOCKED )        \
         {                                                  \
@@ -223,7 +223,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
             ( pxQueue )->cTxLock = queueLOCKED_UNMODIFIED; \
         }                                                  \
     }                                                      \
-    taskEXIT_CRITICAL()
+    EXIT_CRITICAL()
 /*
  * Macro to increment cTxLock member of the queue data structure. It is
  * capped at the number of tasks in the system as we cannot unblock more
@@ -264,7 +264,7 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
         /* Check for multiplication overflow. */
         ( ( SIZE_MAX / pxQueue->uxLength ) >= pxQueue->uxItemSize ) )
     {
-        taskENTER_CRITICAL();
+        ENTER_CRITICAL();
         {
             pxQueue->u.xQueue.pcTail = pxQueue->pcHead + ( pxQueue->uxLength * pxQueue->uxItemSize );
             pxQueue->uxMessagesWaiting = ( UBaseType_t ) 0U;
@@ -279,7 +279,7 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
                  * will still be empty.  If there are tasks blocked waiting to write to
                  * the queue, then one should be unblocked as after this function exits
                  * it will be possible to write to it. */
-                if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                     {
@@ -290,11 +290,11 @@ BaseType_t xQueueGenericReset( QueueHandle_t xQueue,
             else
             {
                 /* Ensure the event queues start in the correct state. */
-                vListInitialise( &( pxQueue->xTasksWaitingToSend ) );
-                vListInitialise( &( pxQueue->xTasksWaitingToReceive ) );
+                ListInitialise( &( pxQueue->xTasksWaitingToSend ) );
+                ListInitialise( &( pxQueue->xTasksWaitingToReceive ) );
             }
         }
-        taskEXIT_CRITICAL();
+        EXIT_CRITICAL();
     }
     else
     {
@@ -532,7 +532,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
          * calling task is the mutex holder, but not a good way of determining the
          * identity of the mutex holder, as the holder may change between the
          * following critical section exiting and the function returning. */
-        taskENTER_CRITICAL();
+        ENTER_CRITICAL();
         {
             if( pxSemaphore->uxQueueType == queueQUEUE_IS_MUTEX )
             {
@@ -543,7 +543,7 @@ static void InitialiseNewQueue( const UBaseType_t uxQueueLength,
                 pxReturn = NULL;
             }
         }
-        taskEXIT_CRITICAL();
+        EXIT_CRITICAL();
         return pxReturn;
     }
 #endif /* if ( ( configUSE_MUTEXES == 1 ) && ( INCLUDE_xSemaphoreGetMutexHolder == 1 ) ) */
@@ -695,7 +695,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
     #endif
     for( ; ; )
     {
-        taskENTER_CRITICAL();
+        ENTER_CRITICAL();
         {
             /* Is there room on the queue now?  The running task must be the
              * highest priority task wanting to access the queue.  If the head item
@@ -727,7 +727,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
                     {
                         /* If there was a task waiting for data to arrive on the
                          * queue then unblock it now. */
-                        if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                        if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                         {
                             if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                             {
@@ -753,7 +753,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
                     xYieldRequired = CopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
                     /* If there was a task waiting for data to arrive on the
                      * queue then unblock it now. */
-                    if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                    if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                     {
                         if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                         {
@@ -774,7 +774,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
                     }
                 }
                 #endif /* configUSE_QUEUE_SETS */
-                taskEXIT_CRITICAL();
+                EXIT_CRITICAL();
                 return true;
             }
             else
@@ -783,7 +783,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
                 {
                     /* The queue was full and no block time is specified (or
                      * the block time has expired) so leave now. */
-                    taskEXIT_CRITICAL();
+                    EXIT_CRITICAL();
                     return errQUEUE_FULL;
                 }
                 else if( xEntryTimeSet == false )
@@ -795,7 +795,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
                 }
             }
         }
-        taskEXIT_CRITICAL();
+        EXIT_CRITICAL();
         /* Interrupts and other tasks can send to and receive from the queue
          * now the critical section has been exited. */
         vTaskSuspendAll();
@@ -817,7 +817,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
                  * task is already in the ready list before it yields - in which
                  * case the yield will not cause a context switch unless there
                  * is also a higher priority task in the pending ready list. */
-                if( xTaskResumeAll() == false )
+                if( TaskResumeAll() == false )
                 {
                     taskYIELD_WITHIN_API();
                 }
@@ -826,14 +826,14 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue,
             {
                 /* Try again. */
                 UnlockQueue( pxQueue );
-                ( void ) xTaskResumeAll();
+                ( void ) TaskResumeAll();
             }
         }
         else
         {
             /* The timeout has expired. */
             UnlockQueue( pxQueue );
-            ( void ) xTaskResumeAll();
+            ( void ) TaskResumeAll();
             return errQUEUE_FULL;
         }
     }
@@ -857,7 +857,7 @@ BaseType_t xQueueGenericSendFromISR( QueueHandle_t xQueue,
      * read, instead return a flag to say whether a context switch is required or
      * not (i.e. has a task with a higher priority than us been woken by this
      * post). */
-    uxSavedInterruptStatus = ( UBaseType_t ) taskENTER_CRITICAL_FROM_ISR();
+    uxSavedInterruptStatus = ( UBaseType_t ) ENTER_CRITICAL_FROM_ISR();
     {
         if( ( pxQueue->uxMessagesWaiting < pxQueue->uxLength ) || ( xCopyPosition == queueOVERWRITE ) )
         {
@@ -896,7 +896,7 @@ BaseType_t xQueueGenericSendFromISR( QueueHandle_t xQueue,
                     }
                     else
                     {
-                        if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                        if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                         {
                             if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                             {
@@ -912,7 +912,7 @@ BaseType_t xQueueGenericSendFromISR( QueueHandle_t xQueue,
                 }
                 #else /* configUSE_QUEUE_SETS */
                 {
-                    if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                    if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                     {
                         if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                         {
@@ -942,7 +942,7 @@ BaseType_t xQueueGenericSendFromISR( QueueHandle_t xQueue,
             xReturn = errQUEUE_FULL;
         }
     }
-    taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
+    EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
     return xReturn;
 }
 
@@ -967,7 +967,7 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
     configASSERT( !( ( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX ) && ( pxQueue->u.xSemaphore.xMutexHolder != NULL ) ) );
 
     portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
-    uxSavedInterruptStatus = ( UBaseType_t ) taskENTER_CRITICAL_FROM_ISR();
+    uxSavedInterruptStatus = ( UBaseType_t ) ENTER_CRITICAL_FROM_ISR();
     {
         const UBaseType_t uxMessagesWaiting = pxQueue->uxMessagesWaiting;
         /* When the queue is used to implement a semaphore no data is ever
@@ -1004,7 +1004,7 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
                     }
                     else
                     {
-                        if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                        if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                         {
                             if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                             {
@@ -1020,7 +1020,7 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
                 }
                 #else /* configUSE_QUEUE_SETS */
                 {
-                    if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                    if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                     {
                         if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                         {
@@ -1048,7 +1048,7 @@ BaseType_t xQueueGiveFromISR( QueueHandle_t xQueue,
             xReturn = errQUEUE_FULL;
         }
     }
-    taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
+    EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
     return xReturn;
 }
 
@@ -1072,7 +1072,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
     #endif
     for( ; ; )
     {
-        taskENTER_CRITICAL();
+        ENTER_CRITICAL();
         {
             const UBaseType_t uxMessagesWaiting = pxQueue->uxMessagesWaiting;
             /* Is there data in the queue now?  To be running the calling task
@@ -1085,14 +1085,14 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
                 /* There is now space in the queue, were any tasks waiting to
                  * post to the queue?  If so, unblock the highest priority waiting
                  * task. */
-                if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                     {
                         queueYIELD_IF_USING_PREEMPTION();
                     }
                 }
-                taskEXIT_CRITICAL();
+                EXIT_CRITICAL();
                 return true;
             }
             else
@@ -1101,7 +1101,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
                 {
                     /* The queue was empty and no block time is specified (or
                      * the block time has expired) so leave now. */
-                    taskEXIT_CRITICAL();
+                    EXIT_CRITICAL();
                     return errQUEUE_EMPTY;
                 }
                 else if( xEntryTimeSet == false )
@@ -1118,7 +1118,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
                 }
             }
         }
-        taskEXIT_CRITICAL();
+        EXIT_CRITICAL();
         /* Interrupts and other tasks can send to and receive from the queue
          * now the critical section has been exited. */
         vTaskSuspendAll();
@@ -1132,7 +1132,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
             {
                 vTaskPlaceOnEventList( &( pxQueue->xTasksWaitingToReceive ), xTicksToWait );
                 UnlockQueue( pxQueue );
-                if( xTaskResumeAll() == false )
+                if( TaskResumeAll() == false )
                 {
                     taskYIELD_WITHIN_API();
                 }
@@ -1142,7 +1142,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
                 /* The queue contains data again.  Loop back to try and read the
                  * data. */
                 UnlockQueue( pxQueue );
-                ( void ) xTaskResumeAll();
+                ( void ) TaskResumeAll();
             }
         }
         else
@@ -1150,7 +1150,7 @@ BaseType_t xQueueReceive( QueueHandle_t xQueue,
             /* Timed out.  If there is no data in the queue exit, otherwise loop
              * back and attempt to read the data. */
             UnlockQueue( pxQueue );
-            ( void ) xTaskResumeAll();
+            ( void ) TaskResumeAll();
             if( IsQueueEmpty( pxQueue ) != false )
             {
                 return errQUEUE_EMPTY;
@@ -1181,7 +1181,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
     #endif
     for( ; ; )
     {
-        taskENTER_CRITICAL();
+        ENTER_CRITICAL();
         {
             /* Semaphores are queues with an item size of 0, and where the
              * number of messages in the queue is the semaphore's count value. */
@@ -1205,14 +1205,14 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                 #endif /* configUSE_MUTEXES */
                 /* Check to see if other tasks are blocked waiting to give the
                  * semaphore, and if so, unblock the highest priority such task. */
-                if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                     {
                         queueYIELD_IF_USING_PREEMPTION();
                     }
                 }
-                taskEXIT_CRITICAL();
+                EXIT_CRITICAL();
                 return true;
             }
             else
@@ -1221,7 +1221,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                 {
                     /* The semaphore count was 0 and no block time is specified
                      * (or the block time has expired) so exit now. */
-                    taskEXIT_CRITICAL();
+                    EXIT_CRITICAL();
                     return errQUEUE_EMPTY;
                 }
                 else if( xEntryTimeSet == false )
@@ -1233,7 +1233,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                 }
             }
         }
-        taskEXIT_CRITICAL();
+        EXIT_CRITICAL();
         /* Interrupts and other tasks can give to and take from the semaphore
          * now the critical section has been exited. */
         vTaskSuspendAll();
@@ -1251,17 +1251,17 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                 {
                     if( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX )
                     {
-                        taskENTER_CRITICAL();
+                        ENTER_CRITICAL();
                         {
                             xInheritanceOccurred = xTaskPriorityInherit( pxQueue->u.xSemaphore.xMutexHolder );
                         }
-                        taskEXIT_CRITICAL();
+                        EXIT_CRITICAL();
                     }
                 }
                 #endif /* if ( configUSE_MUTEXES == 1 ) */
                 vTaskPlaceOnEventList( &( pxQueue->xTasksWaitingToReceive ), xTicksToWait );
                 UnlockQueue( pxQueue );
-                if( xTaskResumeAll() == false )
+                if( TaskResumeAll() == false )
                 {
                     taskYIELD_WITHIN_API();
                 }
@@ -1271,14 +1271,14 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                 /* There was no timeout and the semaphore count was not 0, so
                  * attempt to take the semaphore again. */
                 UnlockQueue( pxQueue );
-                ( void ) xTaskResumeAll();
+                ( void ) TaskResumeAll();
             }
         }
         else
         {
             /* Timed out. */
             UnlockQueue( pxQueue );
-            ( void ) xTaskResumeAll();
+            ( void ) TaskResumeAll();
             /* If the semaphore count is 0 exit now as the timeout has
              * expired.  Otherwise return to attempt to take the semaphore that is
              * known to be available.  As semaphores are implemented by queues the
@@ -1292,7 +1292,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                      * test the mutex type again to check it is actually a mutex. */
                     if( xInheritanceOccurred != false )
                     {
-                        taskENTER_CRITICAL();
+                        ENTER_CRITICAL();
                         {
                             UBaseType_t uxHighestWaitingPriority;
                             /* This task blocking on the mutex caused another
@@ -1302,7 +1302,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                              * task that is waiting for the same mutex. */
                             uxHighestWaitingPriority = GetHighestPriorityOfWaitToReceiveList( pxQueue );
                             /* vTaskPriorityDisinheritAfterTimeout uses the uxHighestWaitingPriority
-                             * parameter to index pxReadyTasksLists when adding the task holding
+                             * parameter to index ReadyTasksLists when adding the task holding
                              * mutex to the ready list for its new priority. Coverity thinks that
                              * it can result in out-of-bounds access which is not true because
                              * uxHighestWaitingPriority, as returned by GetHighestPriorityOfWaitToReceiveList,
@@ -1310,7 +1310,7 @@ BaseType_t xQueueSemaphoreTake( QueueHandle_t xQueue,
                             /* coverity[overrun] */
                             vTaskPriorityDisinheritAfterTimeout( pxQueue->u.xSemaphore.xMutexHolder, uxHighestWaitingPriority );
                         }
-                        taskEXIT_CRITICAL();
+                        EXIT_CRITICAL();
                     }
                 }
                 #endif /* configUSE_MUTEXES */
@@ -1341,7 +1341,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
     #endif
     for( ; ; )
     {
-        taskENTER_CRITICAL();
+        ENTER_CRITICAL();
         {
             const UBaseType_t uxMessagesWaiting = pxQueue->uxMessagesWaiting;
             /* Is there data in the queue now?  To be running the calling task
@@ -1357,7 +1357,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
                 pxQueue->u.xQueue.pcReadFrom = pcOriginalReadPosition;
                 /* The data is being left in the queue, so see if there are
                  * any other tasks waiting for the data. */
-                if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                     {
@@ -1365,7 +1365,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
                         queueYIELD_IF_USING_PREEMPTION();
                     }
                 }
-                taskEXIT_CRITICAL();
+                EXIT_CRITICAL();
                 return true;
             }
             else
@@ -1374,7 +1374,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
                 {
                     /* The queue was empty and no block time is specified (or
                      * the block time has expired) so leave now. */
-                    taskEXIT_CRITICAL();
+                    EXIT_CRITICAL();
                     return errQUEUE_EMPTY;
                 }
                 else if( xEntryTimeSet == false )
@@ -1387,7 +1387,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
                 }
             }
         }
-        taskEXIT_CRITICAL();
+        EXIT_CRITICAL();
         /* Interrupts and other tasks can send to and receive from the queue
          * now that the critical section has been exited. */
         vTaskSuspendAll();
@@ -1401,7 +1401,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
             {
                 vTaskPlaceOnEventList( &( pxQueue->xTasksWaitingToReceive ), xTicksToWait );
                 UnlockQueue( pxQueue );
-                if( xTaskResumeAll() == false )
+                if( TaskResumeAll() == false )
                 {
                     taskYIELD_WITHIN_API();
                 }
@@ -1411,7 +1411,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
                 /* There is data in the queue now, so don't enter the blocked
                  * state, instead return to try and obtain the data. */
                 UnlockQueue( pxQueue );
-                ( void ) xTaskResumeAll();
+                ( void ) TaskResumeAll();
             }
         }
         else
@@ -1419,7 +1419,7 @@ BaseType_t xQueuePeek( QueueHandle_t xQueue,
             /* The timeout has expired.  If there is still no data in the queue
              * exit, otherwise go back and try to read the data again. */
             UnlockQueue( pxQueue );
-            ( void ) xTaskResumeAll();
+            ( void ) TaskResumeAll();
             if( IsQueueEmpty( pxQueue ) != false )
             {
                 return errQUEUE_EMPTY;
@@ -1437,7 +1437,7 @@ BaseType_t xQueueReceiveFromISR( QueueHandle_t xQueue,
     configASSERT( pxQueue );
     configASSERT( !( ( pvBuffer == NULL ) && ( pxQueue->uxItemSize != ( UBaseType_t ) 0U ) ) );
     portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
-    uxSavedInterruptStatus = ( UBaseType_t ) taskENTER_CRITICAL_FROM_ISR();
+    uxSavedInterruptStatus = ( UBaseType_t ) ENTER_CRITICAL_FROM_ISR();
     {
         const UBaseType_t uxMessagesWaiting = pxQueue->uxMessagesWaiting;
         /* Cannot block in an ISR, so check there is data available. */
@@ -1452,7 +1452,7 @@ BaseType_t xQueueReceiveFromISR( QueueHandle_t xQueue,
              * locked. */
             if( cRxLock == queueUNLOCKED )
             {
-                if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                     {
@@ -1478,7 +1478,7 @@ BaseType_t xQueueReceiveFromISR( QueueHandle_t xQueue,
             xReturn = false;
         }
     }
-    taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
+    EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
     return xReturn;
 }
 
@@ -1494,7 +1494,7 @@ BaseType_t xQueuePeekFromISR( QueueHandle_t xQueue,
     configASSERT( pxQueue->uxItemSize != 0 ); /* Can't peek a semaphore. */
 
     portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
-    uxSavedInterruptStatus = ( UBaseType_t ) taskENTER_CRITICAL_FROM_ISR();
+    uxSavedInterruptStatus = ( UBaseType_t ) ENTER_CRITICAL_FROM_ISR();
     {
         /* Cannot block in an ISR, so check there is data available. */
         if( pxQueue->uxMessagesWaiting > ( UBaseType_t ) 0 )
@@ -1511,18 +1511,18 @@ BaseType_t xQueuePeekFromISR( QueueHandle_t xQueue,
             xReturn = false;
         }
     }
-    taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
+    EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
     return xReturn;
 }
 UBaseType_t uxQueueMessagesWaiting( const QueueHandle_t xQueue )
 {
     UBaseType_t uxReturn;
     configASSERT( xQueue );
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     {
         uxReturn = ( ( Queue_t * ) xQueue )->uxMessagesWaiting;
     }
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
     return uxReturn;
 }
 UBaseType_t uxQueueSpacesAvailable( const QueueHandle_t xQueue )
@@ -1530,11 +1530,11 @@ UBaseType_t uxQueueSpacesAvailable( const QueueHandle_t xQueue )
     UBaseType_t uxReturn;
     Queue_t * const pxQueue = xQueue;
     configASSERT( pxQueue );
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     {
         uxReturn = ( UBaseType_t ) ( pxQueue->uxLength - pxQueue->uxMessagesWaiting );
     }
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
     return uxReturn;
 }
 
@@ -1577,12 +1577,12 @@ void vQueueDelete( QueueHandle_t xQueue )
     }
     #endif /* configSUPPORT_DYNAMIC_ALLOCATION */
 }
-UBaseType_t uxQueueGetQueueItemSize( QueueHandle_t xQueue ) /* PRIVILEGED_FUNCTION */
+UBaseType_t uxQueueGetQueueItemSize( QueueHandle_t xQueue ) /*  */
 {
     return ( ( Queue_t * ) xQueue )->uxItemSize;
 }
 
-UBaseType_t uxQueueGetQueueLength( QueueHandle_t xQueue ) /* PRIVILEGED_FUNCTION */
+UBaseType_t uxQueueGetQueueLength( QueueHandle_t xQueue ) /*  */
 {
     return ( ( Queue_t * ) xQueue )->uxLength;
 }
@@ -1597,7 +1597,7 @@ static UBaseType_t GetHighestPriorityOfWaitToReceiveList( const Queue_t * const 
         * other tasks that are waiting for the same mutex.  For this purpose,
         * return the priority of the highest priority task that is waiting for the
         * mutex. */
-    if( listCURRENT_LIST_LENGTH( &( pxQueue->xTasksWaitingToReceive ) ) > 0U )
+    if( CURRENT_LIST_LENGTH( &( pxQueue->xTasksWaitingToReceive ) ) > 0U )
     {
         uxHighestPriorityOfWaitingTasks = ( UBaseType_t ) ( ( UBaseType_t ) configMAX_PRIORITIES - ( UBaseType_t ) GET_ITEM_VALUE_OF_HEAD_ENTRY( &( pxQueue->xTasksWaitingToReceive ) ) );
     }
@@ -1684,7 +1684,7 @@ static void UnlockQueue( Queue_t * const pxQueue )
      * removed from the queue while the queue was locked.  When a queue is
      * locked items can be added or removed, but the event lists cannot be
      * updated. */
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     {
         int8_t cTxLock = pxQueue->cTxLock;
         /* See if data was added to the queue while it was locked. */
@@ -1709,7 +1709,7 @@ static void UnlockQueue( Queue_t * const pxQueue )
                     /* Tasks that are removed from the event list will get
                      * added to the pending ready list as the scheduler is still
                      * suspended. */
-                    if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                    if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                     {
                         if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                         {
@@ -1728,7 +1728,7 @@ static void UnlockQueue( Queue_t * const pxQueue )
             {
                 /* Tasks that are removed from the event list will get added to
                  * the pending ready list as the scheduler is still suspended. */
-                if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
+                if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == false )
                 {
                     if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToReceive ) ) != false )
                     {
@@ -1747,14 +1747,14 @@ static void UnlockQueue( Queue_t * const pxQueue )
         }
         pxQueue->cTxLock = queueUNLOCKED;
     }
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
     /* Do the same for the Rx lock. */
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     {
         int8_t cRxLock = pxQueue->cRxLock;
         while( cRxLock > queueLOCKED_UNMODIFIED )
         {
-            if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
+            if( LIST_IS_EMPTY( &( pxQueue->xTasksWaitingToSend ) ) == false )
             {
                 if( xTaskRemoveFromEventList( &( pxQueue->xTasksWaitingToSend ) ) != false )
                 {
@@ -1769,13 +1769,13 @@ static void UnlockQueue( Queue_t * const pxQueue )
         }
         pxQueue->cRxLock = queueUNLOCKED;
     }
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
 }
 
 static BaseType_t IsQueueEmpty( const Queue_t * pxQueue )
 {
     BaseType_t xReturn;
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     {
         if( pxQueue->uxMessagesWaiting == ( UBaseType_t ) 0 )
         {
@@ -1786,7 +1786,7 @@ static BaseType_t IsQueueEmpty( const Queue_t * pxQueue )
             xReturn = false;
         }
     }
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
     return xReturn;
 }
 
@@ -1808,9 +1808,9 @@ BaseType_t xQueueIsQueueEmptyFromISR( const QueueHandle_t xQueue )
 
 static BaseType_t IsQueueFull( const Queue_t * pxQueue )
 {
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     BaseType_t xReturn = pxQueue->uxMessagesWaiting == pxQueue->uxLength;
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
     return xReturn;
 }
 
@@ -1831,7 +1831,7 @@ BaseType_t xQueueIsQueueFullFromISR( const QueueHandle_t xQueue )
         /* This function should not be called by application code hence the
          * 'Restricted' in its name.  It is not part of the public API.  It is
          * designed for use by kernel code, and has special calling requirements.
-         * It can result in vListInsert() being called on a list that can only
+         * It can result in ListInsert() being called on a list that can only
          * possibly ever have one item in it, so the list will be fast, but even
          * so it should be called with the scheduler locked and not from a critical
          * section. */
@@ -1861,7 +1861,7 @@ BaseType_t xQueueAddToSet( QueueSetMemberHandle_t xQueueOrSemaphore,
                             QueueSetHandle_t xQueueSet )
 {
     BaseType_t xReturn;
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     {
         if( ( ( Queue_t * ) xQueueOrSemaphore )->pxQueueSetContainer != NULL )
         {
@@ -1880,7 +1880,7 @@ BaseType_t xQueueAddToSet( QueueSetMemberHandle_t xQueueOrSemaphore,
             xReturn = true;
         }
     }
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
     return xReturn;
 }
 #endif /* configUSE_QUEUE_SETS */
@@ -1904,12 +1904,12 @@ BaseType_t xQueueAddToSet( QueueSetMemberHandle_t xQueueOrSemaphore,
         }
         else
         {
-            taskENTER_CRITICAL();
+            ENTER_CRITICAL();
             {
                 /* The queue is no longer contained in the set. */
                 pxQueueOrSemaphore->pxQueueSetContainer = NULL;
             }
-            taskEXIT_CRITICAL();
+            EXIT_CRITICAL();
             xReturn = true;
         }
         return xReturn;
@@ -1953,7 +1953,7 @@ BaseType_t xQueueAddToSet( QueueSetMemberHandle_t xQueueOrSemaphore,
             xReturn = CopyDataToQueue( pxQueueSetContainer, &pxQueue, queueSEND_TO_BACK );
             if( cTxLock == queueUNLOCKED )
             {
-                if( listLIST_IS_EMPTY( &( pxQueueSetContainer->xTasksWaitingToReceive ) ) == false )
+                if( LIST_IS_EMPTY( &( pxQueueSetContainer->xTasksWaitingToReceive ) ) == false )
                 {
                     if( xTaskRemoveFromEventList( &( pxQueueSetContainer->xTasksWaitingToReceive ) ) != false )
                     {

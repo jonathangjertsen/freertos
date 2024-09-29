@@ -280,13 +280,13 @@ typedef struct xLIST
  */
 #endif /* #if ( configNUMBER_OF_CORES == 1 ) */
 /*
- * Version of uxListRemove() that does not return a value.  Provided as a slight
+ * Version of ListRemove() that does not return a value.  Provided as a slight
  * optimisation for xTaskIncrementTick() by being inline.
  *
  * Remove an item from a list.  The list item has a pointer to the list that
  * it is in, so only the list item need be passed into the function.
  *
- * @param uxListRemove The item to be removed.  The item will remove itself from
+ * @param ListRemove The item to be removed.  The item will remove itself from
  * the list pointed to by it's pxContainer parameter.
  *
  * @return The number of items that remain in the list after the list item has
@@ -394,7 +394,7 @@ typedef struct xLIST
 #define LIST_ITEM_CONTAINER( pxListItem )            ( ( pxListItem )->pxContainer )
 /*
  * This provides a crude means of knowing if a list has been initialised, as
- * pxList->xListEnd.xItemValue is set to portMAX_DELAY by the vListInitialise()
+ * pxList->xListEnd.xItemValue is set to portMAX_DELAY by the ListInitialise()
  * function.
  */
 #define LIST_IS_INITIALISED( pxList )                ( ( pxList )->xListEnd.xItemValue == portMAX_DELAY )
@@ -405,20 +405,20 @@ typedef struct xLIST
  *
  * @param pxList Pointer to the list being initialised.
  *
- * \page vListInitialise vListInitialise
+ * \page ListInitialise ListInitialise
  * \ingroup LinkedList
  */
-void vListInitialise( List_t * const pxList ) PRIVILEGED_FUNCTION;
+void ListInitialise( List_t * const pxList ) ;
 /*
  * Must be called before a list item is used.  This sets the list container to
  * null so the item does not think that it is already contained in a list.
  *
  * @param pxItem Pointer to the list item being initialised.
  *
- * \page vListInitialiseItem vListInitialiseItem
+ * \page ListInitialiseItem ListInitialiseItem
  * \ingroup LinkedList
  */
-void vListInitialiseItem( ListItem_t * const pxItem ) PRIVILEGED_FUNCTION;
+void ListInitialiseItem( ListItem_t * const pxItem ) ;
 /*
  * Insert a list item into a list.  The item will be inserted into the list in
  * a position determined by its item value (ascending item value order).
@@ -427,11 +427,11 @@ void vListInitialiseItem( ListItem_t * const pxItem ) PRIVILEGED_FUNCTION;
  *
  * @param pxNewListItem The item that is to be placed in the list.
  *
- * \page vListInsert vListInsert
+ * \page ListInsert ListInsert
  * \ingroup LinkedList
  */
-void vListInsert( List_t * const pxList,
-                  ListItem_t * const pxNewListItem ) PRIVILEGED_FUNCTION;
+void ListInsert( List_t * const pxList,
+                  ListItem_t * const pxNewListItem ) ;
 /*
  * Insert a list item into a list.  The item will be inserted in a position
  * such that it will be the last item within the list returned by multiple
@@ -452,21 +452,21 @@ void vListInsert( List_t * const pxList,
  * \ingroup LinkedList
  */
 void vListInsertEnd( List_t * const pxList,
-                     ListItem_t * const pxNewListItem ) PRIVILEGED_FUNCTION;
+                     ListItem_t * const pxNewListItem ) ;
 /*
  * Remove an item from a list.  The list item has a pointer to the list that
  * it is in, so only the list item need be passed into the function.
  *
- * @param uxListRemove The item to be removed.  The item will remove itself from
+ * @param ListRemove The item to be removed.  The item will remove itself from
  * the list pointed to by it's pxContainer parameter.
  *
  * @return The number of items that remain in the list after the list item has
  * been removed.
  *
- * \page uxListRemove uxListRemove
+ * \page ListRemove ListRemove
  * \ingroup LinkedList
  */
-UBaseType_t uxListRemove( ListItem_t * const pxItemToRemove ) PRIVILEGED_FUNCTION;
+UBaseType_t ListRemove( ListItem_t * const pxItemToRemove ) ;
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     }

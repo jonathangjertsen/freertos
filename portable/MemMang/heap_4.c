@@ -76,7 +76,7 @@
  * heap - probably so it can be placed in a special segment or address. */
     extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #else
-    PRIVILEGED_DATA static uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
+     static uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #endif /* configAPPLICATION_ALLOCATED_HEAP */
 /* Define the linked list structure.  This is used to link free blocks in order
  * of their memory address. */
@@ -97,7 +97,7 @@ typedef struct A_BLOCK_LINK
  */
     extern void vApplicationGetRandomHeapCanary( portPOINTER_SIZE_TYPE * pxHeapCanary );
 /* Canary value for protecting internal heap pointers. */
-    PRIVILEGED_DATA static portPOINTER_SIZE_TYPE xHeapCanary;
+     static portPOINTER_SIZE_TYPE xHeapCanary;
 /* Macro to load/store BlockLink_t pointers to memory. By XORing the
  * pointers with a random canary value, heap overflows will result
  * in randomly unpredictable pointer values which will be caught by
@@ -117,25 +117,25 @@ typedef struct A_BLOCK_LINK
  * the block in front it and/or the block behind it if the memory blocks are
  * adjacent to each other.
  */
-static void InsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert ) PRIVILEGED_FUNCTION;
+static void InsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert ) ;
 /*
  * Called automatically to setup the required heap structures the first time
  * pvPortMalloc() is called.
  */
-static void HeapInit( void ) PRIVILEGED_FUNCTION;
+static void HeapInit( void ) ;
 
 /* The size of the structure placed at the beginning of each allocated memory
  * block must by correctly byte aligned. */
 static const size_t xHeapStructSize = ( sizeof( BlockLink_t ) + ( ( size_t ) ( portBYTE_ALIGNMENT - 1 ) ) ) & ~( ( size_t ) portBYTE_ALIGNMENT_MASK );
 /* Create a couple of list links to mark the start and end of the list. */
-PRIVILEGED_DATA static BlockLink_t xStart;
-PRIVILEGED_DATA static BlockLink_t * pxEnd = NULL;
+ static BlockLink_t xStart;
+ static BlockLink_t * pxEnd = NULL;
 /* Keeps track of the number of calls to allocate and free memory as well as the
  * number of free bytes remaining, but says nothing about fragmentation. */
-PRIVILEGED_DATA static size_t xFreeBytesRemaining = ( size_t ) 0U;
-PRIVILEGED_DATA static size_t xMinimumEverFreeBytesRemaining = ( size_t ) 0U;
-PRIVILEGED_DATA static size_t xNumberOfSuccessfulAllocations = ( size_t ) 0U;
-PRIVILEGED_DATA static size_t xNumberOfSuccessfulFrees = ( size_t ) 0U;
+ static size_t xFreeBytesRemaining = ( size_t ) 0U;
+ static size_t xMinimumEverFreeBytesRemaining = ( size_t ) 0U;
+ static size_t xNumberOfSuccessfulAllocations = ( size_t ) 0U;
+ static size_t xNumberOfSuccessfulFrees = ( size_t ) 0U;
 
 void * pvPortMalloc( size_t xWantedSize )
 {
@@ -252,7 +252,7 @@ void * pvPortMalloc( size_t xWantedSize )
         /* Prevent compiler warnings when trace macros are not used. */
         ( void ) xAllocatedBlockSize;
     }
-    ( void ) xTaskResumeAll();
+    ( void ) TaskResumeAll();
     #if ( configUSE_MALLOC_FAILED_HOOK == 1 )
     {
         if( pvReturn == NULL )
@@ -304,7 +304,7 @@ void vPortFree( void * pv )
                     InsertBlockIntoFreeList( ( ( BlockLink_t * ) pxLink ) );
                     xNumberOfSuccessfulFrees++;
                 }
-                ( void ) xTaskResumeAll();
+                ( void ) TaskResumeAll();
             }
             
         }
@@ -341,7 +341,7 @@ void * pvPortCalloc( size_t xNum,
     return pv;
 }
 
-static void HeapInit( void ) /* PRIVILEGED_FUNCTION */
+static void HeapInit( void ) /*  */
 {
     BlockLink_t * pxFirstFreeBlock;
     portPOINTER_SIZE_TYPE uxStartAddress, uxEndAddress;
@@ -381,7 +381,7 @@ static void HeapInit( void ) /* PRIVILEGED_FUNCTION */
     xFreeBytesRemaining = pxFirstFreeBlock->xBlockSize;
 }
 
-static void InsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert ) /* PRIVILEGED_FUNCTION */
+static void InsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert ) /*  */
 {
     BlockLink_t * pxIterator;
     uint8_t * puc;
@@ -463,18 +463,18 @@ void vPortGetHeapStats( HeapStats_t * pxHeapStats )
             }
         }
     }
-    ( void ) xTaskResumeAll();
+    ( void ) TaskResumeAll();
     pxHeapStats->xSizeOfLargestFreeBlockInBytes = xMaxSize;
     pxHeapStats->xSizeOfSmallestFreeBlockInBytes = xMinSize;
     pxHeapStats->xNumberOfFreeBlocks = xBlocks;
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     {
         pxHeapStats->xAvailableHeapSpaceInBytes = xFreeBytesRemaining;
         pxHeapStats->xNumberOfSuccessfulAllocations = xNumberOfSuccessfulAllocations;
         pxHeapStats->xNumberOfSuccessfulFrees = xNumberOfSuccessfulFrees;
         pxHeapStats->xMinimumEverFreeBytesRemaining = xMinimumEverFreeBytesRemaining;
     }
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
 }
 
 /*

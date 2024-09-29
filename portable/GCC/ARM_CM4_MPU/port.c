@@ -133,13 +133,13 @@ typedef void ( * portISR_t )( void );
 /*
  * Configure a number of standard MPU regions that are used by all tasks.
  */
-static void SetupMPU( void ) PRIVILEGED_FUNCTION;
+static void SetupMPU( void ) ;
 /*
  * Return the smallest MPU region size that a given number of bytes will fit
  * into.  The region size is returned as the value that should be programmed
  * into the region attribute register for that region.
  */
-static uint32_t GetMPURegionSizeSetting( uint32_t ulActualSizeInBytes ) PRIVILEGED_FUNCTION;
+static uint32_t GetMPURegionSizeSetting( uint32_t ulActualSizeInBytes ) ;
 /*
  * Setup the timer to generate the tick interrupts.  The implementation in this
  * file is weak to allow application writers to change the timer used to
@@ -149,18 +149,18 @@ void vPortSetupTimerInterrupt( void );
 /*
  * Standard FreeRTOS exception handlers.
  */
-void xPortPendSVHandler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
-void xPortSysTickHandler( void ) PRIVILEGED_FUNCTION;
-void vPortSVCHandler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+void xPortPendSVHandler( void ) __attribute__( ( naked ) ) ;
+void xPortSysTickHandler( void ) ;
+void vPortSVCHandler( void ) __attribute__( ( naked ) ) ;
 /*
  * Starts the scheduler by restoring the context of the first task to run.
  */
-static void RestoreContextOfFirstTask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+static void RestoreContextOfFirstTask( void ) __attribute__( ( naked ) ) ;
 /*
  * C portion of the SVC handler.  The SVC handler is split between an asm entry
  * and a C wrapper for simplicity of coding and maintenance.
  */
-void vSVCHandler_C( uint32_t * pulRegisters ) __attribute__( ( noinline ) ) PRIVILEGED_FUNCTION;
+void vSVCHandler_C( uint32_t * pulRegisters ) __attribute__( ( noinline ) ) ;
 /*
  * Function to enable the VFP.
  */
@@ -190,7 +190,7 @@ void vPortSwitchToUserMode( void );
 #if ( configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS == 1 )
     void vPortEnterCritical( void ) FREERTOS_SYSTEM_CALL;
 #else
-    void vPortEnterCritical( void ) PRIVILEGED_FUNCTION;
+    void vPortEnterCritical( void ) ;
 #endif
 /**
  * @brief Exit from critical section.
@@ -198,7 +198,7 @@ void vPortSwitchToUserMode( void );
 #if ( configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS == 1 )
     void vPortExitCritical( void ) FREERTOS_SYSTEM_CALL;
 #else
-    void vPortExitCritical( void ) PRIVILEGED_FUNCTION;
+    void vPortExitCritical( void ) ;
 #endif
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
 /**
@@ -211,13 +211,13 @@ void vPortSwitchToUserMode( void );
  */
     void vSystemCallEnter( uint32_t * pulTaskStack,
                            uint32_t ulLR,
-                           uint8_t ucSystemCallNumber ) PRIVILEGED_FUNCTION;
+                           uint8_t ucSystemCallNumber ) ;
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
 /**
  * @brief Raise SVC for exiting from a system call.
  */
-    void vRequestSystemCallExit( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+    void vRequestSystemCallExit( void ) __attribute__( ( naked ) ) ;
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
 /**
@@ -228,14 +228,14 @@ void vPortSwitchToUserMode( void );
  * @param ulLR The value of Link Register (EXC_RETURN) in the SVC handler.
  */
     void vSystemCallExit( uint32_t * pulSystemCallStack,
-                          uint32_t ulLR ) PRIVILEGED_FUNCTION;
+                          uint32_t ulLR ) ;
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
 /**
  * @brief Checks whether or not the calling task is privileged.
  *
  * @return true if the calling task is privileged, false otherwise.
  */
-BaseType_t xPortIsTaskPrivileged( void ) PRIVILEGED_FUNCTION;
+BaseType_t xPortIsTaskPrivileged( void ) ;
 
 /* Each task maintains its own interrupt status in the critical nesting
  * variable.  Note this is not saved as part of the task context as context
@@ -245,7 +245,7 @@ static UBaseType_t uxCriticalNesting = 0xaaaaaaaa;
 /*
  * This variable is set to true when the scheduler is started.
  */
-    PRIVILEGED_DATA static BaseType_t xSchedulerRunning = false;
+     static BaseType_t xSchedulerRunning = false;
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
 /*
  * Used by the portASSERT_IF_INTERRUPT_PRIORITY_INVALID() macro to ensure
@@ -309,7 +309,7 @@ StackType_t * pxPortInitialiseStack( StackType_t * pxTopOfStack,
 }
 
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
-    void vPortSVCHandler( void ) /* __attribute__( ( naked ) ) PRIVILEGED_FUNCTION */
+    void vPortSVCHandler( void ) /* __attribute__( ( naked ) )  */
     {
         __asm volatile
         (
@@ -364,7 +364,7 @@ StackType_t * pxPortInitialiseStack( StackType_t * pxTopOfStack,
     }
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
 
-void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
+void vSVCHandler_C( uint32_t * pulParam ) /*  */
 {
     uint8_t ucSVCNumber;
     uint32_t ulPC;
@@ -435,7 +435,7 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
     void vSystemCallEnter( uint32_t * pulTaskStack,
                            uint32_t ulLR,
-                           uint8_t ucSystemCallNumber ) /* PRIVILEGED_FUNCTION */
+                           uint8_t ucSystemCallNumber ) /*  */
     {
         extern TaskHandle_t pxCurrentTCB;
         extern UBaseType_t uxSystemCallImplementations[ NUM_SYSTEM_CALLS ];
@@ -535,7 +535,7 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
 
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
-    void vRequestSystemCallExit( void ) /* __attribute__( ( naked ) ) PRIVILEGED_FUNCTION */
+    void vRequestSystemCallExit( void ) /* __attribute__( ( naked ) )  */
     {
         __asm volatile ( "svc %0 \n" ::"i" ( portSVC_SYSTEM_CALL_EXIT ) : "memory" );
     }
@@ -543,7 +543,7 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
 
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
     void vSystemCallExit( uint32_t * pulSystemCallStack,
-                          uint32_t ulLR ) /* PRIVILEGED_FUNCTION */
+                          uint32_t ulLR ) /*  */
     {
         extern TaskHandle_t pxCurrentTCB;
         xMPU_SETTINGS * pxMpuSettings;
@@ -552,12 +552,12 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
         #if defined( __ARMCC_VERSION )
             /* Declaration when these variable are defined in code instead of being
              * exported from linker scripts. */
-            extern uint32_t * __privileged_functions_start__;
-            extern uint32_t * __privileged_functions_end__;
+            extern uint32_t * __s_start__;
+            extern uint32_t * __s_end__;
         #else
             /* Declaration when these variable are exported from linker scripts. */
-            extern uint32_t __privileged_functions_start__[];
-            extern uint32_t __privileged_functions_end__[];
+            extern uint32_t __s_start__[];
+            extern uint32_t __s_end__[];
         #endif /* #if defined( __ARMCC_VERSION ) */
         ulSystemCallLocation = pulSystemCallStack[ portOFFSET_TO_PC ];
         pxMpuSettings = xTaskGetMPUSettings( pxCurrentTCB );
@@ -570,8 +570,8 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
          *    application is not attempting to exit without entering a system
          *    call.
          */
-        if( ( ulSystemCallLocation >= ( uint32_t ) __privileged_functions_start__ ) &&
-            ( ulSystemCallLocation <= ( uint32_t ) __privileged_functions_end__ ) &&
+        if( ( ulSystemCallLocation >= ( uint32_t ) __s_start__ ) &&
+            ( ulSystemCallLocation <= ( uint32_t ) __s_end__ ) &&
             ( pxMpuSettings->xSystemCallStackInfo.pulTaskStack != NULL ) )
         {
             pulTaskStack = pxMpuSettings->xSystemCallStackInfo.pulTaskStack;
@@ -628,7 +628,7 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
     }
 #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
 
-BaseType_t xPortIsTaskPrivileged( void ) /* PRIVILEGED_FUNCTION */
+BaseType_t xPortIsTaskPrivileged( void ) /*  */
 {
     BaseType_t xTaskIsPrivileged = false;
     const xMPU_SETTINGS * xTaskMpuSettings = xTaskGetMPUSettings( NULL ); /* Calling task's MPU settings. */
@@ -1075,20 +1075,20 @@ static void SetupMPU( void )
     #if defined( __ARMCC_VERSION )
         /* Declaration when these variable are defined in code instead of being
          * exported from linker scripts. */
-        extern uint32_t * __privileged_functions_start__;
-        extern uint32_t * __privileged_functions_end__;
+        extern uint32_t * __s_start__;
+        extern uint32_t * __s_end__;
         extern uint32_t * __FLASH_segment_start__;
         extern uint32_t * __FLASH_segment_end__;
-        extern uint32_t * __privileged_data_start__;
-        extern uint32_t * __privileged_data_end__;
+        extern uint32_t * ___start__;
+        extern uint32_t * ___end__;
     #else
         /* Declaration when these variable are exported from linker scripts. */
-        extern uint32_t __privileged_functions_start__[];
-        extern uint32_t __privileged_functions_end__[];
+        extern uint32_t __s_start__[];
+        extern uint32_t __s_end__[];
         extern uint32_t __FLASH_segment_start__[];
         extern uint32_t __FLASH_segment_end__[];
-        extern uint32_t __privileged_data_start__[];
-        extern uint32_t __privileged_data_end__[];
+        extern uint32_t ___start__[];
+        extern uint32_t ___end__[];
     #endif /* if defined( __ARMCC_VERSION ) */
     /* The only permitted number of regions are 8 or 16. */
     configASSERT( ( configTOTAL_MPU_REGIONS == 8 ) || ( configTOTAL_MPU_REGIONS == 16 ) );
@@ -1107,22 +1107,22 @@ static void SetupMPU( void )
                                        ( portMPU_REGION_ENABLE );
         /* Setup the privileged flash for privileged only access.  This is where
          * the kernel code is placed. */
-        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __privileged_functions_start__ ) | /* Base address. */
+        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __s_start__ ) | /* Base address. */
                                           ( portMPU_REGION_VALID ) |
                                           ( portPRIVILEGED_FLASH_REGION );
         portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_PRIVILEGED_READ_ONLY ) |
                                        ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-                                       ( GetMPURegionSizeSetting( ( uint32_t ) __privileged_functions_end__ - ( uint32_t ) __privileged_functions_start__ ) ) |
+                                       ( GetMPURegionSizeSetting( ( uint32_t ) __s_end__ - ( uint32_t ) __s_start__ ) ) |
                                        ( portMPU_REGION_ENABLE );
         /* Setup the privileged data RAM region.  This is where the kernel data
          * is placed. */
-        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __privileged_data_start__ ) | /* Base address. */
+        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) ___start__ ) | /* Base address. */
                                           ( portMPU_REGION_VALID ) |
                                           ( portPRIVILEGED_RAM_REGION );
         portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_PRIVILEGED_READ_WRITE ) |
                                        ( portMPU_REGION_EXECUTE_NEVER ) |
                                        ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-                                       GetMPURegionSizeSetting( ( uint32_t ) __privileged_data_end__ - ( uint32_t ) __privileged_data_start__ ) |
+                                       GetMPURegionSizeSetting( ( uint32_t ) ___end__ - ( uint32_t ) ___start__ ) |
                                        ( portMPU_REGION_ENABLE );
         /* By default allow everything to access the general peripherals.  The
          * system peripherals and registers are protected. */
@@ -1206,14 +1206,14 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
          * exported from linker scripts. */
         extern uint32_t * __SRAM_segment_start__;
         extern uint32_t * __SRAM_segment_end__;
-        extern uint32_t * __privileged_data_start__;
-        extern uint32_t * __privileged_data_end__;
+        extern uint32_t * ___start__;
+        extern uint32_t * ___end__;
     #else
         /* Declaration when these variable are exported from linker scripts. */
         extern uint32_t __SRAM_segment_start__[];
         extern uint32_t __SRAM_segment_end__[];
-        extern uint32_t __privileged_data_start__[];
-        extern uint32_t __privileged_data_end__[];
+        extern uint32_t ___start__[];
+        extern uint32_t ___end__[];
     #endif /* if defined( __ARMCC_VERSION ) */
     int32_t lIndex;
     uint32_t ul;
@@ -1315,7 +1315,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
     BaseType_t xPortIsAuthorizedToAccessBuffer( const void * pvBuffer,
                                                 uint32_t ulBufferLength,
-                                                uint32_t ulAccessRequested ) /* PRIVILEGED_FUNCTION */
+                                                uint32_t ulAccessRequested ) /*  */
     {
         uint32_t i, ulBufferStartAddress, ulBufferEndAddress;
         BaseType_t xAccessGranted = false;
@@ -1414,7 +1414,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
 
 #if ( ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) )
     void vPortGrantAccessToKernelObject( TaskHandle_t xInternalTaskHandle,
-                                         int32_t lInternalIndexOfKernelObject ) /* PRIVILEGED_FUNCTION */
+                                         int32_t lInternalIndexOfKernelObject ) /*  */
     {
         uint32_t ulAccessControlListEntryIndex, ulAccessControlListEntryBit;
         xMPU_SETTINGS * xTaskMpuSettings;
@@ -1427,7 +1427,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
 
 #if ( ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) )
     void vPortRevokeAccessToKernelObject( TaskHandle_t xInternalTaskHandle,
-                                          int32_t lInternalIndexOfKernelObject ) /* PRIVILEGED_FUNCTION */
+                                          int32_t lInternalIndexOfKernelObject ) /*  */
     {
         uint32_t ulAccessControlListEntryIndex, ulAccessControlListEntryBit;
         xMPU_SETTINGS * xTaskMpuSettings;
@@ -1440,7 +1440,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
 
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
     #if ( configENABLE_ACCESS_CONTROL_LIST == 1 )
-        BaseType_t xPortIsAuthorizedToAccessKernelObject( int32_t lInternalIndexOfKernelObject ) /* PRIVILEGED_FUNCTION */
+        BaseType_t xPortIsAuthorizedToAccessKernelObject( int32_t lInternalIndexOfKernelObject ) /*  */
         {
             uint32_t ulAccessControlListEntryIndex, ulAccessControlListEntryBit;
             BaseType_t xAccessGranted = false;
@@ -1473,7 +1473,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
             return xAccessGranted;
         }
     #else /* #if ( configENABLE_ACCESS_CONTROL_LIST == 1 ) */
-        BaseType_t xPortIsAuthorizedToAccessKernelObject( int32_t lInternalIndexOfKernelObject ) /* PRIVILEGED_FUNCTION */
+        BaseType_t xPortIsAuthorizedToAccessKernelObject( int32_t lInternalIndexOfKernelObject ) /*  */
         {
             ( void ) lInternalIndexOfKernelObject;
             /* If Access Control List feature is not used, all the tasks have

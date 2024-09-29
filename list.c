@@ -166,7 +166,7 @@ void ListInsert( List_t * const List,
     ( List->uxNumberOfItems ) = ( UBaseType_t ) ( List->uxNumberOfItems + 1U );
 }
 
-UBaseType_t uxListRemove( ListItem_t * const ItemToRemove )
+UBaseType_t ListRemove( ListItem_t * const ItemToRemove )
 {
     /* The list item knows which list it is in.  Obtain the list from the list
      * item. */

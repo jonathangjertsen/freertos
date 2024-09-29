@@ -38,18 +38,18 @@
 #if ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_16_BITS )
     #define eventCLEAR_EVENTS_ON_EXIT_BIT    ( ( uint16_t ) 0x0100U )
     #define eventUNBLOCKED_DUE_TO_BIT_SET    ( ( uint16_t ) 0x0200U )
-    #define eventWAIT_FOR_ALL_BITS           ( ( uint16_t ) 0x0400U )
-    #define eventEVENT_BITS_CONTROL_BYTES    ( ( uint16_t ) 0xff00U )
+    #define WAIT_FOR_ALL_BITS           ( ( uint16_t ) 0x0400U )
+    #define EVENT_BITS_CONTROL_BYTES    ( ( uint16_t ) 0xff00U )
 #elif ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_32_BITS )
     #define eventCLEAR_EVENTS_ON_EXIT_BIT    ( ( uint32_t ) 0x01000000U )
     #define eventUNBLOCKED_DUE_TO_BIT_SET    ( ( uint32_t ) 0x02000000U )
-    #define eventWAIT_FOR_ALL_BITS           ( ( uint32_t ) 0x04000000U )
-    #define eventEVENT_BITS_CONTROL_BYTES    ( ( uint32_t ) 0xff000000U )
+    #define WAIT_FOR_ALL_BITS           ( ( uint32_t ) 0x04000000U )
+    #define EVENT_BITS_CONTROL_BYTES    ( ( uint32_t ) 0xff000000U )
 #elif ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_64_BITS )
     #define eventCLEAR_EVENTS_ON_EXIT_BIT    ( ( uint64_t ) 0x0100000000000000U )
     #define eventUNBLOCKED_DUE_TO_BIT_SET    ( ( uint64_t ) 0x0200000000000000U )
-    #define eventWAIT_FOR_ALL_BITS           ( ( uint64_t ) 0x0400000000000000U )
-    #define eventEVENT_BITS_CONTROL_BYTES    ( ( uint64_t ) 0xff00000000000000U )
+    #define WAIT_FOR_ALL_BITS           ( ( uint64_t ) 0x0400000000000000U )
+    #define EVENT_BITS_CONTROL_BYTES    ( ( uint64_t ) 0xff00000000000000U )
 #endif /* if ( configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_16_BITS ) */
 /* *INDENT-OFF* */
 #ifdef __cplusplus
@@ -159,7 +159,7 @@ typedef TickType_t               EventBits_t;
  * \ingroup EventGroup
  */
 #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
-    EventGroupHandle_t xEventGroupCreate( void ) PRIVILEGED_FUNCTION;
+    EventGroupHandle_t xEventGroupCreate( void ) ;
 #endif
 /**
  * event_groups.h
@@ -215,7 +215,7 @@ typedef TickType_t               EventBits_t;
  * @endcode
  */
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
-    EventGroupHandle_t xEventGroupCreateStatic( StaticEventGroup_t * pxEventGroupBuffer ) PRIVILEGED_FUNCTION;
+    EventGroupHandle_t xEventGroupCreateStatic( StaticEventGroup_t * pxEventGroupBuffer ) ;
 #endif
 /**
  * event_groups.h
@@ -317,7 +317,7 @@ EventBits_t xEventGroupWaitBits( EventGroupHandle_t xEventGroup,
                                  const EventBits_t uxBitsToWaitFor,
                                  const BaseType_t xClearOnExit,
                                  const BaseType_t xWaitForAllBits,
-                                 TickType_t xTicksToWait ) PRIVILEGED_FUNCTION;
+                                 TickType_t xTicksToWait ) ;
 /**
  * event_groups.h
  * @code{c}
@@ -377,7 +377,7 @@ EventBits_t xEventGroupWaitBits( EventGroupHandle_t xEventGroup,
  * \ingroup EventGroup
  */
 EventBits_t xEventGroupClearBits( EventGroupHandle_t xEventGroup,
-                                  const EventBits_t uxBitsToClear ) PRIVILEGED_FUNCTION;
+                                  const EventBits_t uxBitsToClear ) ;
 /**
  * event_groups.h
  * @code{c}
@@ -440,7 +440,7 @@ EventBits_t xEventGroupClearBits( EventGroupHandle_t xEventGroup,
  */
 #if ( configUSE_TRACE_FACILITY == 1 )
     BaseType_t xEventGroupClearBitsFromISR( EventGroupHandle_t xEventGroup,
-                                            const EventBits_t uxBitsToClear ) PRIVILEGED_FUNCTION;
+                                            const EventBits_t uxBitsToClear ) ;
 #else
     #define xEventGroupClearBitsFromISR( xEventGroup, uxBitsToClear ) \
     xTimerPendFunctionCallFromISR( vEventGroupClearBitsCallback, ( void * ) ( xEventGroup ), ( uint32_t ) ( uxBitsToClear ), NULL )
@@ -518,7 +518,7 @@ EventBits_t xEventGroupClearBits( EventGroupHandle_t xEventGroup,
  * \ingroup EventGroup
  */
 EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
-                                const EventBits_t uxBitsToSet ) PRIVILEGED_FUNCTION;
+                                const EventBits_t uxBitsToSet ) ;
 /**
  * event_groups.h
  * @code{c}
@@ -594,7 +594,7 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
 #if ( configUSE_TRACE_FACILITY == 1 )
     BaseType_t xEventGroupSetBitsFromISR( EventGroupHandle_t xEventGroup,
                                           const EventBits_t uxBitsToSet,
-                                          BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
+                                          BaseType_t * pxHigherPriorityTaskWoken ) ;
 #else
     #define xEventGroupSetBitsFromISR( xEventGroup, uxBitsToSet, pxHigherPriorityTaskWoken ) \
     xTimerPendFunctionCallFromISR( vEventGroupSetBitsCallback, ( void * ) ( xEventGroup ), ( uint32_t ) ( uxBitsToSet ), ( pxHigherPriorityTaskWoken ) )
@@ -729,7 +729,7 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
 EventBits_t xEventGroupSync( EventGroupHandle_t xEventGroup,
                              const EventBits_t uxBitsToSet,
                              const EventBits_t uxBitsToWaitFor,
-                             TickType_t xTicksToWait ) PRIVILEGED_FUNCTION;
+                             TickType_t xTicksToWait ) ;
 
 /**
  * event_groups.h
@@ -769,7 +769,7 @@ EventBits_t xEventGroupSync( EventGroupHandle_t xEventGroup,
  * \defgroup xEventGroupGetBitsFromISR xEventGroupGetBitsFromISR
  * \ingroup EventGroup
  */
-EventBits_t xEventGroupGetBitsFromISR( EventGroupHandle_t xEventGroup ) PRIVILEGED_FUNCTION;
+EventBits_t xEventGroupGetBitsFromISR( EventGroupHandle_t xEventGroup ) ;
 /**
  * event_groups.h
  * @code{c}
@@ -785,7 +785,7 @@ EventBits_t xEventGroupGetBitsFromISR( EventGroupHandle_t xEventGroup ) PRIVILEG
  *
  * @param xEventGroup The event group being deleted.
  */
-void vEventGroupDelete( EventGroupHandle_t xEventGroup ) PRIVILEGED_FUNCTION;
+void vEventGroupDelete( EventGroupHandle_t xEventGroup ) ;
 /**
  * event_groups.h
  * @code{c}
@@ -808,18 +808,18 @@ void vEventGroupDelete( EventGroupHandle_t xEventGroup ) PRIVILEGED_FUNCTION;
  */
 #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     BaseType_t xEventGroupGetStaticBuffer( EventGroupHandle_t xEventGroup,
-                                           StaticEventGroup_t ** ppxEventGroupBuffer ) PRIVILEGED_FUNCTION;
+                                           StaticEventGroup_t ** ppxEventGroupBuffer ) ;
 #endif /* configSUPPORT_STATIC_ALLOCATION */
 /* For internal use only. */
 void vEventGroupSetBitsCallback( void * pvEventGroup,
-                                 uint32_t ulBitsToSet ) PRIVILEGED_FUNCTION;
+                                 uint32_t ulBitsToSet ) ;
 void vEventGroupClearBitsCallback( void * pvEventGroup,
-                                   uint32_t ulBitsToClear ) PRIVILEGED_FUNCTION;
+                                   uint32_t ulBitsToClear ) ;
 
 #if ( configUSE_TRACE_FACILITY == 1 )
-    UBaseType_t uxEventGroupGetNumber( void * xEventGroup ) PRIVILEGED_FUNCTION;
+    UBaseType_t uxEventGroupGetNumber( void * xEventGroup ) ;
     void vEventGroupSetNumber( void * xEventGroup,
-                               UBaseType_t uxEventGroupNumber ) PRIVILEGED_FUNCTION;
+                               UBaseType_t uxEventGroupNumber ) ;
 #endif
 /* *INDENT-OFF* */
 #ifdef __cplusplus

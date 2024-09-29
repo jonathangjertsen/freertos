@@ -27,7 +27,7 @@
  */
 /* Standard includes. */
 #include <stdint.h>
-/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE ensures that PRIVILEGED_FUNCTION
+/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE ensures that 
  * is defined correctly and privileged functions are placed in correct sections. */
 #define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 /* Portasm includes. */
@@ -38,7 +38,7 @@
  * header files. */
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 #if ( configENABLE_MPU == 1 )
-    void vRestoreContextOfFirstTask( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
+    void vRestoreContextOfFirstTask( void ) /* __attribute__ (( naked ))  */
     {
         __asm volatile
         (
@@ -126,7 +126,7 @@
         );
     }
 #else /* configENABLE_MPU */
-    void vRestoreContextOfFirstTask( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
+    void vRestoreContextOfFirstTask( void ) /* __attribute__ (( naked ))  */
     {
         __asm volatile
         (
@@ -171,7 +171,7 @@ BaseType_t xIsPrivileged( void ) /* __attribute__ (( naked )) */
     );
 }
 
-void vRaisePrivilege( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
+void vRaisePrivilege( void ) /* __attribute__ (( naked ))  */
 {
     __asm volatile
     (
@@ -201,7 +201,7 @@ void vResetPrivilege( void ) /* __attribute__ (( naked )) */
     );
 }
 
-void vStartFirstTask( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
+void vStartFirstTask( void ) /* __attribute__ (( naked ))  */
 {
     /* Don't reset the MSP stack as is done on CM3/4 devices. The reason is that
      * the Vector Table Offset Register (VTOR) is optional in CM0+ architecture
@@ -220,7 +220,7 @@ void vStartFirstTask( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
     );
 }
 
-uint32_t ulSetInterruptMask( void ) /* __attribute__(( naked )) PRIVILEGED_FUNCTION */
+uint32_t ulSetInterruptMask( void ) /* __attribute__(( naked ))  */
 {
     __asm volatile
     (
@@ -233,7 +233,7 @@ uint32_t ulSetInterruptMask( void ) /* __attribute__(( naked )) PRIVILEGED_FUNCT
     );
 }
 
-void vClearInterruptMask( __attribute__( ( unused ) ) uint32_t ulMask ) /* __attribute__(( naked )) PRIVILEGED_FUNCTION */
+void vClearInterruptMask( __attribute__( ( unused ) ) uint32_t ulMask ) /* __attribute__(( naked ))  */
 {
     __asm volatile
     (
@@ -246,7 +246,7 @@ void vClearInterruptMask( __attribute__( ( unused ) ) uint32_t ulMask ) /* __att
 }
 
 #if ( configENABLE_MPU == 1 )
-    void PendSV_Handler( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
+    void PendSV_Handler( void ) /* __attribute__ (( naked ))  */
     {
         __asm volatile
         (
@@ -362,7 +362,7 @@ void vClearInterruptMask( __attribute__( ( unused ) ) uint32_t ulMask ) /* __att
         );
     }
 #else /* configENABLE_MPU */
-    void PendSV_Handler( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
+    void PendSV_Handler( void ) /* __attribute__ (( naked ))  */
     {
         __asm volatile
         (
@@ -408,7 +408,7 @@ void vClearInterruptMask( __attribute__( ( unused ) ) uint32_t ulMask ) /* __att
 #endif /* configENABLE_MPU */
 
 #if ( ( configENABLE_MPU == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 0 ) )
-    void SVC_Handler( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
+    void SVC_Handler( void ) /* __attribute__ (( naked ))  */
     {
         __asm volatile
         (
@@ -462,7 +462,7 @@ void vClearInterruptMask( __attribute__( ( unused ) ) uint32_t ulMask ) /* __att
         );
     }
 #else /* ( configENABLE_MPU == 1 ) && ( configUSE_MPU_WRAPPERS_V1 == 0 ) */
-    void SVC_Handler( void ) /* __attribute__ (( naked )) PRIVILEGED_FUNCTION */
+    void SVC_Handler( void ) /* __attribute__ (( naked ))  */
     {
         __asm volatile
         (

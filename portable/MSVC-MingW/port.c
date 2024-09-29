@@ -457,7 +457,7 @@ void vPortCloseRunningThread( void * pvTaskToDelete,
     configASSERT( ulErrorCode );
     /* This is called from a critical section, which must be exited before the
      * thread stops. */
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
     /* Record that a yield is pending so that the next tick interrupt switches
      * out this thread regardless of the value of configUSE_PREEMPTION. This is
      * needed when a task deletes itself - the taskYIELD_WITHIN_API within

@@ -69,7 +69,7 @@
                 ( pxStreamBuffer )->xTaskWaitingToSend = NULL;                        \
             }                                                                         \
         }                                                                             \
-        ( void ) xTaskResumeAll();                                                    \
+        ( void ) TaskResumeAll();                                                    \
     } while( 0 )
     #endif /* sbRECEIVE_COMPLETED */
 /* If user has provided a per-instance receive complete callback, then
@@ -96,7 +96,7 @@
     do {                                                                                     \
         UBaseType_t uxSavedInterruptStatus;                                                  \
                                                                                              \
-        uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();                              \
+        uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();                              \
         {                                                                                    \
             if( ( pxStreamBuffer )->xTaskWaitingToSend != NULL )                             \
             {                                                                                \
@@ -108,7 +108,7 @@
                 ( pxStreamBuffer )->xTaskWaitingToSend = NULL;                               \
             }                                                                                \
         }                                                                                    \
-        taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );                                \
+        EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );                                \
     } while( 0 )
     #endif /* sbRECEIVE_COMPLETED_FROM_ISR */
     #if ( configUSE_SB_COMPLETED_CALLBACK == 1 )
@@ -145,7 +145,7 @@
             ( pxStreamBuffer )->xTaskWaitingToReceive = NULL;                       \
         }                                                                           \
     }                                                                               \
-    ( void ) xTaskResumeAll()
+    ( void ) TaskResumeAll()
     #endif /* sbSEND_COMPLETED */
 /* If user has provided a per-instance send completed callback, then
  * invoke the callback else use the send complete macro which is provided by default for all instances.
@@ -171,7 +171,7 @@
     do {                                                                                       \
         UBaseType_t uxSavedInterruptStatus;                                                    \
                                                                                                \
-        uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();                                \
+        uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();                                \
         {                                                                                      \
             if( ( pxStreamBuffer )->xTaskWaitingToReceive != NULL )                            \
             {                                                                                  \
@@ -183,7 +183,7 @@
                 ( pxStreamBuffer )->xTaskWaitingToReceive = NULL;                              \
             }                                                                                  \
         }                                                                                      \
-        taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );                                  \
+        EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );                                  \
     } while( 0 )
     #endif /* sbSEND_COMPLETE_FROM_ISR */
 
@@ -230,7 +230,7 @@ typedef struct StreamBufferDef_t
 /*
  * The number of bytes available to be read from the buffer.
  */
-static size_t BytesInBuffer( const StreamBuffer_t * const pxStreamBuffer ) PRIVILEGED_FUNCTION;
+static size_t BytesInBuffer( const StreamBuffer_t * const pxStreamBuffer ) ;
 /*
  * Add xCount bytes from pucData into the pxStreamBuffer's data storage area.
  * This function does not update the buffer's xHead pointer, so multiple writes
@@ -245,7 +245,7 @@ static size_t BytesInBuffer( const StreamBuffer_t * const pxStreamBuffer ) PRIVI
 static size_t WriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
                                      const uint8_t * pucData,
                                      size_t xCount,
-                                     size_t xHead ) PRIVILEGED_FUNCTION;
+                                     size_t xHead ) ;
 /*
  * If the stream buffer is being used as a message buffer, then reads an entire
  * message out of the buffer.  If the stream buffer is being used as a stream
@@ -256,7 +256,7 @@ static size_t WriteBytesToBuffer( StreamBuffer_t * const pxStreamBuffer,
 static size_t ReadMessageFromBuffer( StreamBuffer_t * pxStreamBuffer,
                                         void * pvRxData,
                                         size_t xBufferLengthBytes,
-                                        size_t xBytesAvailable ) PRIVILEGED_FUNCTION;
+                                        size_t xBytesAvailable ) ;
 /*
  * If the stream buffer is being used as a message buffer, then writes an entire
  * message to the buffer.  If the stream buffer is being used as a stream
@@ -268,7 +268,7 @@ static size_t WriteMessageToBuffer( StreamBuffer_t * const pxStreamBuffer,
                                        const void * pvTxData,
                                        size_t xDataLengthBytes,
                                        size_t xSpace,
-                                       size_t xRequiredSpace ) PRIVILEGED_FUNCTION;
+                                       size_t xRequiredSpace ) ;
 /*
  * Copies xCount bytes from the pxStreamBuffer's data storage area to pucData.
  * This function does not update the buffer's xTail pointer, so multiple reads
@@ -284,7 +284,7 @@ static size_t WriteMessageToBuffer( StreamBuffer_t * const pxStreamBuffer,
 static size_t ReadBytesFromBuffer( StreamBuffer_t * pxStreamBuffer,
                                       uint8_t * pucData,
                                       size_t xCount,
-                                      size_t xTail ) PRIVILEGED_FUNCTION;
+                                      size_t xTail ) ;
 /*
  * Called by both pxStreamBufferCreate() and pxStreamBufferCreateStatic() to
  * initialise the members of the newly created stream buffer structure.
@@ -295,7 +295,7 @@ static void InitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
                                           size_t xTriggerLevelBytes,
                                           uint8_t ucFlags,
                                           StreamBufferCallbackFunction_t pxSendCompletedCallback,
-                                          StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) PRIVILEGED_FUNCTION;
+                                          StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) ;
 
     #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
     StreamBufferHandle_t xStreamBufferGenericCreate( size_t xBufferSizeBytes,
@@ -513,7 +513,7 @@ BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer )
     StreamBufferCallbackFunction_t pxSendCallback = NULL, pxReceiveCallback = NULL;
     configASSERT( pxStreamBuffer );
     /* Can only reset a message buffer if there are no tasks blocked on it. */
-    taskENTER_CRITICAL();
+    ENTER_CRITICAL();
     {
         if( ( pxStreamBuffer->xTaskWaitingToReceive == NULL ) && ( pxStreamBuffer->xTaskWaitingToSend == NULL ) )
         {
@@ -533,7 +533,7 @@ BaseType_t xStreamBufferReset( StreamBufferHandle_t xStreamBuffer )
             xReturn = true;
         }
     }
-    taskEXIT_CRITICAL();
+    EXIT_CRITICAL();
     return xReturn;
 }
 
@@ -545,7 +545,7 @@ BaseType_t xStreamBufferResetFromISR( StreamBufferHandle_t xStreamBuffer )
     UBaseType_t uxSavedInterruptStatus;
     configASSERT( pxStreamBuffer );
     /* Can only reset a message buffer if there are no tasks blocked on it. */
-    uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+    uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
     {
         if( ( pxStreamBuffer->xTaskWaitingToReceive == NULL ) && ( pxStreamBuffer->xTaskWaitingToSend == NULL ) )
         {
@@ -565,7 +565,7 @@ BaseType_t xStreamBufferResetFromISR( StreamBufferHandle_t xStreamBuffer )
             xReturn = true;
         }
     }
-    taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
+    EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
     return xReturn;
 }
 
@@ -676,7 +676,7 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
         {
             /* Wait until the required number of bytes are free in the message
              * buffer. */
-            taskENTER_CRITICAL();
+            ENTER_CRITICAL();
             {
                 xSpace = xStreamBufferSpacesAvailable( pxStreamBuffer );
                 if( xSpace < xRequiredSpace )
@@ -689,11 +689,11 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
                 }
                 else
                 {
-                    taskEXIT_CRITICAL();
+                    EXIT_CRITICAL();
                     break;
                 }
             }
-            taskEXIT_CRITICAL();
+            EXIT_CRITICAL();
             ( void ) xTaskNotifyWaitIndexed( pxStreamBuffer->uxNotificationIndex, ( uint32_t ) 0, ( uint32_t ) 0, NULL, xTicksToWait );
             pxStreamBuffer->xTaskWaitingToSend = NULL;
         } while( xTaskCheckForTimeOut( &xTimeOut, &xTicksToWait ) == false );
@@ -821,7 +821,7 @@ size_t xStreamBufferReceive( StreamBufferHandle_t xStreamBuffer,
     {
         /* Checking if there is data and clearing the notification state must be
          * performed atomically. */
-        taskENTER_CRITICAL();
+        ENTER_CRITICAL();
         {
             xBytesAvailable = BytesInBuffer( pxStreamBuffer );
             /* If this function was invoked by a message buffer read then
@@ -841,7 +841,7 @@ size_t xStreamBufferReceive( StreamBufferHandle_t xStreamBuffer,
             }
             
         }
-        taskEXIT_CRITICAL();
+        EXIT_CRITICAL();
         if( xBytesAvailable <= xBytesToStoreMessageLength )
         {
             /* Wait for data to be available. */
@@ -1048,7 +1048,7 @@ BaseType_t xStreamBufferSendCompletedFromISR( StreamBufferHandle_t xStreamBuffer
     configASSERT( pxStreamBuffer );
 
 
-    uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+    uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
     {
         if( ( pxStreamBuffer )->xTaskWaitingToReceive != NULL )
         {
@@ -1065,7 +1065,7 @@ BaseType_t xStreamBufferSendCompletedFromISR( StreamBufferHandle_t xStreamBuffer
             xReturn = false;
         }
     }
-    taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
+    EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
     return xReturn;
 }
 
@@ -1078,7 +1078,7 @@ BaseType_t xStreamBufferReceiveCompletedFromISR( StreamBufferHandle_t xStreamBuf
     configASSERT( pxStreamBuffer );
 
 
-    uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+    uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
     {
         if( ( pxStreamBuffer )->xTaskWaitingToSend != NULL )
         {
@@ -1095,7 +1095,7 @@ BaseType_t xStreamBufferReceiveCompletedFromISR( StreamBufferHandle_t xStreamBuf
             xReturn = false;
         }
     }
-    taskEXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
+    EXIT_CRITICAL_FROM_ISR( uxSavedInterruptStatus );
     return xReturn;
 }
 

@@ -75,7 +75,7 @@
  * heap - probably so it can be placed in a special segment or address. */
     extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #else
-    PRIVILEGED_DATA static uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
+     static uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #endif /* configAPPLICATION_ALLOCATED_HEAP */
 
 /* Define the linked list structure.  This is used to link free blocks in order
@@ -89,17 +89,17 @@ typedef struct A_BLOCK_LINK
 static const size_t xHeapStructSize = ( ( sizeof( BlockLink_t ) + ( size_t ) ( portBYTE_ALIGNMENT - 1 ) ) & ~( ( size_t ) portBYTE_ALIGNMENT_MASK ) );
 #define heapMINIMUM_BLOCK_SIZE    ( ( size_t ) ( xHeapStructSize * 2 ) )
 /* Create a couple of list links to mark the start and end of the list. */
-PRIVILEGED_DATA static BlockLink_t xStart, xEnd;
+ static BlockLink_t xStart, xEnd;
 /* Keeps track of the number of free bytes remaining, but says nothing about
  * fragmentation. */
-PRIVILEGED_DATA static size_t xFreeBytesRemaining = configADJUSTED_HEAP_SIZE;
+ static size_t xFreeBytesRemaining = configADJUSTED_HEAP_SIZE;
 /* Indicates whether the heap has been initialised or not. */
-PRIVILEGED_DATA static BaseType_t xHeapHasBeenInitialised = false;
+ static BaseType_t xHeapHasBeenInitialised = false;
 
 /*
  * Initialises the heap structures before their first use.
  */
-static void HeapInit( void ) PRIVILEGED_FUNCTION;
+static void HeapInit( void ) ;
 
 /* STATIC FUNCTIONS ARE DEFINED AS MACROS TO MINIMIZE THE FUNCTION CALL DEPTH. */
 /*
@@ -228,7 +228,7 @@ void * pvPortMalloc( size_t xWantedSize )
         /* Prevent compiler warnings when trace macros are not used. */
         ( void ) xAllocatedBlockSize;
     }
-    ( void ) xTaskResumeAll();
+    ( void ) TaskResumeAll();
     #if ( configUSE_MALLOC_FAILED_HOOK == 1 )
     {
         if( pvReturn == NULL )
@@ -273,7 +273,7 @@ void vPortFree( void * pv )
                     xFreeBytesRemaining += pxLink->xBlockSize;
                     traceFREE( pv, pxLink->xBlockSize );
                 }
-                ( void ) xTaskResumeAll();
+                ( void ) TaskResumeAll();
             }
         }
     }
@@ -304,7 +304,7 @@ void * pvPortCalloc( size_t xNum,
     return pv;
 }
 
-static void HeapInit( void ) /* PRIVILEGED_FUNCTION */
+static void HeapInit( void ) /*  */
 {
     BlockLink_t * pxFirstFreeBlock;
     uint8_t * pucAlignedHeap;

@@ -35,7 +35,7 @@
  * @brief Restore the context of the first task so that the first task starts
  * executing.
  */
-void vRestoreContextOfFirstTask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+void vRestoreContextOfFirstTask( void ) __attribute__( ( naked ) ) ;
 /**
  * @brief Checks whether or not the processor is privileged.
  *
@@ -53,7 +53,7 @@ BaseType_t xIsPrivileged( void ) __attribute__( ( naked ) );
  *  Bit[0] = 0 --> The processor is running privileged
  *  Bit[0] = 1 --> The processor is running unprivileged.
  */
-void vRaisePrivilege( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+void vRaisePrivilege( void ) __attribute__( ( naked ) ) ;
 /**
  * @brief Lowers the privilege level by setting the bit 0 of the CONTROL
  * register.
@@ -66,21 +66,21 @@ void vResetPrivilege( void ) __attribute__( ( naked ) );
 /**
  * @brief Starts the first task.
  */
-void vStartFirstTask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+void vStartFirstTask( void ) __attribute__( ( naked ) ) ;
 /**
  * @brief Disables interrupts.
  */
-uint32_t ulSetInterruptMask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+uint32_t ulSetInterruptMask( void ) __attribute__( ( naked ) ) ;
 /**
  * @brief Enables interrupts.
  */
-void vClearInterruptMask( uint32_t ulMask ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+void vClearInterruptMask( uint32_t ulMask ) __attribute__( ( naked ) ) ;
 /**
  * @brief PendSV Exception handler.
  */
-void PendSV_Handler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+void PendSV_Handler( void ) __attribute__( ( naked ) ) ;
 /**
  * @brief SVC Handler.
  */
-void SVC_Handler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+void SVC_Handler( void ) __attribute__( ( naked ) ) ;
 #endif /* __PORT_ASM_H__ */

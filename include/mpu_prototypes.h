@@ -133,44 +133,44 @@ BaseType_t MPU_xTaskCreate( TaskFunction_t pxTaskCode,
                             const configSTACK_DEPTH_TYPE uxStackDepth,
                             void * const pvParameters,
                             UBaseType_t uxPriority,
-                            TaskHandle_t * const pxCreatedTask ) PRIVILEGED_FUNCTION;
+                            TaskHandle_t * const pxCreatedTask ) ;
 TaskHandle_t MPU_xTaskCreateStatic( TaskFunction_t pxTaskCode,
                                     const char * const pcName,
                                     const configSTACK_DEPTH_TYPE uxStackDepth,
                                     void * const pvParameters,
                                     UBaseType_t uxPriority,
                                     StackType_t * const puxStackBuffer,
-                                    StaticTask_t * const pxTaskBuffer ) PRIVILEGED_FUNCTION;
-void MPU_vTaskDelete( TaskHandle_t xTaskToDelete ) PRIVILEGED_FUNCTION;
+                                    StaticTask_t * const pxTaskBuffer ) ;
+void MPU_vTaskDelete( TaskHandle_t xTaskToDelete ) ;
 void MPU_vTaskPrioritySet( TaskHandle_t xTask,
-                           UBaseType_t uxNewPriority ) PRIVILEGED_FUNCTION;
-TaskHandle_t MPU_xTaskGetHandle( const char * pcNameToQuery ) PRIVILEGED_FUNCTION;
+                           UBaseType_t uxNewPriority ) ;
+TaskHandle_t MPU_xTaskGetHandle( const char * pcNameToQuery ) ;
 BaseType_t MPU_xTaskCallApplicationTaskHook( TaskHandle_t xTask,
-                                             void * pvParameter ) PRIVILEGED_FUNCTION;
-char * MPU_pcTaskGetName( TaskHandle_t xTaskToQuery ) PRIVILEGED_FUNCTION;
+                                             void * pvParameter ) ;
+char * MPU_pcTaskGetName( TaskHandle_t xTaskToQuery ) ;
 BaseType_t MPU_xTaskCreateRestricted( const TaskParameters_t * const pxTaskDefinition,
-                                      TaskHandle_t * pxCreatedTask ) PRIVILEGED_FUNCTION;
+                                      TaskHandle_t * pxCreatedTask ) ;
 BaseType_t MPU_xTaskCreateRestrictedStatic( const TaskParameters_t * const pxTaskDefinition,
-                                            TaskHandle_t * pxCreatedTask ) PRIVILEGED_FUNCTION;
+                                            TaskHandle_t * pxCreatedTask ) ;
 void MPU_vTaskAllocateMPURegions( TaskHandle_t xTaskToModify,
-                                  const MemoryRegion_t * const xRegions ) PRIVILEGED_FUNCTION;
+                                  const MemoryRegion_t * const xRegions ) ;
 BaseType_t MPU_xTaskGetStaticBuffers( TaskHandle_t xTask,
                                       StackType_t ** ppuxStackBuffer,
-                                      StaticTask_t ** ppxTaskBuffer ) PRIVILEGED_FUNCTION;
-UBaseType_t MPU_uxTaskPriorityGetFromISR( const TaskHandle_t xTask ) PRIVILEGED_FUNCTION;
-UBaseType_t MPU_uxTaskBasePriorityGet( const TaskHandle_t xTask ) PRIVILEGED_FUNCTION;
-UBaseType_t MPU_uxTaskBasePriorityGetFromISR( const TaskHandle_t xTask ) PRIVILEGED_FUNCTION;
-BaseType_t MPU_xTaskResumeFromISR( TaskHandle_t xTaskToResume ) PRIVILEGED_FUNCTION;
-TaskHookFunction_t MPU_xTaskGetApplicationTaskTagFromISR( TaskHandle_t xTask ) PRIVILEGED_FUNCTION;
+                                      StaticTask_t ** ppxTaskBuffer ) ;
+UBaseType_t MPU_uxTaskPriorityGetFromISR( const TaskHandle_t xTask ) ;
+UBaseType_t MPU_uxTaskBasePriorityGet( const TaskHandle_t xTask ) ;
+UBaseType_t MPU_uxTaskBasePriorityGetFromISR( const TaskHandle_t xTask ) ;
+BaseType_t MPU_xTaskResumeFromISR( TaskHandle_t xTaskToResume ) ;
+TaskHookFunction_t MPU_xTaskGetApplicationTaskTagFromISR( TaskHandle_t xTask ) ;
 BaseType_t MPU_xTaskGenericNotifyFromISR( TaskHandle_t xTaskToNotify,
                                           UBaseType_t uxIndexToNotify,
                                           uint32_t ulValue,
                                           eNotifyAction eAction,
                                           uint32_t * pulPreviousNotificationValue,
-                                          BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
+                                          BaseType_t * pxHigherPriorityTaskWoken ) ;
 void MPU_vTaskGenericNotifyGiveFromISR( TaskHandle_t xTaskToNotify,
                                         UBaseType_t uxIndexToNotify,
-                                        BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
+                                        BaseType_t * pxHigherPriorityTaskWoken ) ;
 /* MPU versions of queue.h API functions. */
 BaseType_t MPU_xQueueGenericSend( QueueHandle_t xQueue,
                                   const void * const pvItemToQueue,
@@ -205,47 +205,47 @@ uint8_t MPU_ucQueueGetQueueType( QueueHandle_t xQueue ) FREERTOS_SYSTEM_CALL;
 /* Privileged only wrappers for Queue APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
-void MPU_vQueueDelete( QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
-QueueHandle_t MPU_xQueueCreateMutex( const uint8_t ucQueueType ) PRIVILEGED_FUNCTION;
+void MPU_vQueueDelete( QueueHandle_t xQueue ) ;
+QueueHandle_t MPU_xQueueCreateMutex( const uint8_t ucQueueType ) ;
 QueueHandle_t MPU_xQueueCreateMutexStatic( const uint8_t ucQueueType,
-                                           StaticQueue_t * pxStaticQueue ) PRIVILEGED_FUNCTION;
+                                           StaticQueue_t * pxStaticQueue ) ;
 QueueHandle_t MPU_xQueueCreateCountingSemaphore( const UBaseType_t uxMaxCount,
-                                                 const UBaseType_t uxInitialCount ) PRIVILEGED_FUNCTION;
+                                                 const UBaseType_t uxInitialCount ) ;
 QueueHandle_t MPU_xQueueCreateCountingSemaphoreStatic( const UBaseType_t uxMaxCount,
                                                        const UBaseType_t uxInitialCount,
-                                                       StaticQueue_t * pxStaticQueue ) PRIVILEGED_FUNCTION;
+                                                       StaticQueue_t * pxStaticQueue ) ;
 QueueHandle_t MPU_xQueueGenericCreate( const UBaseType_t uxQueueLength,
                                        const UBaseType_t uxItemSize,
-                                       const uint8_t ucQueueType ) PRIVILEGED_FUNCTION;
+                                       const uint8_t ucQueueType ) ;
 QueueHandle_t MPU_xQueueGenericCreateStatic( const UBaseType_t uxQueueLength,
                                              const UBaseType_t uxItemSize,
                                              uint8_t * pucQueueStorage,
                                              StaticQueue_t * pxStaticQueue,
-                                             const uint8_t ucQueueType ) PRIVILEGED_FUNCTION;
-QueueSetHandle_t MPU_xQueueCreateSet( const UBaseType_t uxEventQueueLength ) PRIVILEGED_FUNCTION;
+                                             const uint8_t ucQueueType ) ;
+QueueSetHandle_t MPU_xQueueCreateSet( const UBaseType_t uxEventQueueLength ) ;
 BaseType_t MPU_xQueueRemoveFromSet( QueueSetMemberHandle_t xQueueOrSemaphore,
-                                    QueueSetHandle_t xQueueSet ) PRIVILEGED_FUNCTION;
+                                    QueueSetHandle_t xQueueSet ) ;
 BaseType_t MPU_xQueueGenericReset( QueueHandle_t xQueue,
-                                   BaseType_t xNewQueue ) PRIVILEGED_FUNCTION;
+                                   BaseType_t xNewQueue ) ;
 BaseType_t MPU_xQueueGenericGetStaticBuffers( QueueHandle_t xQueue,
                                               uint8_t ** ppucQueueStorage,
-                                              StaticQueue_t ** ppxStaticQueue ) PRIVILEGED_FUNCTION;
+                                              StaticQueue_t ** ppxStaticQueue ) ;
 BaseType_t MPU_xQueueGenericSendFromISR( QueueHandle_t xQueue,
                                          const void * const pvItemToQueue,
                                          BaseType_t * const pxHigherPriorityTaskWoken,
-                                         const BaseType_t xCopyPosition ) PRIVILEGED_FUNCTION;
+                                         const BaseType_t xCopyPosition ) ;
 BaseType_t MPU_xQueueGiveFromISR( QueueHandle_t xQueue,
-                                  BaseType_t * const pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
+                                  BaseType_t * const pxHigherPriorityTaskWoken ) ;
 BaseType_t MPU_xQueuePeekFromISR( QueueHandle_t xQueue,
-                                  void * const pvBuffer ) PRIVILEGED_FUNCTION;
+                                  void * const pvBuffer ) ;
 BaseType_t MPU_xQueueReceiveFromISR( QueueHandle_t xQueue,
                                      void * const pvBuffer,
-                                     BaseType_t * const pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
-BaseType_t MPU_xQueueIsQueueEmptyFromISR( const QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
-BaseType_t MPU_xQueueIsQueueFullFromISR( const QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
-UBaseType_t MPU_uxQueueMessagesWaitingFromISR( const QueueHandle_t xQueue ) PRIVILEGED_FUNCTION;
-TaskHandle_t MPU_xQueueGetMutexHolderFromISR( QueueHandle_t xSemaphore ) PRIVILEGED_FUNCTION;
-QueueSetMemberHandle_t MPU_xQueueSelectFromSetFromISR( QueueSetHandle_t xQueueSet ) PRIVILEGED_FUNCTION;
+                                     BaseType_t * const pxHigherPriorityTaskWoken ) ;
+BaseType_t MPU_xQueueIsQueueEmptyFromISR( const QueueHandle_t xQueue ) ;
+BaseType_t MPU_xQueueIsQueueFullFromISR( const QueueHandle_t xQueue ) ;
+UBaseType_t MPU_uxQueueMessagesWaitingFromISR( const QueueHandle_t xQueue ) ;
+TaskHandle_t MPU_xQueueGetMutexHolderFromISR( QueueHandle_t xSemaphore ) ;
+QueueSetMemberHandle_t MPU_xQueueSelectFromSetFromISR( QueueSetHandle_t xQueueSet ) ;
 /* MPU versions of timers.h API functions. */
 void * MPU_pvTimerGetTimerID( const TimerHandle_t xTimer ) FREERTOS_SYSTEM_CALL;
 void MPU_vTimerSetTimerID( TimerHandle_t xTimer,
@@ -272,20 +272,20 @@ TimerHandle_t MPU_xTimerCreate( const char * const pcTimerName,
                                 const TickType_t xTimerPeriodInTicks,
                                 const UBaseType_t uxAutoReload,
                                 void * const pvTimerID,
-                                TimerCallbackFunction_t pxCallbackFunction ) PRIVILEGED_FUNCTION;
+                                TimerCallbackFunction_t pxCallbackFunction ) ;
 TimerHandle_t MPU_xTimerCreateStatic( const char * const pcTimerName,
                                       const TickType_t xTimerPeriodInTicks,
                                       const UBaseType_t uxAutoReload,
                                       void * const pvTimerID,
                                       TimerCallbackFunction_t pxCallbackFunction,
-                                      StaticTimer_t * pxTimerBuffer ) PRIVILEGED_FUNCTION;
+                                      StaticTimer_t * pxTimerBuffer ) ;
 BaseType_t MPU_xTimerGetStaticBuffer( TimerHandle_t xTimer,
-                                      StaticTimer_t ** ppxTimerBuffer ) PRIVILEGED_FUNCTION;
+                                      StaticTimer_t ** ppxTimerBuffer ) ;
 BaseType_t MPU_xTimerGenericCommandFromISR( TimerHandle_t xTimer,
                                             const BaseType_t xCommandID,
                                             const TickType_t xOptionalValue,
                                             BaseType_t * const pxHigherPriorityTaskWoken,
-                                            const TickType_t xTicksToWait ) PRIVILEGED_FUNCTION;
+                                            const TickType_t xTicksToWait ) ;
 /* MPU versions of event_group.h API functions. */
 EventBits_t MPU_xEventGroupWaitBits( EventGroupHandle_t xEventGroup,
                                      const EventBits_t uxBitsToWaitFor,
@@ -309,17 +309,17 @@ EventBits_t MPU_xEventGroupSync( EventGroupHandle_t xEventGroup,
 /* Privileged only wrappers for Event Group APIs. These are needed so that
  * the application can use opaque handles maintained in mpu_wrappers.c
  * with all the APIs. */
-EventGroupHandle_t MPU_xEventGroupCreate( void ) PRIVILEGED_FUNCTION;
-EventGroupHandle_t MPU_xEventGroupCreateStatic( StaticEventGroup_t * pxEventGroupBuffer ) PRIVILEGED_FUNCTION;
-void MPU_vEventGroupDelete( EventGroupHandle_t xEventGroup ) PRIVILEGED_FUNCTION;
+EventGroupHandle_t MPU_xEventGroupCreate( void ) ;
+EventGroupHandle_t MPU_xEventGroupCreateStatic( StaticEventGroup_t * pxEventGroupBuffer ) ;
+void MPU_vEventGroupDelete( EventGroupHandle_t xEventGroup ) ;
 BaseType_t MPU_xEventGroupGetStaticBuffer( EventGroupHandle_t xEventGroup,
-                                           StaticEventGroup_t ** ppxEventGroupBuffer ) PRIVILEGED_FUNCTION;
+                                           StaticEventGroup_t ** ppxEventGroupBuffer ) ;
 BaseType_t MPU_xEventGroupClearBitsFromISR( EventGroupHandle_t xEventGroup,
-                                            const EventBits_t uxBitsToClear ) PRIVILEGED_FUNCTION;
+                                            const EventBits_t uxBitsToClear ) ;
 BaseType_t MPU_xEventGroupSetBitsFromISR( EventGroupHandle_t xEventGroup,
                                           const EventBits_t uxBitsToSet,
-                                          BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
-EventBits_t MPU_xEventGroupGetBitsFromISR( EventGroupHandle_t xEventGroup ) PRIVILEGED_FUNCTION;
+                                          BaseType_t * pxHigherPriorityTaskWoken ) ;
+EventBits_t MPU_xEventGroupGetBitsFromISR( EventGroupHandle_t xEventGroup ) ;
 /* MPU versions of message/stream_buffer.h API functions. */
 size_t MPU_xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
                               const void * pvTxData,
@@ -343,30 +343,30 @@ StreamBufferHandle_t MPU_xStreamBufferGenericCreate( size_t xBufferSizeBytes,
                                                      size_t xTriggerLevelBytes,
                                                      BaseType_t xStreamBufferType,
                                                      StreamBufferCallbackFunction_t pxSendCompletedCallback,
-                                                     StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) PRIVILEGED_FUNCTION;
+                                                     StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) ;
 StreamBufferHandle_t MPU_xStreamBufferGenericCreateStatic( size_t xBufferSizeBytes,
                                                            size_t xTriggerLevelBytes,
                                                            BaseType_t xStreamBufferType,
                                                            uint8_t * const pucStreamBufferStorageArea,
                                                            StaticStreamBuffer_t * const pxStaticStreamBuffer,
                                                            StreamBufferCallbackFunction_t pxSendCompletedCallback,
-                                                           StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) PRIVILEGED_FUNCTION;
-void MPU_vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer ) PRIVILEGED_FUNCTION;
-BaseType_t MPU_xStreamBufferReset( StreamBufferHandle_t xStreamBuffer ) PRIVILEGED_FUNCTION;
+                                                           StreamBufferCallbackFunction_t pxReceiveCompletedCallback ) ;
+void MPU_vStreamBufferDelete( StreamBufferHandle_t xStreamBuffer ) ;
+BaseType_t MPU_xStreamBufferReset( StreamBufferHandle_t xStreamBuffer ) ;
 BaseType_t MPU_xStreamBufferGetStaticBuffers( StreamBufferHandle_t xStreamBuffers,
                                               uint8_t * ppucStreamBufferStorageArea,
-                                              StaticStreamBuffer_t * ppxStaticStreamBuffer ) PRIVILEGED_FUNCTION;
+                                              StaticStreamBuffer_t * ppxStaticStreamBuffer ) ;
 size_t MPU_xStreamBufferSendFromISR( StreamBufferHandle_t xStreamBuffer,
                                      const void * pvTxData,
                                      size_t xDataLengthBytes,
-                                     BaseType_t * const pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
+                                     BaseType_t * const pxHigherPriorityTaskWoken ) ;
 size_t MPU_xStreamBufferReceiveFromISR( StreamBufferHandle_t xStreamBuffer,
                                         void * pvRxData,
                                         size_t xBufferLengthBytes,
-                                        BaseType_t * const pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
+                                        BaseType_t * const pxHigherPriorityTaskWoken ) ;
 BaseType_t MPU_xStreamBufferSendCompletedFromISR( StreamBufferHandle_t xStreamBuffer,
-                                                  BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
+                                                  BaseType_t * pxHigherPriorityTaskWoken ) ;
 BaseType_t MPU_xStreamBufferReceiveCompletedFromISR( StreamBufferHandle_t xStreamBuffer,
-                                                     BaseType_t * pxHigherPriorityTaskWoken ) PRIVILEGED_FUNCTION;
-BaseType_t MPU_xStreamBufferResetFromISR( StreamBufferHandle_t xStreamBuffer ) PRIVILEGED_FUNCTION;
+                                                     BaseType_t * pxHigherPriorityTaskWoken ) ;
+BaseType_t MPU_xStreamBufferResetFromISR( StreamBufferHandle_t xStreamBuffer ) ;
 #endif /* MPU_PROTOTYPES_H */

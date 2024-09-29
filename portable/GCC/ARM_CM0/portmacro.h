@@ -89,11 +89,11 @@ typedef unsigned long    UBaseType_t;
  * @brief Extern declarations.
  */
 extern BaseType_t xPortIsInsideInterrupt( void );
-extern void vPortYield( void ) /* PRIVILEGED_FUNCTION */;
-extern void vPortEnterCritical( void ) /* PRIVILEGED_FUNCTION */;
-extern void vPortExitCritical( void ) /* PRIVILEGED_FUNCTION */;
-extern uint32_t ulSetInterruptMask( void ) /* __attribute__(( naked )) PRIVILEGED_FUNCTION */;
-extern void vClearInterruptMask( uint32_t ulMask ) /* __attribute__(( naked )) PRIVILEGED_FUNCTION */;
+extern void vPortYield( void ) /*  */;
+extern void vPortEnterCritical( void ) /*  */;
+extern void vPortExitCritical( void ) /*  */;
+extern uint32_t ulSetInterruptMask( void ) /* __attribute__(( naked ))  */;
+extern void vClearInterruptMask( uint32_t ulMask ) /* __attribute__(( naked ))  */;
 #if ( configENABLE_MPU == 1 )
     extern BaseType_t xIsPrivileged( void ) /* __attribute__ (( naked )) */;
     extern void vResetPrivilege( void ) /* __attribute__ (( naked )) */;
