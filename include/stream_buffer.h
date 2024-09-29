@@ -26,15 +26,9 @@
  * https://github.com/FreeRTOS
  *
  */
-#ifndef STREAM_BUFFER_H
-#define STREAM_BUFFER_H
-#ifndef INC_FREERTOS_H
-#error \
-    "include FreeRTOS.h must appear in source files before include stream_buffer.h"
-#endif
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#pragma once
+#include "freertos.h"
+#include "portmacro.h"
 #define sbTYPE_STREAM_BUFFER ((BaseType_t)0)
 #define sbTYPE_MESSAGE_BUFFER ((BaseType_t)1)
 #define sbTYPE_STREAM_BATCHING_BUFFER ((BaseType_t)2)
@@ -42,75 +36,42 @@ struct StreamBufferDef_t;
 typedef struct StreamBufferDef_t* StreamBufferHandle_t;
 typedef void (*StreamBufferCallbackFunction_t)(
     StreamBufferHandle_t xStreamBuffer, BaseType_t xIsInsideISR,
-    BaseType_t* const pxHigherPriorityTaskWoken);
+    BaseType_t* const HigherPriorityTaskWoken);
 #define xStreamBufferCreate(xBufferSizeBytes, xTriggerLevelBytes)      \
   xStreamBufferGenericCreate((xBufferSizeBytes), (xTriggerLevelBytes), \
                              sbTYPE_STREAM_BUFFER, NULL, NULL)
-#if (configUSE_SB_COMPLETED_CALLBACK == 1)
-#define xStreamBufferCreateWithCallback(xBufferSizeBytes, xTriggerLevelBytes, \
-                                        pxSendCompletedCallback,              \
-                                        pxReceiveCompletedCallback)           \
-  xStreamBufferGenericCreate((xBufferSizeBytes), (xTriggerLevelBytes),        \
-                             sbTYPE_STREAM_BUFFER, (pxSendCompletedCallback), \
-                             (pxReceiveCompletedCallback))
-#endif
+
 #define xStreamBufferCreateStatic(xBufferSizeBytes, xTriggerLevelBytes, \
                                   pucStreamBufferStorageArea,           \
                                   pStaticStreamBuffer)                  \
   xStreamBufferGenericCreateStatic(                                     \
       (xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BUFFER,   \
       (pucStreamBufferStorageArea), (pStaticStreamBuffer), NULL, NULL)
-#if (configUSE_SB_COMPLETED_CALLBACK == 1)
-#define xStreamBufferCreateStaticWithCallback(                                \
-    xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea,         \
-    pStaticStreamBuffer, pxSendCompletedCallback, pxReceiveCompletedCallback) \
-  xStreamBufferGenericCreateStatic(                                           \
-      (xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BUFFER,         \
-      (pucStreamBufferStorageArea), (pStaticStreamBuffer),                    \
-      (pxSendCompletedCallback), (pxReceiveCompletedCallback))
-#endif
 #define xStreamBatchingBufferCreate(xBufferSizeBytes, xTriggerLevelBytes) \
   xStreamBufferGenericCreate((xBufferSizeBytes), (xTriggerLevelBytes),    \
                              sbTYPE_STREAM_BATCHING_BUFFER, NULL, NULL)
-#if (configUSE_SB_COMPLETED_CALLBACK == 1)
-#define xStreamBatchingBufferCreateWithCallback(                               \
-    xBufferSizeBytes, xTriggerLevelBytes, pxSendCompletedCallback,             \
-    pxReceiveCompletedCallback)                                                \
-  xStreamBufferGenericCreate(                                                  \
-      (xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BATCHING_BUFFER, \
-      (pxSendCompletedCallback), (pxReceiveCompletedCallback))
-#endif
+
 #define xStreamBatchingBufferCreateStatic(                                     \
     xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea,          \
     pStaticStreamBuffer)                                                       \
   xStreamBufferGenericCreateStatic(                                            \
       (xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BATCHING_BUFFER, \
       (pucStreamBufferStorageArea), (pStaticStreamBuffer), NULL, NULL)
-#if (configUSE_SB_COMPLETED_CALLBACK == 1)
-#define xStreamBatchingBufferCreateStaticWithCallback(                         \
-    xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea,          \
-    pStaticStreamBuffer, pxSendCompletedCallback, pxReceiveCompletedCallback)  \
-  xStreamBufferGenericCreateStatic(                                            \
-      (xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BATCHING_BUFFER, \
-      (pucStreamBufferStorageArea), (pStaticStreamBuffer),                     \
-      (pxSendCompletedCallback), (pxReceiveCompletedCallback))
-#endif
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
+
 BaseType_t xStreamBufferGetStaticBuffers(
     StreamBufferHandle_t xStreamBuffer, uint8_t** ppucStreamBufferStorageArea,
     StaticStreamBuffer_t** ppStaticStreamBuffer);
-#endif
 size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer,
                          const void* pvTxData, size_t xDataLengthBytes,
                          TickType_t xTicksToWait);
 size_t xStreamBufferSendFromISR(StreamBufferHandle_t xStreamBuffer,
                                 const void* pvTxData, size_t xDataLengthBytes,
-                                BaseType_t* const pxHigherPriorityTaskWoken);
+                                BaseType_t* const HigherPriorityTaskWoken);
 size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void* pvRxData,
                             size_t xBufferLengthBytes, TickType_t xTicksToWait);
 size_t xStreamBufferReceiveFromISR(StreamBufferHandle_t xStreamBuffer,
                                    void* pvRxData, size_t xBufferLengthBytes,
-                                   BaseType_t* const pxHigherPriorityTaskWoken);
+                                   BaseType_t* const HigherPriorityTaskWoken);
 void vStreamBufferDelete(StreamBufferHandle_t xStreamBuffer);
 BaseType_t xStreamBufferIsFull(StreamBufferHandle_t xStreamBuffer);
 BaseType_t xStreamBufferIsEmpty(StreamBufferHandle_t xStreamBuffer);
@@ -121,9 +82,9 @@ size_t xStreamBufferBytesAvailable(StreamBufferHandle_t xStreamBuffer);
 BaseType_t xStreamBufferSetTriggerLevel(StreamBufferHandle_t xStreamBuffer,
                                         size_t xTriggerLevel);
 BaseType_t xStreamBufferSendCompletedFromISR(
-    StreamBufferHandle_t xStreamBuffer, BaseType_t* pxHigherPriorityTaskWoken);
+    StreamBufferHandle_t xStreamBuffer, BaseType_t* HigherPriorityTaskWoken);
 BaseType_t xStreamBufferReceiveCompletedFromISR(
-    StreamBufferHandle_t xStreamBuffer, BaseType_t* pxHigherPriorityTaskWoken);
+    StreamBufferHandle_t xStreamBuffer, BaseType_t* HigherPriorityTaskWoken);
 UBaseType_t uxStreamBufferGetStreamBufferNotificationIndex(
     StreamBufferHandle_t xStreamBuffer);
 void vStreamBufferSetStreamBufferNotificationIndex(
@@ -131,25 +92,12 @@ void vStreamBufferSetStreamBufferNotificationIndex(
 StreamBufferHandle_t xStreamBufferGenericCreate(
     size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
     BaseType_t xStreamBufferType,
-    StreamBufferCallbackFunction_t pxSendCompletedCallback,
-    StreamBufferCallbackFunction_t pxReceiveCompletedCallback);
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    StreamBufferCallbackFunction_t SendCompletedCallback,
+    StreamBufferCallbackFunction_t ReceiveCompletedCallback);
 StreamBufferHandle_t xStreamBufferGenericCreateStatic(
     size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
     BaseType_t xStreamBufferType, uint8_t* const pucStreamBufferStorageArea,
     StaticStreamBuffer_t* const pStaticStreamBuffer,
-    StreamBufferCallbackFunction_t pxSendCompletedCallback,
-    StreamBufferCallbackFunction_t pxReceiveCompletedCallback);
-#endif
+    StreamBufferCallbackFunction_t SendCompletedCallback,
+    StreamBufferCallbackFunction_t ReceiveCompletedCallback);
 size_t xStreamBufferNextMessageLengthBytes(StreamBufferHandle_t xStreamBuffer);
-#if (configUSE_TRACE_FACILITY == 1)
-void vStreamBufferSetStreamBufferNumber(StreamBufferHandle_t xStreamBuffer,
-                                        UBaseType_t uxStreamBufferNumber);
-UBaseType_t uxStreamBufferGetStreamBufferNumber(
-    StreamBufferHandle_t xStreamBuffer);
-uint8_t ucStreamBufferGetStreamBufferType(StreamBufferHandle_t xStreamBuffer);
-#endif
-#if defined(__cplusplus)
-}
-#endif
-#endif

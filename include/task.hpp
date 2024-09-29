@@ -27,486 +27,269 @@
  *
  */
 
- 
-
 #pragma once
 
 #include "list.hpp"
 
- 
- 
- 
 #define tskKERNEL_VERSION_NUMBER "V11.1.0+"
 #define tskKERNEL_VERSION_MAJOR 11
 #define tskKERNEL_VERSION_MINOR 1
 #define tskKERNEL_VERSION_BUILD 0
- 
-#define tskMPU_REGION_READ_ONLY (1U << 0U)
-#define tskMPU_REGION_READ_WRITE (1U << 1U)
-#define tskMPU_REGION_EXECUTE_NEVER (1U << 2U)
-#define tskMPU_REGION_NORMAL_MEMORY (1U << 3U)
-#define tskMPU_REGION_DEVICE_MEMORY (1U << 4U)
-#if defined(portARMV8M_MINOR_VERSION) && (portARMV8M_MINOR_VERSION >= 1)
-#define tskMPU_REGION_PRIVILEGED_EXECUTE_NEVER (1U << 5U)
-#endif  
- 
-#define tskMPU_READ_PERMISSION (1U << 0U)
-#define tskMPU_WRITE_PERMISSION (1U << 1U)
- 
+
 #define tskDEFAULT_INDEX_TO_NOTIFY (0)
- 
-struct TCB_t;  
+
+struct TCB_t;
 typedef struct TCB_t *TaskHandle_t;
 typedef const struct TCB_t *ConstTaskHandle_t;
- 
+
 typedef BaseType_t (*TaskHookFunction_t)(void *arg);
- 
+
 typedef enum {
-  eRunning =
-      0,       
-  eReady,      
-  eBlocked,    
-  eSuspended,  
-  eDeleted,  
-  eInvalid   
-} eTaskState;
- 
+  eRunning = 0,
+  eReady,
+  eBlocked,
+  eSuspended,
+  eDeleted,
+  eInvalid
+} TaskState;
+
 typedef enum {
-  eNoAction = 0,  
-  eSetBits,       
-  eIncrement,     
-  eSetValueWithOverwrite,    
-  eSetValueWithoutOverwrite  
+  eNoAction = 0,
+  eSetBits,
+  eIncrement,
+  eSetValueWithOverwrite,
+  eSetValueWithoutOverwrite
 } eNotifyAction;
- 
+
 typedef struct xTIME_OUT {
-  BaseType_t xOverflowCount;
-  TickType_t xTimeOnEntering;
+  BaseType_t OverflowCount;
+  TickType_t TimeOnEntering;
 } TimeOut_t;
- 
+
 typedef struct xMEMORY_REGION {
-  void *pvBaseAddress;
-  uint32_t ulLengthInBytes;
-  uint32_t ulParameters;
+  void *Address;
+  uint32_t NBytes;
+  uint32_t Params;
 } MemoryRegion_t;
- 
-typedef struct xTASK_PARAMETERS {
-  TaskFunction_t pvTaskCode;
-  const char *pcName;
-  configSTACK_DEPTH_TYPE usStackDepth;
-  void *pvParameters;
-  UBaseType_t uxPriority;
-  StackType_t *puxStackBuffer;
-  MemoryRegion_t xRegions[portNUM_CONFIGURABLE_REGIONS];
-#if ((portUSING_MPU_WRAPPERS == 1) && (configSUPPORT_STATIC_ALLOCATION == 1))
-  StaticTask_t *const pxTaskBuffer;
-#endif
-} TaskParameters_t;
- 
-typedef struct xTASK_STATUS {
-  TaskHandle_t xHandle;     
-  const char *pcTaskName;   
-  UBaseType_t xTaskNumber;  
-  eTaskState eCurrentState;  
-  UBaseType_t
-      uxCurrentPriority;  
-  UBaseType_t
-      uxBasePriority;  
-  configRUN_TIME_COUNTER_TYPE
-      ulRunTimeCounter;  
-  StackType_t
-      *pxStackBase;  
-#if ((portSTACK_GROWTH > 0) || (configRECORD_STACK_HIGH_ADDRESS == 1))
-  StackType_t
-      *pxTopOfStack;  
-  StackType_t
-      *pxEndOfStack;  
-#endif
-  configSTACK_DEPTH_TYPE
-      usStackHighWaterMark;  
-#if ((configUSE_CORE_AFFINITY == 1) && (configNUMBER_OF_CORES > 1))
-  UBaseType_t uxCoreAffinityMask;  
-#endif
-} TaskStatus_t;
- 
-typedef enum {
-  eAbortSleep = 0,  
-  eStandardSleep    
-#if (INCLUDE_vTaskSuspend == 1)
-  ,
-  eNoTasksWaitingTimeout  
-#endif                    
-} eSleepModeStatus;
- 
+
+struct TaskParameters_t {
+  TaskFunction_t TaskCode;
+  const char *Name;
+  configSTACK_DEPTH_TYPE StackDepth;
+  void *Params;
+  UBaseType_t Priority;
+  StackType_t *StackBuffer;
+  MemoryRegion_t Regions[portNUM_CONFIGURABLE_REGIONS];
+};
+
+struct TaskStatus_t {
+  TaskHandle_t Handle;
+  const char *Name;
+  UBaseType_t Number;
+  TaskState State;
+  UBaseType_t Priority;
+  UBaseType_t BasePriority;
+  configRUN_TIME_COUNTER_TYPE RTCounter;
+  StackType_t *StackBase;
+  configSTACK_DEPTH_TYPE StackHighWaterMark;
+};
+
+enum eSleepModeStatus {
+  eAbortSleep = 0,
+  eStandardSleep,
+  eNoTasksWaitingTimeout
+};
+
 #define tskIDLE_PRIORITY ((UBaseType_t)0U)
- 
+
 #define tskNO_AFFINITY ((UBaseType_t)-1)
- 
+
 #define taskYIELD() portYIELD()
- 
+
 #define ENTER_CRITICAL() portENTER_CRITICAL()
 #define ENTER_CRITICAL_FROM_ISR() portSET_INTERRUPT_MASK_FROM_ISR()
- 
+
 #define EXIT_CRITICAL() portEXIT_CRITICAL()
 #define EXIT_CRITICAL_FROM_ISR(x) portCLEAR_INTERRUPT_MASK_FROM_ISR(x)
 
 struct CriticalSection {
   CriticalSection() { ENTER_CRITICAL(); }
-
   ~CriticalSection() { EXIT_CRITICAL(); }
 };
 
- 
 #define taskDISABLE_INTERRUPTS() portDISABLE_INTERRUPTS()
- 
+
 #define taskENABLE_INTERRUPTS() portENABLE_INTERRUPTS()
- 
+
 #define taskSCHEDULER_SUSPENDED ((BaseType_t)0)
 #define taskSCHEDULER_NOT_STARTED ((BaseType_t)1)
 #define taskSCHEDULER_RUNNING ((BaseType_t)2)
- 
+
 #define taskVALID_CORE_ID(xCoreID)                     \
   (((((BaseType_t)0 <= (xCoreID)) &&                   \
      ((xCoreID) < (BaseType_t)configNUMBER_OF_CORES))) \
        ? (true)                                        \
        : (false))
- 
- 
-#if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
-BaseType_t xTaskCreate(TaskFunction_t pxTaskCode, const char *const pcName,
-                       const configSTACK_DEPTH_TYPE uxStackDepth,
-                       void *const pvParameters, UBaseType_t uxPriority,
-                       TaskHandle_t *const pxCreatedTask);
-#endif
-#if ((configSUPPORT_DYNAMIC_ALLOCATION == 1) && (configNUMBER_OF_CORES > 1) && \
-     (configUSE_CORE_AFFINITY == 1))
-BaseType_t xTaskCreateAffinitySet(TaskFunction_t pxTaskCode,
-                                  const char *const pcName,
-                                  const configSTACK_DEPTH_TYPE uxStackDepth,
-                                  void *const pvParameters,
-                                  UBaseType_t uxPriority,
-                                  UBaseType_t uxCoreAffinityMask,
-                                  TaskHandle_t *const pxCreatedTask);
-#endif
- 
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
-TaskHandle_t xTaskCreateStatic(TaskFunction_t pxTaskCode,
-                               const char *const pcName,
-                               const configSTACK_DEPTH_TYPE uxStackDepth,
-                               void *const pvParameters, UBaseType_t uxPriority,
-                               StackType_t *const puxStackBuffer,
-                               StaticTask_t *const pxTaskBuffer);
-#endif  
-#if ((configSUPPORT_STATIC_ALLOCATION == 1) && (configNUMBER_OF_CORES > 1) && \
-     (configUSE_CORE_AFFINITY == 1))
-TaskHandle_t xTaskCreateStaticAffinitySet(
-    TaskFunction_t pxTaskCode, const char *const pcName,
-    const configSTACK_DEPTH_TYPE uxStackDepth, void *const pvParameters,
-    UBaseType_t uxPriority, StackType_t *const puxStackBuffer,
-    StaticTask_t *const pxTaskBuffer, UBaseType_t uxCoreAffinityMask);
-#endif
- 
-#if (portUSING_MPU_WRAPPERS == 1)
-BaseType_t xTaskCreateRestricted(const TaskParameters_t *const pxTaskDefinition,
-                                 TaskHandle_t *pxCreatedTask);
-#endif
-#if ((portUSING_MPU_WRAPPERS == 1) && (configNUMBER_OF_CORES > 1) && \
-     (configUSE_CORE_AFFINITY == 1))
-BaseType_t xTaskCreateRestrictedAffinitySet(
-    const TaskParameters_t *const pxTaskDefinition,
-    UBaseType_t uxCoreAffinityMask, TaskHandle_t *pxCreatedTask);
-#endif
- 
-#if ((portUSING_MPU_WRAPPERS == 1) && (configSUPPORT_STATIC_ALLOCATION == 1))
-BaseType_t xTaskCreateRestrictedStatic(
-    const TaskParameters_t *const pxTaskDefinition,
-    TaskHandle_t *pxCreatedTask);
-#endif
-#if ((portUSING_MPU_WRAPPERS == 1) &&                                         \
-     (configSUPPORT_STATIC_ALLOCATION == 1) && (configNUMBER_OF_CORES > 1) && \
-     (configUSE_CORE_AFFINITY == 1))
-BaseType_t xTaskCreateRestrictedStaticAffinitySet(
-    const TaskParameters_t *const pxTaskDefinition,
-    UBaseType_t uxCoreAffinityMask, TaskHandle_t *pxCreatedTask);
-#endif
- 
-#if (portUSING_MPU_WRAPPERS == 1)
-void vTaskAllocateMPURegions(TaskHandle_t xTaskToModify,
-                             const MemoryRegion_t *const pxRegions);
-#endif
- 
-void vTaskDelete(TaskHandle_t xTaskToDelete);
- 
- 
-void vTaskDelay(const TickType_t xTicksToDelay);
- 
-BaseType_t xTaskDelayUntil(TickType_t *const pxPreviousWakeTime,
-                           const TickType_t xTimeIncrement);
- 
-#define vTaskDelayUntil(pxPreviousWakeTime, xTimeIncrement)        \
-  do {                                                             \
-    (void)xTaskDelayUntil((pxPreviousWakeTime), (xTimeIncrement)); \
-  } while (0)
 
- 
-#if (INCLUDE_xTaskAbortDelay == 1)
-BaseType_t xTaskAbortDelay(TaskHandle_t xTask);
-#endif
- 
-UBaseType_t uxTaskPriorityGet(const TaskHandle_t xTask);
- 
-UBaseType_t uxTaskPriorityGetFromISR(const TaskHandle_t xTask);
- 
-UBaseType_t uxTaskBasePriorityGet(const TaskHandle_t xTask);
- 
-UBaseType_t uxTaskBasePriorityGetFromISR(const TaskHandle_t xTask);
- 
-#if ((INCLUDE_eTaskGetState == 1) || (configUSE_TRACE_FACILITY == 1) || \
-     (INCLUDE_xTaskAbortDelay == 1))
-eTaskState eTaskGetState(TaskHandle_t xTask);
-#endif
- 
-#if (configUSE_TRACE_FACILITY == 1)
-void vTaskGetInfo(TaskHandle_t xTask, TaskStatus_t *pxTaskStatus,
-                  BaseType_t xGetFreeStackSpace, eTaskState eState);
-#endif
- 
-void vTaskPrioritySet(TaskHandle_t xTask, UBaseType_t uxNewPriority);
- 
-void vTaskSuspend(TaskHandle_t xTaskToSuspend);
- 
-void vTaskResume(TaskHandle_t xTaskToResume);
- 
-BaseType_t xTaskResumeFromISR(TaskHandle_t xTaskToResume);
-#if (configUSE_CORE_AFFINITY == 1)
- 
-void vTaskCoreAffinitySet(const TaskHandle_t xTask,
-                          UBaseType_t uxCoreAffinityMask);
-#endif
-#if ((configNUMBER_OF_CORES > 1) && (configUSE_CORE_AFFINITY == 1))
- 
-UBaseType_t vTaskCoreAffinityGet(ConstTaskHandle_t xTask);
-#endif
-#if (configUSE_TASK_PREEMPTION_DISABLE == 1)
- 
-void vTaskPreemptionDisable(const TaskHandle_t xTask);
-#endif
-#if (configUSE_TASK_PREEMPTION_DISABLE == 1)
- 
-void vTaskPreemptionEnable(const TaskHandle_t xTask);
-#endif
- 
- 
-void vTaskStartScheduler(void);
- 
-void vTaskEndScheduler(void);
- 
-void vTaskSuspendAll(void);
- 
+BaseType_t TaskCreate(TaskFunction_t Code, const char *const Name,
+                      const configSTACK_DEPTH_TYPE StackDepth,
+                      void *const Params, UBaseType_t Priority,
+                      TaskHandle_t *const CreatedTask);
+
+TaskHandle_t TaskCreateStatic(TaskFunction_t Code, const char *const Name,
+                              const configSTACK_DEPTH_TYPE StackDepth,
+                              void *const Params, UBaseType_t Priority,
+                              StackType_t *const StackBuffer,
+                              StaticTask_t *const TaskBuffer);
+
+void TaskDelete(TaskHandle_t TaskToDelete);
+
+void TaskDelay(const TickType_t xTicksToDelay);
+
+BaseType_t TaskDelayUntil(TickType_t *const PreviousWakeTime,
+                          const TickType_t xTimeIncrement);
+
+BaseType_t TaskAbortDelay(TaskHandle_t Task);
+
+UBaseType_t TaskPriorityGet(const TaskHandle_t Task);
+
+UBaseType_t TaskPriorityGetFromISR(const TaskHandle_t Task);
+
+UBaseType_t TaskBasePriorityGet(const TaskHandle_t Task);
+
+UBaseType_t TaskBasePriorityGetFromISR(const TaskHandle_t Task);
+
+TaskState TaskGetState(TaskHandle_t Task);
+
+void TaskPrioritySet(TaskHandle_t Task, UBaseType_t uxNewPriority);
+
+void TaskSuspend(TaskHandle_t TaskToSuspend);
+
+void TaskResume(TaskHandle_t TaskToResume);
+
+BaseType_t TaskResumeFromISR(TaskHandle_t TaskToResume);
+
+void TaskStartScheduler(void);
+
+void TaskEndScheduler(void);
+
+void TaskSuspendAll(void);
+
 BaseType_t TaskResumeAll(void);
- 
- 
-TickType_t xTaskGetTickCount(void);
- 
-TickType_t xTaskGetTickCountFromISR(void);
- 
+
+TickType_t TaskGetTickCount(void);
+
+TickType_t TaskGetTickCountFromISR(void);
+
 UBaseType_t TaskGetNumberOfTasks(void);
- 
-char *pcTaskGetName(TaskHandle_t xTaskToQuery);
- 
-#if (INCLUDE_xTaskGetHandle == 1)
-TaskHandle_t xTaskGetHandle(const char *pcNameToQuery);
-#endif
- 
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
-BaseType_t xTaskGetStaticBuffers(TaskHandle_t xTask,
-                                 StackType_t **ppuxStackBuffer,
-                                 StaticTask_t **ppxTaskBuffer);
-#endif  
- 
-#if (INCLUDE_uxTaskGetStackHighWaterMark == 1)
-UBaseType_t uxTaskGetStackHighWaterMark(TaskHandle_t xTask);
-#endif
- 
-#if (INCLUDE_uxTaskGetStackHighWaterMark2 == 1)
-configSTACK_DEPTH_TYPE uxTaskGetStackHighWaterMark2(TaskHandle_t xTask);
-#endif
- 
-#ifdef configUSE_APPLICATION_TASK_TAG
-#if configUSE_APPLICATION_TASK_TAG == 1
- 
-void vTaskSetApplicationTaskTag(TaskHandle_t xTask,
-                                TaskHookFunction_t pxHookFunction);
- 
-TaskHookFunction_t xTaskGetApplicationTaskTag(TaskHandle_t xTask);
- 
-TaskHookFunction_t xTaskGetApplicationTaskTagFromISR(TaskHandle_t xTask);
-#endif  
-#endif  
-#if (configNUM_THREAD_LOCAL_STORAGE_POINTERS > 0)
- 
-void vTaskSetThreadLocalStoragePointer(TaskHandle_t xTaskToSet,
-                                       BaseType_t xIndex, void *pvValue);
-void *pvTaskGetThreadLocalStoragePointer(TaskHandle_t xTaskToQuery,
-                                         BaseType_t xIndex);
-#endif
-#if (configCHECK_FOR_STACK_OVERFLOW > 0)
- 
 
-void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName);
-#endif
+char *TaskGetName(TaskHandle_t TaskToQuery);
+
+BaseType_t TaskGetStaticBuffers(TaskHandle_t Task, StackType_t **pStackBuffer,
+                                StaticTask_t **TaskBuffer);
+
 #if (configUSE_IDLE_HOOK == 1)
- 
 
-void vApplicationIdleHook(void);
+void ApplicationIdleHook(void);
 #endif
 
 #if (configUSE_TICK_HOOK != 0)
- 
 
-void vApplicationTickHook(void);
+void ApplicationTickHook(void);
 #endif
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
- 
-void ApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
-                                  StackType_t **ppxIdleTaskStackBuffer,
-                                  configSTACK_DEPTH_TYPE *puxIdleTaskStackSize);
- 
-#if (configNUMBER_OF_CORES > 1)
-void vApplicationGetPassiveIdleTaskMemory(
-    StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer,
-    configSTACK_DEPTH_TYPE *puxIdleTaskStackSize,
-    BaseType_t xPassiveIdleTaskIndex);
-#endif  
-#endif  
- 
-#if (configUSE_APPLICATION_TASK_TAG == 1)
-BaseType_t xTaskCallApplicationTaskHook(TaskHandle_t xTask, void *pvParameter);
-#endif
- 
-#if (INCLUDE_xTaskGetIdleTaskHandle == 1)
-#if (configNUMBER_OF_CORES == 1)
-TaskHandle_t xTaskGetIdleTaskHandle(void);
-#endif  
-TaskHandle_t xTaskGetIdleTaskHandleForCore(BaseType_t xCoreID);
-#endif  
- 
-#if (configUSE_TRACE_FACILITY == 1)
-UBaseType_t uxTaskGetSystemState(
-    TaskStatus_t *const pxTaskStatusArray, const UBaseType_t uxArraySize,
-    configRUN_TIME_COUNTER_TYPE *const pulTotalRunTime);
-#endif
- 
-#if ((configUSE_TRACE_FACILITY == 1) && \
-     (configUSE_STATS_FORMATTING_FUNCTIONS > 0))
-void vTaskListTasks(char *pcWriteBuffer, size_t uxBufferLength);
-#endif
- 
-#define vTaskList(pcWriteBuffer) \
-  vTaskListTasks((pcWriteBuffer), configSTATS_BUFFER_MAX_LENGTH)
- 
-#if ((configGENERATE_RUN_TIME_STATS == 1) &&       \
-     (configUSE_STATS_FORMATTING_FUNCTIONS > 0) && \
-     (configUSE_TRACE_FACILITY == 1))
-void vTaskGetRunTimeStatistics(char *pcWriteBuffer, size_t uxBufferLength);
-#endif
- 
-#define vTaskGetRunTimeStats(pcWriteBuffer) \
-  vTaskGetRunTimeStatistics((pcWriteBuffer), configSTATS_BUFFER_MAX_LENGTH)
- 
-#if (configGENERATE_RUN_TIME_STATS == 1)
-configRUN_TIME_COUNTER_TYPE ulTaskGetRunTimeCounter(const TaskHandle_t xTask);
-configRUN_TIME_COUNTER_TYPE ulTaskGetRunTimePercent(const TaskHandle_t xTask);
-#endif
- 
-#if ((configGENERATE_RUN_TIME_STATS == 1) && \
-     (INCLUDE_xTaskGetIdleTaskHandle == 1))
-configRUN_TIME_COUNTER_TYPE ulTaskGetIdleRunTimeCounter(void);
-configRUN_TIME_COUNTER_TYPE ulTaskGetIdleRunTimePercent(void);
-#endif
- 
-BaseType_t TaskGenericNotify(TaskHandle_t xTaskToNotify,
+
+void ApplicationGetIdlTaskMemory(StaticTask_t **IdlTaskTCBBuffer,
+                                 StackType_t **IdlTaskStackBuffer,
+                                 configSTACK_DEPTH_TYPE *puxIdlTaskStackSize);
+
+#define TaskList(pcWriteBuffer) \
+  TaskListTasks((pcWriteBuffer), configSTATS_BUFFER_MAX_LENGTH)
+
+#define TaskGetRunTimeStats(pcWriteBuffer) \
+  TaskGetRunTimeStatistics((pcWriteBuffer), configSTATS_BUFFER_MAX_LENGTH)
+
+BaseType_t TaskGenericNotify(TaskHandle_t TaskToNotify,
                              UBaseType_t uxIndexToNotify, uint32_t ulValue,
                              eNotifyAction eAction,
-                             uint32_t *pulPreviousNotificationValue);
-#define xTaskNotify(xTaskToNotify, ulValue, eAction)                          \
-  TaskGenericNotify((xTaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), (ulValue), \
+                             uint32_t *PreviousNotificationValue);
+#define TaskNotify(TaskToNotify, ulValue, eAction)                           \
+  TaskGenericNotify((TaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), (ulValue), \
                     (eAction), NULL)
-#define xTaskNotifyIndexed(xTaskToNotify, uxIndexToNotify, ulValue, eAction)  \
-  TaskGenericNotify((xTaskToNotify), (uxIndexToNotify), (ulValue), (eAction), \
+#define TaskNotifyIndexed(TaskToNotify, uxIndexToNotify, ulValue, eAction)   \
+  TaskGenericNotify((TaskToNotify), (uxIndexToNotify), (ulValue), (eAction), \
                     NULL)
- 
-#define xTaskNotifyAndQuery(xTaskToNotify, ulValue, eAction,                  \
-                            pulPreviousNotifyValue)                           \
-  TaskGenericNotify((xTaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), (ulValue), \
-                    (eAction), (pulPreviousNotifyValue))
-#define xTaskNotifyAndQueryIndexed(xTaskToNotify, uxIndexToNotify, ulValue,   \
-                                   eAction, pulPreviousNotifyValue)           \
-  TaskGenericNotify((xTaskToNotify), (uxIndexToNotify), (ulValue), (eAction), \
-                    (pulPreviousNotifyValue))
- 
-BaseType_t TaskGenericNotifyFromISR(TaskHandle_t xTaskToNotify,
+
+#define TaskNotifyAndQuery(TaskToNotify, ulValue, eAction,                   \
+                           PreviousNotifyValue)                           \
+  TaskGenericNotify((TaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), (ulValue), \
+                    (eAction), (PreviousNotifyValue))
+#define TaskNotifyAndQueryIndexed(TaskToNotify, uxIndexToNotify, ulValue,    \
+                                  eAction, PreviousNotifyValue)           \
+  TaskGenericNotify((TaskToNotify), (uxIndexToNotify), (ulValue), (eAction), \
+                    (PreviousNotifyValue))
+
+BaseType_t TaskGenericNotifyFromISR(TaskHandle_t TaskToNotify,
                                     UBaseType_t uxIndexToNotify,
                                     uint32_t ulValue, eNotifyAction eAction,
-                                    uint32_t *pulPreviousNotificationValue,
-                                    BaseType_t *pxHigherPriorityTaskWoken);
-#define xTaskNotifyFromISR(xTaskToNotify, ulValue, eAction,               \
-                           pxHigherPriorityTaskWoken)                     \
-  TaskGenericNotifyFromISR((xTaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), \
-                           (ulValue), (eAction), NULL,                    \
-                           (pxHigherPriorityTaskWoken))
-#define xTaskNotifyIndexedFromISR(xTaskToNotify, uxIndexToNotify, ulValue, \
-                                  eAction, pxHigherPriorityTaskWoken)      \
-  TaskGenericNotifyFromISR((xTaskToNotify), (uxIndexToNotify), (ulValue),  \
-                           (eAction), NULL, (pxHigherPriorityTaskWoken))
- 
-#define xTaskNotifyAndQueryIndexedFromISR(                                \
-    xTaskToNotify, uxIndexToNotify, ulValue, eAction,                     \
-    pulPreviousNotificationValue, pxHigherPriorityTaskWoken)              \
-  TaskGenericNotifyFromISR((xTaskToNotify), (uxIndexToNotify), (ulValue), \
-                           (eAction), (pulPreviousNotificationValue),     \
-                           (pxHigherPriorityTaskWoken))
-#define xTaskNotifyAndQueryFromISR(xTaskToNotify, ulValue, eAction,        \
-                                   pulPreviousNotificationValue,           \
-                                   pxHigherPriorityTaskWoken)              \
-  TaskGenericNotifyFromISR(                                                \
-      (xTaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), (ulValue), (eAction), \
-      (pulPreviousNotificationValue), (pxHigherPriorityTaskWoken))
- 
+                                    uint32_t *PreviousNotificationValue,
+                                    BaseType_t *HigherPriorityTaskWoken);
+#define TaskNotifyFromISR(TaskToNotify, ulValue, eAction,                \
+                          HigherPriorityTaskWoken)                     \
+  TaskGenericNotifyFromISR((TaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), \
+                           (ulValue), (eAction), NULL,                   \
+                           (HigherPriorityTaskWoken))
+#define TaskNotifyIndexedFromISR(TaskToNotify, uxIndexToNotify, ulValue, \
+                                 eAction, HigherPriorityTaskWoken)     \
+  TaskGenericNotifyFromISR((TaskToNotify), (uxIndexToNotify), (ulValue), \
+                           (eAction), NULL, (HigherPriorityTaskWoken))
+
+#define TaskNotifyAndQueryIndexedFromISR(                                \
+    TaskToNotify, uxIndexToNotify, ulValue, eAction,                     \
+    PreviousNotificationValue, HigherPriorityTaskWoken)             \
+  TaskGenericNotifyFromISR((TaskToNotify), (uxIndexToNotify), (ulValue), \
+                           (eAction), (PreviousNotificationValue),    \
+                           (HigherPriorityTaskWoken))
+#define TaskNotifyAndQueryFromISR(TaskToNotify, ulValue, eAction,         \
+                                  PreviousNotificationValue,           \
+                                  HigherPriorityTaskWoken)              \
+  TaskGenericNotifyFromISR(                                               \
+      (TaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), (ulValue), (eAction), \
+      (PreviousNotificationValue), (HigherPriorityTaskWoken))
+
 BaseType_t TaskGenericNotifyWait(UBaseType_t uxIndexToWaitOn,
                                  uint32_t ulBitsToClearOnEntry,
                                  uint32_t ulBitsToClearOnExit,
-                                 uint32_t *pulNotificationValue,
+                                 uint32_t *NotificationValue,
                                  TickType_t xTicksToWait);
-#define xTaskNotifyWait(ulBitsToClearOnEntry, ulBitsToClearOnExit,          \
-                        pulNotificationValue, xTicksToWait)                 \
+#define TaskNotifyWait(ulBitsToClearOnEntry, ulBitsToClearOnExit,           \
+                       NotificationValue, xTicksToWait)                  \
   TaskGenericNotifyWait(tskDEFAULT_INDEX_TO_NOTIFY, (ulBitsToClearOnEntry), \
-                        (ulBitsToClearOnExit), (pulNotificationValue),      \
+                        (ulBitsToClearOnExit), (NotificationValue),      \
                         (xTicksToWait))
-#define xTaskNotifyWaitIndexed(uxIndexToWaitOn, ulBitsToClearOnEntry,     \
-                               ulBitsToClearOnExit, pulNotificationValue, \
-                               xTicksToWait)                              \
-  TaskGenericNotifyWait((uxIndexToWaitOn), (ulBitsToClearOnEntry),        \
-                        (ulBitsToClearOnExit), (pulNotificationValue),    \
+#define TaskNotifyWaitIndexed(uxIndexToWaitOn, ulBitsToClearOnEntry,     \
+                              ulBitsToClearOnExit, NotificationValue, \
+                              xTicksToWait)                              \
+  TaskGenericNotifyWait((uxIndexToWaitOn), (ulBitsToClearOnEntry),       \
+                        (ulBitsToClearOnExit), (NotificationValue),   \
                         (xTicksToWait))
- 
-#define xTaskNotifyGive(xTaskToNotify)                                  \
-  TaskGenericNotify((xTaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), (0), \
+
+#define TaskNotifyGive(TaskToNotify)                                   \
+  TaskGenericNotify((TaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), (0), \
                     eIncrement, NULL)
-#define xTaskNotifyGiveIndexed(xTaskToNotify, uxIndexToNotify) \
-  TaskGenericNotify((xTaskToNotify), (uxIndexToNotify), (0), eIncrement, NULL)
- 
-void vTaskGenericNotifyGiveFromISR(TaskHandle_t xTaskToNotify,
-                                   UBaseType_t uxIndexToNotify,
-                                   BaseType_t *pxHigherPriorityTaskWoken);
-#define vTaskNotifyGiveFromISR(xTaskToNotify, pxHigherPriorityTaskWoken)       \
-  vTaskGenericNotifyGiveFromISR((xTaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), \
-                                (pxHigherPriorityTaskWoken))
-#define vTaskNotifyGiveIndexedFromISR(xTaskToNotify, uxIndexToNotify, \
-                                      pxHigherPriorityTaskWoken)      \
-  vTaskGenericNotifyGiveFromISR((xTaskToNotify), (uxIndexToNotify),   \
-                                (pxHigherPriorityTaskWoken))
- 
+#define TaskNotifyGiveIndexed(TaskToNotify, uxIndexToNotify) \
+  TaskGenericNotify((TaskToNotify), (uxIndexToNotify), (0), eIncrement, NULL)
+
+void TaskGenericNotifyGiveFromISR(TaskHandle_t TaskToNotify,
+                                  UBaseType_t uxIndexToNotify,
+                                  BaseType_t *HigherPriorityTaskWoken);
+#define TaskNotifyGiveFromISR(TaskToNotify, HigherPriorityTaskWoken)       \
+  TaskGenericNotifyGiveFromISR((TaskToNotify), (tskDEFAULT_INDEX_TO_NOTIFY), \
+                               (HigherPriorityTaskWoken))
+#define TaskNotifyGiveIndexedFromISR(TaskToNotify, uxIndexToNotify, \
+                                     HigherPriorityTaskWoken)     \
+  TaskGenericNotifyGiveFromISR((TaskToNotify), (uxIndexToNotify),   \
+                               (HigherPriorityTaskWoken))
+
 uint32_t ulTaskGenericNotifyTake(UBaseType_t uxIndexToWaitOn,
                                  BaseType_t xClearCountOnExit,
                                  TickType_t xTicksToWait);
@@ -517,78 +300,75 @@ uint32_t ulTaskGenericNotifyTake(UBaseType_t uxIndexToWaitOn,
                                 xTicksToWait)                       \
   ulTaskGenericNotifyTake((uxIndexToWaitOn), (xClearCountOnExit),   \
                           (xTicksToWait))
- 
-BaseType_t xTaskGenericNotifyStateClear(TaskHandle_t xTask,
-                                        UBaseType_t uxIndexToClear);
-#define xTaskNotifyStateClear(xTask) \
-  xTaskGenericNotifyStateClear((xTask), (tskDEFAULT_INDEX_TO_NOTIFY))
-#define xTaskNotifyStateClearIndexed(xTask, uxIndexToClear) \
-  xTaskGenericNotifyStateClear((xTask), (uxIndexToClear))
- 
-uint32_t ulTaskGenericNotifyValueClear(TaskHandle_t xTask,
+
+BaseType_t TaskGenericNotifyStateClear(TaskHandle_t Task,
+                                       UBaseType_t uxIndexToClear);
+#define TaskNotifyStateClear(Task) \
+  TaskGenericNotifyStateClear((Task), (tskDEFAULT_INDEX_TO_NOTIFY))
+#define TaskNotifyStateClearIndexed(Task, uxIndexToClear) \
+  TaskGenericNotifyStateClear((Task), (uxIndexToClear))
+
+uint32_t ulTaskGenericNotifyValueClear(TaskHandle_t Task,
                                        UBaseType_t uxIndexToClear,
                                        uint32_t ulBitsToClear);
-#define ulTaskNotifyValueClear(xTask, ulBitsToClear)                   \
-  ulTaskGenericNotifyValueClear((xTask), (tskDEFAULT_INDEX_TO_NOTIFY), \
+#define ulTaskNotifyValueClear(Task, ulBitsToClear)                   \
+  ulTaskGenericNotifyValueClear((Task), (tskDEFAULT_INDEX_TO_NOTIFY), \
                                 (ulBitsToClear))
-#define ulTaskNotifyValueClearIndexed(xTask, uxIndexToClear, ulBitsToClear) \
-  ulTaskGenericNotifyValueClear((xTask), (uxIndexToClear), (ulBitsToClear))
- 
-void vTaskSetTimeOutState(TimeOut_t *const pxTimeOut);
- 
-BaseType_t xTaskCheckForTimeOut(TimeOut_t *const pxTimeOut,
-                                TickType_t *const pxTicksToWait);
- 
-BaseType_t xTaskCatchUpTicks(TickType_t xTicksToCatchUp);
- 
+#define ulTaskNotifyValueClearIndexed(Task, uxIndexToClear, ulBitsToClear) \
+  ulTaskGenericNotifyValueClear((Task), (uxIndexToClear), (ulBitsToClear))
+
+void TaskSetTimeOutState(TimeOut_t *const TimeOut);
+
+BaseType_t TaskCheckForTimeOut(TimeOut_t *const TimeOut,
+                               TickType_t *const TicksToWait);
+
+BaseType_t TaskCatchUpTicks(TickType_t xTicksToCatchUp);
+
 void TaskResetState(void);
 
- 
 #if (configNUMBER_OF_CORES == 1)
 #define taskYIELD_WITHIN_API() portYIELD_WITHIN_API()
-#else  
-#define taskYIELD_WITHIN_API() vTaskYieldWithinAPI()
-#endif  
- 
-BaseType_t xTaskIncrementTick(void);
- 
-void vTaskPlaceOnEventList(List_t<TCB_t> *const pxEventList,
-                           const TickType_t xTicksToWait);
-void vTaskPlaceOnUnorderedEventList(List_t<TCB_t> *pxEventList,
-                                    const TickType_t Value,
-                                    const TickType_t xTicksToWait);
- 
-void vTaskPlaceOnEventListRestricted(List_t<TCB_t> *const pxEventList,
-                                     TickType_t xTicksToWait,
-                                     const BaseType_t xWaitIndefinitely);
+#else
+#define taskYIELD_WITHIN_API() TaskYieldWithinAPI()
+#endif
 
-BaseType_t xTaskRemoveFromEventList(const List_t<TCB_t> *const pxEventList);
-void vTaskRemoveFromUnorderedEventList(Item_t<TCB_t> *pxEventListItem,
-                                       const TickType_t Value);
- 
-portDONT_DISCARD void vTaskSwitchContext(void);
+BaseType_t TaskIncrementTick(void);
 
- 
-TickType_t uxTaskResetEventItemValue(void);
- 
-TaskHandle_t xTaskGetCurrentTaskHandle(void);
- 
-TaskHandle_t xTaskGetCurrentTaskHandleForCore(BaseType_t xCoreID);
- 
-void vTaskMissedYield(void);
- 
-BaseType_t xTaskGetSchedulerState(void);
- 
-BaseType_t xTaskPriorityInherit(TaskHandle_t const pMutexHolder);
- 
-BaseType_t xTaskPriorityDisinherit(TaskHandle_t const pMutexHolder);
- 
-void vTaskPriorityDisinheritAfterTimeout(
+void TaskPlaceOnEventList(List_t<TCB_t> *const EventList,
+                          const TickType_t xTicksToWait);
+void TaskPlaceOnUnorderedEventList(List_t<TCB_t> *EventList,
+                                   const TickType_t Value,
+                                   const TickType_t xTicksToWait);
+
+void TaskPlaceOnEventListRestricted(List_t<TCB_t> *const EventList,
+                                    TickType_t xTicksToWait,
+                                    const BaseType_t xWaitIndefinitely);
+
+BaseType_t TaskRemoveFromEventList(const List_t<TCB_t> *const EventList);
+void TaskRemoveFromUnorderedEventList(Item_t<TCB_t> *EventListItem,
+                                      const TickType_t Value);
+
+portDONT_DISCARD void TaskSwitchContext(void);
+
+TickType_t TaskResetEventItemValue(void);
+
+TaskHandle_t TaskGetCurrentTaskHandle(void);
+
+TaskHandle_t TaskGetCurrentTaskHandleForCore(BaseType_t xCoreID);
+
+void TaskMissedYield(void);
+
+BaseType_t TaskGetSchedulerState(void);
+
+BaseType_t TaskPriorityInherit(TaskHandle_t const pMutexHolder);
+
+BaseType_t TaskPriorityDisinherit(TaskHandle_t const pMutexHolder);
+
+void TaskPriorityDisinheritAfterTimeout(
     TaskHandle_t const pMutexHolder, UBaseType_t uxHighestPriorityWaitingTask);
 
- 
-TaskHandle_t pvTaskIncrementMutexHeldCount(void);
- 
-void vTaskInternalSetTimeOutState(TimeOut_t *const pxTimeOut);
-void vTaskEnterCritical(void);
-void vTaskExitCritical(void);
+TaskHandle_t TaskIncrementMutexHeldCount(void);
+
+void TaskInternalSetTimeOutState(TimeOut_t *const TimeOut);
+void TaskEnterCritical(void);
+void TaskExitCritical(void);

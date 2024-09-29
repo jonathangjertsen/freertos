@@ -26,113 +26,68 @@
  * https://github.com/FreeRTOS
  *
  */
- 
-
- 
-#ifndef FREERTOS_MESSAGE_BUFFER_H
-#define FREERTOS_MESSAGE_BUFFER_H
-
- 
+#pragma once
 #include "stream_buffer.h"
- 
-#if defined(__cplusplus)
-extern "C" {
-#endif
- 
- 
+
 typedef StreamBufferHandle_t MessageBufferHandle_t;
 
- 
 #define xMessageBufferCreate(xBufferSizeBytes)              \
   xStreamBufferGenericCreate((xBufferSizeBytes), (size_t)0, \
                              sbTYPE_MESSAGE_BUFFER, NULL, NULL)
-#if (configUSE_SB_COMPLETED_CALLBACK == 1)
-#define xMessageBufferCreateWithCallback(                                      \
-    xBufferSizeBytes, pxSendCompletedCallback, pxReceiveCompletedCallback)     \
-  xStreamBufferGenericCreate((xBufferSizeBytes), (size_t)0,                    \
-                             sbTYPE_MESSAGE_BUFFER, (pxSendCompletedCallback), \
-                             (pxReceiveCompletedCallback))
-#endif
- 
+
 #define xMessageBufferCreateStatic(                                      \
     xBufferSizeBytes, pucMessageBufferStorageArea, pStaticMessageBuffer) \
   xStreamBufferGenericCreateStatic(                                      \
       (xBufferSizeBytes), 0, sbTYPE_MESSAGE_BUFFER,                      \
       (pucMessageBufferStorageArea), (pStaticMessageBuffer), NULL, NULL)
-#if (configUSE_SB_COMPLETED_CALLBACK == 1)
-#define xMessageBufferCreateStaticWithCallback(                          \
-    xBufferSizeBytes, pucMessageBufferStorageArea, pStaticMessageBuffer, \
-    pxSendCompletedCallback, pxReceiveCompletedCallback)                 \
-  xStreamBufferGenericCreateStatic(                                      \
-      (xBufferSizeBytes), 0, sbTYPE_MESSAGE_BUFFER,                      \
-      (pucMessageBufferStorageArea), (pStaticMessageBuffer),             \
-      (pxSendCompletedCallback), (pxReceiveCompletedCallback))
-#endif
- 
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
-#define xMessageBufferGetStaticBuffers(                                  \
-    xMessageBuffer, ppucMessageBufferStorageArea, ppStaticMessageBuffer) \
-  xStreamBufferGetStaticBuffers((xMessageBuffer),                        \
-                                (ppucMessageBufferStorageArea),          \
-                                (ppStaticMessageBuffer))
-#endif  
- 
+
 #define xMessageBufferSend(xMessageBuffer, pvTxData, xDataLengthBytes, \
                            xTicksToWait)                               \
   xStreamBufferSend((xMessageBuffer), (pvTxData), (xDataLengthBytes),  \
                     (xTicksToWait))
- 
+
 #define xMessageBufferSendFromISR(xMessageBuffer, pvTxData, xDataLengthBytes, \
-                                  pxHigherPriorityTaskWoken)                  \
+                                  HigherPriorityTaskWoken)                  \
   xStreamBufferSendFromISR((xMessageBuffer), (pvTxData), (xDataLengthBytes),  \
-                           (pxHigherPriorityTaskWoken))
- 
+                           (HigherPriorityTaskWoken))
+
 #define xMessageBufferReceive(xMessageBuffer, pvRxData, xBufferLengthBytes, \
                               xTicksToWait)                                 \
   xStreamBufferReceive((xMessageBuffer), (pvRxData), (xBufferLengthBytes),  \
                        (xTicksToWait))
 
- 
 #define xMessageBufferReceiveFromISR(                                        \
-    xMessageBuffer, pvRxData, xBufferLengthBytes, pxHigherPriorityTaskWoken) \
+    xMessageBuffer, pvRxData, xBufferLengthBytes, HigherPriorityTaskWoken) \
   xStreamBufferReceiveFromISR((xMessageBuffer), (pvRxData),                  \
                               (xBufferLengthBytes),                          \
-                              (pxHigherPriorityTaskWoken))
- 
+                              (HigherPriorityTaskWoken))
+
 #define vMessageBufferDelete(xMessageBuffer) vStreamBufferDelete(xMessageBuffer)
- 
+
 #define xMessageBufferIsFull(xMessageBuffer) xStreamBufferIsFull(xMessageBuffer)
- 
+
 #define xMessageBufferIsEmpty(xMessageBuffer) \
   xStreamBufferIsEmpty(xMessageBuffer)
- 
+
 #define xMessageBufferReset(xMessageBuffer) xStreamBufferReset(xMessageBuffer)
 
- 
 #define xMessageBufferResetFromISR(xMessageBuffer) \
   xStreamBufferResetFromISR(xMessageBuffer)
- 
+
 #define xMessageBufferSpaceAvailable(xMessageBuffer) \
   xStreamBufferSpacesAvailable(xMessageBuffer)
 #define xMessageBufferSpacesAvailable(xMessageBuffer) \
-  xStreamBufferSpacesAvailable(                       \
-      xMessageBuffer)  
- 
+  xStreamBufferSpacesAvailable(xMessageBuffer)
+
 #define xMessageBufferNextLengthBytes(xMessageBuffer) \
   xStreamBufferNextMessageLengthBytes(xMessageBuffer)
- 
+
 #define xMessageBufferSendCompletedFromISR(xMessageBuffer,            \
-                                           pxHigherPriorityTaskWoken) \
+                                           HigherPriorityTaskWoken) \
   xStreamBufferSendCompletedFromISR((xMessageBuffer),                 \
-                                    (pxHigherPriorityTaskWoken))
- 
+                                    (HigherPriorityTaskWoken))
+
 #define xMessageBufferReceiveCompletedFromISR(xMessageBuffer,            \
-                                              pxHigherPriorityTaskWoken) \
+                                              HigherPriorityTaskWoken) \
   xStreamBufferReceiveCompletedFromISR((xMessageBuffer),                 \
-                                       (pxHigherPriorityTaskWoken))
- 
-#if defined(__cplusplus)
-}  
-#endif
- 
-#endif  
+                                       (HigherPriorityTaskWoken))

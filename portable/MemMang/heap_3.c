@@ -51,7 +51,7 @@
 void * pvPortMalloc( size_t xWantedSize )
 {
     void * pvReturn;
-    vTaskSuspendAll();
+    TaskSuspendAll();
     {
         pvReturn = malloc( xWantedSize );
         traceMALLOC( pvReturn, xWantedSize );
@@ -61,7 +61,7 @@ void * pvPortMalloc( size_t xWantedSize )
     {
         if( pvReturn == NULL )
         {
-            vApplicationMallocFailedHook();
+            ApplicationMallocFailedHook();
         }
     }
     #endif
@@ -72,7 +72,7 @@ void vPortFree( void * pv )
 {
     if( pv != NULL )
     {
-        vTaskSuspendAll();
+        TaskSuspendAll();
         {
             free( pv );
             traceFREE( pv, 0 );

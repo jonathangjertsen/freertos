@@ -26,12 +26,8 @@
  * https://github.com/FreeRTOS
  *
  */
- 
- 
-#ifndef PORTABLE_H
-#define PORTABLE_H
- 
- 
+#pragma once
+#include "projdefs.h"
 #ifndef portENTER_CRITICAL
 #include "portmacro.h"
 #endif
@@ -47,9 +43,9 @@
 #define portBYTE_ALIGNMENT_MASK (0x0001)
 #elif portBYTE_ALIGNMENT == 1
 #define portBYTE_ALIGNMENT_MASK (0x0000)
-#else  
+#else
 #error "Invalid portBYTE_ALIGNMENT definition"
-#endif  
+#endif
 #ifndef portUSING_MPU_WRAPPERS
 #define portUSING_MPU_WRAPPERS 0
 #endif
@@ -66,90 +62,38 @@
 #define configSTACK_DEPTH_TYPE StackType_t
 #endif
 #ifndef configSTACK_ALLOCATION_FROM_SEPARATE_HEAP
- 
+
 #define configSTACK_ALLOCATION_FROM_SEPARATE_HEAP 0
 #endif
- 
-#ifdef __cplusplus
-extern "C" {
-#endif
- 
- 
-#if (portUSING_MPU_WRAPPERS == 1)
-#if (portHAS_STACK_OVERFLOW_CHECKING == 1)
-StackType_t* pxPortInitialiseStack(StackType_t* pxTopOfStack,
-                                   StackType_t* pxEndOfStack,
-                                   TaskFunction_t pxCode, void* pvParameters,
-                                   BaseType_t xRunPrivileged,
-                                   xMPU_SETTINGS* xMPUSettings);
-#else
-StackType_t* pxPortInitialiseStack(StackType_t* pxTopOfStack,
-                                   TaskFunction_t pxCode, void* pvParameters,
-                                   BaseType_t xRunPrivileged,
-                                   xMPU_SETTINGS* xMPUSettings);
-#endif  
-#else   
-#if (portHAS_STACK_OVERFLOW_CHECKING == 1)
-StackType_t* pxPortInitialiseStack(StackType_t* pxTopOfStack,
-                                   StackType_t* pxEndOfStack,
-                                   TaskFunction_t pxCode, void* pvParameters);
-#else
-StackType_t* pxPortInitialiseStack(StackType_t* pxTopOfStack,
-                                   TaskFunction_t pxCode, void* pvParameters);
-#endif
-#endif  
- 
+
+StackType_t* PortInitialiseStack(StackType_t* StackTop, TaskFunction_t Code,
+                                   void* Params);
+
 typedef struct HeapRegion {
   uint8_t* pucStartAddress;
   size_t xSizeInBytes;
 } HeapRegion_t;
- 
+
 typedef struct xHeapStats {
-  size_t
-      xAvailableHeapSpaceInBytes;  
-  size_t
-      xSizeOfLargestFreeBlockInBytes;  
-  size_t
-      xSizeOfSmallestFreeBlockInBytes;  
-  size_t
-      xNumberOfFreeBlocks;  
-  size_t
-      xMinimumEverFreeBytesRemaining;  
-  size_t xNumberOfSuccessfulAllocations;  
-  size_t
-      xNumberOfSuccessfulFrees;  
+  size_t xAvailableHeapSpaceInBytes;
+  size_t xSizeOfLargestFreeBlockInBytes;
+  size_t xSizeOfSmallestFreeBlockInBytes;
+  size_t xNumberOfFreeBlocks;
+  size_t xMinimumEverFreeBytesRemaining;
+  size_t xNumberOfSuccessfulAllocations;
+  size_t xNumberOfSuccessfulFrees;
 } HeapStats_t;
- 
-void vPortDefineHeapRegions(const HeapRegion_t* const pxHeapRegions);
- 
-void vPortGetHeapStats(HeapStats_t* pxHeapStats);
- 
+
+void vPortDefineHeapRegions(const HeapRegion_t* const HeapRegions);
+void vPortGetHeapStats(HeapStats_t* HeapStats);
 void* pvPortMalloc(size_t xWantedSize);
 void* pvPortCalloc(size_t xNum, size_t xSize);
 void vPortFree(void* pv);
 void vPortInitialiseBlocks(void);
 size_t xPortGetFreeHeapSize(void);
 size_t xPortGetMinimumEverFreeHeapSize(void);
-#if (configSTACK_ALLOCATION_FROM_SEPARATE_HEAP == 1)
-void* pvPortMallocStack(size_t xSize);
-void vPortFreeStack(void* pv);
-#else
 #define pvPortMallocStack pvPortMalloc
 #define vPortFreeStack vPortFree
-#endif
- 
 void vPortHeapResetState(void);
-#if (configUSE_MALLOC_FAILED_HOOK == 1)
- 
-void vApplicationMallocFailedHook(void);
-#endif
- 
 BaseType_t xPortStartScheduler(void);
- 
 void vPortEndScheduler(void);
- 
-#ifdef __cplusplus
-}
-#endif
- 
-#endif  

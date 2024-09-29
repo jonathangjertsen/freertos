@@ -85,7 +85,7 @@ void * pvPortMalloc( size_t xWantedSize )
         }
     }
     #endif /* if ( portBYTE_ALIGNMENT != 1 ) */
-    vTaskSuspendAll();
+    TaskSuspendAll();
     {
         if( pucAlignedHeap == NULL )
         {
@@ -110,7 +110,7 @@ void * pvPortMalloc( size_t xWantedSize )
     {
         if( pvReturn == NULL )
         {
-            vApplicationMallocFailedHook();
+            ApplicationMallocFailedHook();
         }
     }
     #endif

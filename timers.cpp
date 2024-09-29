@@ -26,8 +26,7 @@
  * https://github.com/FreeRTOS
  *
  */
- 
- 
+
 #include "timers.h"
 
 #include <stdbool.h>
@@ -37,96 +36,87 @@
 #include "queue.h"
 #include "task.hpp"
 
- 
 #define tmrNO_DELAY ((TickType_t)0U)
 #define tmrMAX_TIME_BEFORE_OVERFLOW ((TickType_t)-1)
- 
+
 #ifndef configTIMER_SERVICE_TASK_NAME
 #define configTIMER_SERVICE_TASK_NAME "Tmr Svc"
 #endif
- 
+
 #define tmrSTATUS_IS_ACTIVE (0x01U)
 #define tmrSTATUS_IS_STATICALLY_ALLOCATED (0x02U)
 #define tmrSTATUS_IS_AUTORELOAD (0x04U)
-struct Timer_t  
-{
-  const char *pcTimerName;  
-  Item_t<Timer_t> TimerListItem;  
-  TickType_t
-      TimerPeriodInTicks;  
-  void *pvTimerID;  
-  portTIMER_CALLBACK_ATTRIBUTE TimerCallbackFunction_t
-      pxCallbackFunction;  
-  uint8_t ucStatus;  
+struct Timer_t {
+  const char *pcTimerName;
+  Item_t<Timer_t> TimerListItem;
+  TickType_t TimerPeriodInTicks;
+  void *pvTimerID;
+  portTIMER_CALLBACK_ATTRIBUTE TimerCallbackFunction_t CallbackFunction;
+  uint8_t ucStatus;
 };
 
- 
 typedef struct tmrTimerParameters {
-  TickType_t
-      xMessageValue;  
-  Timer_t *pTimer;    
+  TickType_t xMessageValue;
+  Timer_t *pTimer;
 } TimerParameter_t;
 
 typedef struct tmrCallbackParameters {
-  portTIMER_CALLBACK_ATTRIBUTE PendedFunction_t
-      pxCallbackFunction;  
-  void *pvParameter1;      
-  uint32_t ulParameter2;   
+  portTIMER_CALLBACK_ATTRIBUTE PendedFunction_t CallbackFunction;
+  void *pvParameter1;
+  uint32_t ulParameter2;
 } CallbackParameters_t;
- 
+
 typedef struct tmrTimerQueueMessage {
-  BaseType_t
-      xMessageID;  
+  BaseType_t xMessageID;
   union {
     TimerParameter_t TimerParameters;
- 
+
 #if (INCLUDE_TimerPendFunctionCall == 1)
     CallbackParameters_t xCallbackParameters;
-#endif  
+#endif
   } u;
 } DaemonTaskMessage_t;
- 
+
 static List_t<Timer_t> ActiveTimerList1;
 static List_t<Timer_t> ActiveTimerList2;
 static List_t<Timer_t> *CurrentTimerList;
 static List_t<Timer_t> *OverflowTimerList;
- 
+
 static QueueHandle_t TimerQueue = NULL;
 static TaskHandle_t TimerTaskHandle = NULL;
 
- 
 static void CheckForValidListAndQueue(void);
- 
-static portTASK_FUNCTION_PROTO(TimerTask, pvParameters);
- 
+
+static portTASK_FUNCTION_PROTO(TimerTask, Params);
+
 static void ProcessReceivedCommands(void);
- 
+
 static BaseType_t InsertTimerInActiveList(Timer_t *const pTimer,
                                           const TickType_t xNextExpiryTime,
                                           const TickType_t TimeNow,
                                           const TickType_t xCommandTime);
- 
+
 static void ReloadTimer(Timer_t *const pTimer, TickType_t xExpiredTime,
                         const TickType_t TimeNow);
- 
+
 static void ProcessExpiredTimer(const TickType_t NextExpireTime,
                                 const TickType_t TimeNow);
- 
+
 static void SwitchTimerLists(void);
- 
+
 static TickType_t SampleTimeNow(BaseType_t *const TimerListsWereSwitched);
- 
+
 static TickType_t GetNextExpireTime(BaseType_t *const ListWasEmpty);
- 
+
 static void ProcessTimerOrBlockTask(const TickType_t NextExpireTime,
                                     BaseType_t ListWasEmpty);
- 
+
 static void InitialiseNewTimer(const char *const pcTimerName,
                                const TickType_t TimerPeriodInTicks,
                                const BaseType_t xAutoReload,
                                void *const pvTimerID,
-                               TimerCallbackFunction_t pxCallbackFunction,
-                               Timer_t *pxNewTimer);
+                               TimerCallbackFunction_t CallbackFunction,
+                               Timer_t *NewTimer);
 
 BaseType_t TimerCreateTimerTask(void) {
   BaseType_t Return = false;
@@ -137,7 +127,7 @@ BaseType_t TimerCreateTimerTask(void) {
     configSTACK_DEPTH_TYPE uTimerTaskStackSize;
     ApplicationGetTimerTaskMemory(&pTimerTaskTCBBuffer, &pTimerTaskStackBuffer,
                                   &uTimerTaskStackSize);
-    TimerTaskHandle = xTaskCreateStatic(
+    TimerTaskHandle = TaskCreateStatic(
         TimerTask, configTIMER_SERVICE_TASK_NAME, uTimerTaskStackSize, NULL,
         ((UBaseType_t)configTIMER_TASK_PRIORITY) | portPRIVILEGE_BIT,
         pTimerTaskStackBuffer, pTimerTaskTCBBuffer);
@@ -152,64 +142,64 @@ BaseType_t TimerCreateTimerTask(void) {
 TimerHandle_t TimerCreate(const char *const pcTimerName,
                           const TickType_t TimerPeriodInTicks,
                           const BaseType_t xAutoReload, void *const pvTimerID,
-                          TimerCallbackFunction_t pxCallbackFunction) {
-  Timer_t *pxNewTimer;
-  pxNewTimer = (Timer_t *)pvPortMalloc(sizeof(Timer_t));
-  if (pxNewTimer != NULL) {
-    pxNewTimer->ucStatus = 0x00;
+                          TimerCallbackFunction_t CallbackFunction) {
+  Timer_t *NewTimer;
+  NewTimer = (Timer_t *)pvPortMalloc(sizeof(Timer_t));
+  if (NewTimer != NULL) {
+    NewTimer->ucStatus = 0x00;
     InitialiseNewTimer(pcTimerName, TimerPeriodInTicks, xAutoReload, pvTimerID,
-                       pxCallbackFunction, pxNewTimer);
+                       CallbackFunction, NewTimer);
   }
 
-  return pxNewTimer;
+  return NewTimer;
 }
 
 TimerHandle_t TimerCreateStatic(const char *const pcTimerName,
                                 const TickType_t TimerPeriodInTicks,
                                 const BaseType_t xAutoReload,
                                 void *const pvTimerID,
-                                TimerCallbackFunction_t pxCallbackFunction,
+                                TimerCallbackFunction_t CallbackFunction,
                                 StaticTimer_t *pTimerBuffer) {
-  Timer_t *pxNewTimer;
+  Timer_t *NewTimer;
 
 #if (configASSERT_DEFINED == 1)
   { configASSERT(sizeof(StaticTimer_t) == sizeof(Timer_t)); }
-#endif  
+#endif
   configASSERT(pTimerBuffer);
-  pxNewTimer = (Timer_t *)pTimerBuffer;
-  if (pxNewTimer != NULL) {
-    pxNewTimer->ucStatus = (uint8_t)tmrSTATUS_IS_STATICALLY_ALLOCATED;
+  NewTimer = (Timer_t *)pTimerBuffer;
+  if (NewTimer != NULL) {
+    NewTimer->ucStatus = (uint8_t)tmrSTATUS_IS_STATICALLY_ALLOCATED;
     InitialiseNewTimer(pcTimerName, TimerPeriodInTicks, xAutoReload, pvTimerID,
-                       pxCallbackFunction, pxNewTimer);
+                       CallbackFunction, NewTimer);
   }
-  return pxNewTimer;
+  return NewTimer;
 }
 
 static void InitialiseNewTimer(const char *const pcTimerName,
                                const TickType_t TimerPeriodInTicks,
                                const BaseType_t xAutoReload,
                                void *const pvTimerID,
-                               TimerCallbackFunction_t pxCallbackFunction,
-                               Timer_t *pxNewTimer) {
+                               TimerCallbackFunction_t CallbackFunction,
+                               Timer_t *NewTimer) {
   configASSERT((TimerPeriodInTicks > 0));
   CheckForValidListAndQueue();
-  pxNewTimer->pcTimerName = pcTimerName;
-  pxNewTimer->TimerPeriodInTicks = TimerPeriodInTicks;
-  pxNewTimer->pvTimerID = pvTimerID;
-  pxNewTimer->pxCallbackFunction = pxCallbackFunction;
-  pxNewTimer->TimerListItem.init();
+  NewTimer->pcTimerName = pcTimerName;
+  NewTimer->TimerPeriodInTicks = TimerPeriodInTicks;
+  NewTimer->pvTimerID = pvTimerID;
+  NewTimer->CallbackFunction = CallbackFunction;
+  NewTimer->TimerListItem.init();
   if (xAutoReload != false) {
-    pxNewTimer->ucStatus |= (uint8_t)tmrSTATUS_IS_AUTORELOAD;
+    NewTimer->ucStatus |= (uint8_t)tmrSTATUS_IS_AUTORELOAD;
   }
 }
 
 BaseType_t TimerGenericCommandFromTask(
     TimerHandle_t Timer, const BaseType_t xCommandID,
     const TickType_t xOptionalValue,
-    BaseType_t *const pxHigherPriorityTaskWoken,
+    BaseType_t *const HigherPriorityTaskWoken,
     const TickType_t xTicksToWait) {
   DaemonTaskMessage_t xMessage;
-  (void)pxHigherPriorityTaskWoken;
+  (void)HigherPriorityTaskWoken;
   configASSERT(Timer);
   if (TimerQueue == NULL) {
     return false;
@@ -220,7 +210,7 @@ BaseType_t TimerGenericCommandFromTask(
   configASSERT(xCommandID < tmrFIRST_FROM_ISR_COMMAND);
   if (xCommandID < tmrFIRST_FROM_ISR_COMMAND) {
     return xQueueSendToBack(TimerQueue, &xMessage,
-                            xTaskGetSchedulerState() == taskSCHEDULER_RUNNING
+                            TaskGetSchedulerState() == taskSCHEDULER_RUNNING
                                 ? xTicksToWait
                                 : tmrNO_DELAY);
   }
@@ -230,7 +220,7 @@ BaseType_t TimerGenericCommandFromTask(
 BaseType_t TimerGenericCommandFromISR(
     TimerHandle_t Timer, const BaseType_t xCommandID,
     const TickType_t xOptionalValue,
-    BaseType_t *const pxHigherPriorityTaskWoken,
+    BaseType_t *const HigherPriorityTaskWoken,
     const TickType_t xTicksToWait) {
   DaemonTaskMessage_t xMessage;
   (void)xTicksToWait;
@@ -244,7 +234,7 @@ BaseType_t TimerGenericCommandFromISR(
   configASSERT(xCommandID >= tmrFIRST_FROM_ISR_COMMAND);
   if (xCommandID >= tmrFIRST_FROM_ISR_COMMAND) {
     return xQueueSendToBackFromISR(TimerQueue, &xMessage,
-                                   pxHigherPriorityTaskWoken);
+                                   HigherPriorityTaskWoken);
   }
   return false;
 }
@@ -323,7 +313,7 @@ static void ReloadTimer(Timer_t *const pTimer, TickType_t xExpiredTime,
                                  (xExpiredTime + pTimer->TimerPeriodInTicks),
                                  TimeNow, xExpiredTime) != false) {
     xExpiredTime += pTimer->TimerPeriodInTicks;
-    pTimer->pxCallbackFunction((TimerHandle_t)pTimer);
+    pTimer->CallbackFunction((TimerHandle_t)pTimer);
   }
 }
 
@@ -336,13 +326,13 @@ static void ProcessExpiredTimer(const TickType_t NextExpireTime,
   } else {
     pTimer->ucStatus &= ((uint8_t)~tmrSTATUS_IS_ACTIVE);
   }
-  pTimer->pxCallbackFunction((TimerHandle_t)pTimer);
+  pTimer->CallbackFunction((TimerHandle_t)pTimer);
 }
 
-static portTASK_FUNCTION(TimerTask, pvParameters) {
+static portTASK_FUNCTION(TimerTask, Params) {
   TickType_t NextExpireTime;
   BaseType_t ListWasEmpty;
-  (void)pvParameters;
+  (void)Params;
   for (; configCONTROL_INFINITE_LOOP();) {
     NextExpireTime = GetNextExpireTime(&ListWasEmpty);
     ProcessTimerOrBlockTask(NextExpireTime, ListWasEmpty);
@@ -354,7 +344,7 @@ static void ProcessTimerOrBlockTask(const TickType_t NextExpireTime,
                                     BaseType_t ListWasEmpty) {
   TickType_t TimeNow;
   BaseType_t TimerListsWereSwitched;
-  vTaskSuspendAll();
+  TaskSuspendAll();
   TimeNow = SampleTimeNow(&TimerListsWereSwitched);
   if (TimerListsWereSwitched) {
     TaskResumeAll();
@@ -405,7 +395,6 @@ static BaseType_t InsertTimerInActiveList(Timer_t *const pTimer,
     }
   } else {
     if ((TimeNow < xCommandTime) && (xNextExpiryTime >= xCommandTime)) {
-       
       xProcessTimerNow = true;
     } else {
       CurrentTimerList->insert(&(pTimer->TimerListItem));
@@ -421,11 +410,11 @@ static void ProcessReceivedCommands(void) {
   TickType_t TimeNow;
   while (xQueueReceive(TimerQueue, &xMessage, tmrNO_DELAY) != false) {
     if (xMessage.xMessageID < (BaseType_t)0) {
-      const CallbackParameters_t *const pxCallback =
+      const CallbackParameters_t *const Callback =
           &(xMessage.u.xCallbackParameters);
-      configASSERT(pxCallback);
-      pxCallback->pxCallbackFunction(pxCallback->pvParameter1,
-                                     pxCallback->ulParameter2);
+      configASSERT(Callback);
+      Callback->CallbackFunction(Callback->pvParameter1,
+                                     Callback->ulParameter2);
     }
     if (xMessage.xMessageID >= (BaseType_t)0) {
       pTimer = xMessage.u.TimerParameters.pTimer;
@@ -452,12 +441,12 @@ static void ProcessReceivedCommands(void) {
             } else {
               pTimer->ucStatus &= ((uint8_t)~tmrSTATUS_IS_ACTIVE);
             }
-            pTimer->pxCallbackFunction((TimerHandle_t)pTimer);
+            pTimer->CallbackFunction((TimerHandle_t)pTimer);
           }
           break;
         case tmrCOMMAND_STOP:
         case tmrCOMMAND_STOP_FROM_ISR:
-           
+
           pTimer->ucStatus &= ((uint8_t)~tmrSTATUS_IS_ACTIVE);
           break;
         case tmrCOMMAND_CHANGE_PERIOD:
@@ -539,13 +528,13 @@ void SetTimerID(TimerHandle_t Timer, void *pvNewID) {
 BaseType_t TimerPendFunctionCallFromISR(PendedFunction_t xFunctionToPend,
                                         void *pvParameter1,
                                         uint32_t ulParameter2,
-                                        BaseType_t *pxHigherPriorityTaskWoken) {
+                                        BaseType_t *HigherPriorityTaskWoken) {
   DaemonTaskMessage_t xMessage;
   xMessage.xMessageID = tmrCOMMAND_EXECUTE_CALLBACK_FROM_ISR;
-  xMessage.u.xCallbackParameters.pxCallbackFunction = xFunctionToPend;
+  xMessage.u.xCallbackParameters.CallbackFunction = xFunctionToPend;
   xMessage.u.xCallbackParameters.pvParameter1 = pvParameter1;
   xMessage.u.xCallbackParameters.ulParameter2 = ulParameter2;
-  return xQueueSendFromISR(TimerQueue, &xMessage, pxHigherPriorityTaskWoken);
+  return xQueueSendFromISR(TimerQueue, &xMessage, HigherPriorityTaskWoken);
 }
 
 BaseType_t TimerPendFunctionCall(PendedFunction_t xFunctionToPend,
@@ -554,7 +543,7 @@ BaseType_t TimerPendFunctionCall(PendedFunction_t xFunctionToPend,
   DaemonTaskMessage_t xMessage;
   configASSERT(TimerQueue);
   xMessage.xMessageID = tmrCOMMAND_EXECUTE_CALLBACK;
-  xMessage.u.xCallbackParameters.pxCallbackFunction = xFunctionToPend;
+  xMessage.u.xCallbackParameters.CallbackFunction = xFunctionToPend;
   xMessage.u.xCallbackParameters.pvParameter1 = pvParameter1;
   xMessage.u.xCallbackParameters.ulParameter2 = ulParameter2;
   return xQueueSendToBack(TimerQueue, &xMessage, xTicksToWait);

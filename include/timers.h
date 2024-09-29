@@ -53,22 +53,22 @@ typedef void (*PendedFunction_t)(void* arg1, uint32_t arg2);
 TimerHandle_t TimerCreate(const char* const pcTimerName,
                           const TickType_t TimerPeriodInTicks,
                           const BaseType_t xAutoReload, void* const pvTimerID,
-                          TimerCallbackFunction_t pxCallbackFunction);
+                          TimerCallbackFunction_t CallbackFunction);
 #endif
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 TimerHandle_t TimerCreateStatic(const char* const pcTimerName,
                                 const TickType_t TimerPeriodInTicks,
                                 const BaseType_t xAutoReload,
                                 void* const pvTimerID,
-                                TimerCallbackFunction_t pxCallbackFunction,
+                                TimerCallbackFunction_t CallbackFunction,
                                 StaticTimer_t* pTimerBuffer);
 #endif
 void* pvTimerGetTimerID(const TimerHandle_t Timer);
 void SetTimerID(TimerHandle_t Timer, void* pvNewID);
 BaseType_t TimerIsTimerActive(TimerHandle_t Timer);
 TaskHandle_t TimerGetTimerDaemonTaskHandle(void);
-#define TimerStart(Timer, xTicksToWait)                                       \
-  TimerGenericCommand((Timer), tmrCOMMAND_START, (xTaskGetTickCount()), NULL, \
+#define TimerStart(Timer, xTicksToWait)                                      \
+  TimerGenericCommand((Timer), tmrCOMMAND_START, (TaskGetTickCount()), NULL, \
                       (xTicksToWait))
 #define TimerStop(Timer, xTicksToWait) \
   TimerGenericCommand((Timer), tmrCOMMAND_STOP, 0U, NULL, (xTicksToWait))
@@ -77,27 +77,27 @@ TaskHandle_t TimerGetTimerDaemonTaskHandle(void);
                       (xTicksToWait))
 #define TimerDelete(Timer, xTicksToWait) \
   TimerGenericCommand((Timer), tmrCOMMAND_DELETE, 0U, NULL, (xTicksToWait))
-#define TimerReset(Timer, xTicksToWait)                                       \
-  TimerGenericCommand((Timer), tmrCOMMAND_RESET, (xTaskGetTickCount()), NULL, \
+#define TimerReset(Timer, xTicksToWait)                                      \
+  TimerGenericCommand((Timer), tmrCOMMAND_RESET, (TaskGetTickCount()), NULL, \
                       (xTicksToWait))
-#define TimerStartFromISR(Timer, pxHigherPriorityTaskWoken) \
+#define TimerStartFromISR(Timer, HigherPriorityTaskWoken) \
   TimerGenericCommand((Timer), tmrCOMMAND_START_FROM_ISR,   \
-                      (xTaskGetTickCountFromISR()),         \
-                      (pxHigherPriorityTaskWoken), 0U)
-#define TimerStopFromISR(Timer, pxHigherPriorityTaskWoken)  \
+                      (TaskGetTickCountFromISR()),          \
+                      (HigherPriorityTaskWoken), 0U)
+#define TimerStopFromISR(Timer, HigherPriorityTaskWoken)  \
   TimerGenericCommand((Timer), tmrCOMMAND_STOP_FROM_ISR, 0, \
-                      (pxHigherPriorityTaskWoken), 0U)
-#define TimerChangePeriodFromISR(Timer, xNewPeriod, pxHigherPriorityTaskWoken) \
+                      (HigherPriorityTaskWoken), 0U)
+#define TimerChangePeriodFromISR(Timer, xNewPeriod, HigherPriorityTaskWoken) \
   TimerGenericCommand((Timer), tmrCOMMAND_CHANGE_PERIOD_FROM_ISR,              \
-                      (xNewPeriod), (pxHigherPriorityTaskWoken), 0U)
-#define TimerResetFromISR(Timer, pxHigherPriorityTaskWoken) \
+                      (xNewPeriod), (HigherPriorityTaskWoken), 0U)
+#define TimerResetFromISR(Timer, HigherPriorityTaskWoken) \
   TimerGenericCommand((Timer), tmrCOMMAND_RESET_FROM_ISR,   \
-                      (xTaskGetTickCountFromISR()),         \
-                      (pxHigherPriorityTaskWoken), 0U)
+                      (TaskGetTickCountFromISR()),          \
+                      (HigherPriorityTaskWoken), 0U)
 BaseType_t TimerPendFunctionCallFromISR(PendedFunction_t xFunctionToPend,
                                         void* pvParameter1,
                                         uint32_t ulParameter2,
-                                        BaseType_t* pxHigherPriorityTaskWoken);
+                                        BaseType_t* HigherPriorityTaskWoken);
 BaseType_t TimerPendFunctionCall(PendedFunction_t xFunctionToPend,
                                  void* pvParameter1, uint32_t ulParameter2,
                                  TickType_t xTicksToWait);
@@ -113,18 +113,18 @@ BaseType_t TimerCreateTimerTask(void);
 BaseType_t TimerGenericCommandFromTask(
     TimerHandle_t Timer, const BaseType_t xCommandID,
     const TickType_t xOptionalValue,
-    BaseType_t* const pxHigherPriorityTaskWoken, const TickType_t xTicksToWait);
+    BaseType_t* const HigherPriorityTaskWoken, const TickType_t xTicksToWait);
 BaseType_t TimerGenericCommandFromISR(
     TimerHandle_t Timer, const BaseType_t xCommandID,
     const TickType_t xOptionalValue,
-    BaseType_t* const pxHigherPriorityTaskWoken, const TickType_t xTicksToWait);
+    BaseType_t* const HigherPriorityTaskWoken, const TickType_t xTicksToWait);
 #define TimerGenericCommand(Timer, xCommandID, xOptionalValue,                \
-                            pxHigherPriorityTaskWoken, xTicksToWait)          \
+                            HigherPriorityTaskWoken, xTicksToWait)          \
   ((xCommandID) < tmrFIRST_FROM_ISR_COMMAND                                   \
        ? TimerGenericCommandFromTask(Timer, xCommandID, xOptionalValue,       \
-                                     pxHigherPriorityTaskWoken, xTicksToWait) \
+                                     HigherPriorityTaskWoken, xTicksToWait) \
        : TimerGenericCommandFromISR(Timer, xCommandID, xOptionalValue,        \
-                                    pxHigherPriorityTaskWoken, xTicksToWait))
+                                    HigherPriorityTaskWoken, xTicksToWait))
 void ApplicationGetTimerTaskMemory(
     StaticTask_t** ppTimerTaskTCBBuffer, StackType_t** ppTimerTaskStackBuffer,
     configSTACK_DEPTH_TYPE* puTimerTaskStackSize);

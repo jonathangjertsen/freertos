@@ -25,8 +25,7 @@
  * https://github.com/FreeRTOS
  *
  */
-#ifndef PORTMACRO_H
-#define PORTMACRO_H
+#pragma once
 #ifdef WIN32_LEAN_AND_MEAN
     #include <winsock2.h>
 #else
@@ -36,9 +35,8 @@
 #include <timeapi.h>
 #include <mmsystem.h>
 #include <winbase.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdint.h>
+
 /******************************************************************************
 *   Defines
 ******************************************************************************/
@@ -99,11 +97,11 @@ extern volatile BaseType_t xInsideInterrupt;
  * or a non-zero number if a context switch should be performed. */
 #define portYIELD_FROM_ISR( x )       ( void ) x
 #define portEND_SWITCHING_ISR( x )    portYIELD_FROM_ISR( ( x ) )
-void vPortCloseRunningThread( void * pvTaskToDelete,
-                              volatile BaseType_t * pxPendYield );
+void vPortCloseRunningThread( void * TaskToDelete,
+                              volatile BaseType_t * PendYield );
 void vPortDeleteThread( void * pvThreadToDelete );
-#define portCLEAN_UP_TCB( pxTCB )                                  vPortDeleteThread( pxTCB )
-#define portPRE_TASK_DELETE_HOOK( pvTaskToDelete, pxPendYield )    vPortCloseRunningThread( ( pvTaskToDelete ), ( pxPendYield ) )
+#define portCLEAN_UP_TCB( TCB )                                  vPortDeleteThread( TCB )
+#define portPRE_TASK_DELETE_HOOK( TaskToDelete, PendYield )    vPortCloseRunningThread( ( TaskToDelete ), ( PendYield ) )
 #define portDISABLE_INTERRUPTS()                                   vPortEnterCritical()
 #define portENABLE_INTERRUPTS()                                    vPortExitCritical()
 /* Critical section handling. */
@@ -121,8 +119,8 @@ void vPortExitCritical( void );
         #error configUSE_PORT_OPTIMISED_TASK_SELECTION can only be set to 1 when configMAX_PRIORITIES is less than or equal to 32.  It is very rare that a system requires more than 10 to 15 difference priorities as tasks that share a priority will time slice.
     #endif
     /* Store/clear the ready priorities in a bit map. */
-    #define portRECORD_READY_PRIORITY( uxPriority, uxReadyPriorities )    ( uxReadyPriorities ) |= ( ( ( UBaseType_t ) 1 ) << ( uxPriority ) )
-    #define portRESET_READY_PRIORITY( uxPriority, uxReadyPriorities )     ( uxReadyPriorities ) &= ~( ( ( UBaseType_t ) 1 ) << ( uxPriority ) )
+    #define portRECORD_READY_PRIORITY( Priority, uxReadyPriorities )    ( uxReadyPriorities ) |= ( ( ( UBaseType_t ) 1 ) << ( Priority ) )
+    #define portRESET_READY_PRIORITY( Priority, uxReadyPriorities )     ( uxReadyPriorities ) &= ~( ( ( UBaseType_t ) 1 ) << ( Priority ) )
     #ifdef __GNUC__
         #define portGET_HIGHEST_PRIORITY( uxTopPriority, uxReadyPriorities )    \
         __asm volatile ( "bsr %1, %0\n\t"                                       \
@@ -150,8 +148,8 @@ void vPortExitCritical( void );
 #endif
 
 /* Task function macros as described on the FreeRTOS.org WEB site. */
-#define portTASK_FUNCTION_PROTO( vFunction, pvParameters )    void vFunction( void * pvParameters )
-#define portTASK_FUNCTION( vFunction, pvParameters )          void vFunction( void * pvParameters )
+#define portTASK_FUNCTION_PROTO( vFunction, Params )    void vFunction( void * Params )
+#define portTASK_FUNCTION( vFunction, Params )          void vFunction( void * Params )
 #define portINTERRUPT_YIELD                        ( 0UL )
 #define portINTERRUPT_TICK                         ( 1UL )
 #define portINTERRUPT_APPLICATION_DEFINED_START    ( 2UL )
@@ -179,7 +177,3 @@ void vPortGenerateSimulatedInterruptFromWindowsThread( uint32_t ulInterruptNumbe
  */
 void vPortSetInterruptHandler( uint32_t ulInterruptNumber,
                                uint32_t ( * pvHandler )( void ) );
-#ifdef __cplusplus
-}
-#endif
-#endif /* ifndef PORTMACRO_H */

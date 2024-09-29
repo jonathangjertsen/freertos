@@ -30,14 +30,14 @@
 #define INCLUDE_TimerPendFunctionCall 1
 #define configUSE_TASK_PREEMPTION_DISABLE 0
 #define portCRITICAL_NESTING_IN_TCB 1
-#define INCLUDE_vTaskSuspend 1
-#define INCLUDE_vTaskPrioritySet 1
+#define INCLUDE_TaskSuspend 1
+#define INCLUDE_TaskPrioritySet 1
 #define configUSE_MUTEXES 1
-#define INCLUDE_uxTaskPriorityGet 1
+#define INCLUDE_TaskPriorityGet 1
 #define configKERNEL_PROVIDED_STATIC_MEMORY 1
-#define INCLUDE_xTaskAbortDelay 1
+#define INCLUDE_TaskAbortDelay 1
 #define configUSE_QUEUE_SETS 1
-#define INCLUDE_xTaskDelayUntil 1
+#define INCLUDE_TaskDelayUntil 1
 
 void freertos_config_assert_handler(const char* func, size_t line, const char *msg);
 #define configASSERT( x ) \
@@ -45,8 +45,8 @@ void freertos_config_assert_handler(const char* func, size_t line, const char *m
         freertos_config_assert_handler(__FUNCTION__, __LINE__, "Assertion failed: " #x); \
     }
 
-#define INCLUDE_vTaskDelete 1
-#define INCLUDE_xTaskGetSchedulerState 1
+#define INCLUDE_TaskDelete 1
+#define INCLUDE_TaskGetSchedulerState 1
 
 #define pvPortMalloc malloc
 #define vPortFree free
