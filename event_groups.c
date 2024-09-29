@@ -63,7 +63,7 @@ typedef struct EventGroupDef_t
 * wait condition is met if any of the bits set in uxBitsToWait for are also set
 * in uxCurrentEventBits.
 */
-static BaseType_t prvTestWaitCondition( const EventBits_t uxCurrentEventBits,
+static BaseType_t TestWaitCondition( const EventBits_t uxCurrentEventBits,
                                         const EventBits_t uxBitsToWaitFor,
                                         const BaseType_t xWaitForAllBits ) PRIVILEGED_FUNCTION;
 
@@ -235,7 +235,7 @@ EventBits_t xEventGroupWaitBits( EventGroupHandle_t xEventGroup,
     {
         const EventBits_t uxCurrentEventBits = pxEventBits->uxEventBits;
         /* Check to see if the wait condition is already met or not. */
-        xWaitConditionMet = prvTestWaitCondition( uxCurrentEventBits, uxBitsToWaitFor, xWaitForAllBits );
+        xWaitConditionMet = TestWaitCondition( uxCurrentEventBits, uxBitsToWaitFor, xWaitForAllBits );
         if( xWaitConditionMet != false )
         {
             /* The wait condition has already been met so there is no need to
@@ -299,7 +299,7 @@ EventBits_t xEventGroupWaitBits( EventGroupHandle_t xEventGroup,
                 uxReturn = pxEventBits->uxEventBits;
                 /* It is possible that the event bits were updated between this
                     * task leaving the Blocked state and running again. */
-                if( prvTestWaitCondition( uxReturn, uxBitsToWaitFor, xWaitForAllBits ) != false )
+                if( TestWaitCondition( uxReturn, uxBitsToWaitFor, xWaitForAllBits ) != false )
                 {
                     if( xClearOnExit != false )
                     {
@@ -501,7 +501,7 @@ void vEventGroupClearBitsCallback( void * pvEventGroup,
     ( void ) xEventGroupClearBits( pvEventGroup, ( EventBits_t ) ulBitsToClear );
 }
 
-static BaseType_t prvTestWaitCondition( const EventBits_t uxCurrentEventBits,
+static BaseType_t TestWaitCondition( const EventBits_t uxCurrentEventBits,
                                         const EventBits_t uxBitsToWaitFor,
                                         const BaseType_t xWaitForAllBits )
 {

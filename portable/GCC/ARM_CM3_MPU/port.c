@@ -120,13 +120,13 @@ typedef void ( * portISR_t )( void );
 /*
  * Configure a number of standard MPU regions that are used by all tasks.
  */
-static void prvSetupMPU( void ) PRIVILEGED_FUNCTION;
+static void SetupMPU( void ) PRIVILEGED_FUNCTION;
 /*
  * Return the smallest MPU region size that a given number of bytes will fit
  * into.  The region size is returned as the value that should be programmed
  * into the region attribute register for that region.
  */
-static uint32_t prvGetMPURegionSizeSetting( uint32_t ulActualSizeInBytes ) PRIVILEGED_FUNCTION;
+static uint32_t GetMPURegionSizeSetting( uint32_t ulActualSizeInBytes ) PRIVILEGED_FUNCTION;
 /*
  * Setup the timer to generate the tick interrupts.  The implementation in this
  * file is weak to allow application writers to change the timer used to
@@ -142,7 +142,7 @@ void vPortSVCHandler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
 /*
  * Starts the scheduler by restoring the context of the first task to run.
  */
-static void prvRestoreContextOfFirstTask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+static void RestoreContextOfFirstTask( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
 /*
  * C portion of the SVC handler.  The SVC handler is split between an asm entry
  * and a C wrapper for simplicity of coding and maintenance.
@@ -358,7 +358,7 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
     switch( ucSVCNumber )
     {
         case portSVC_START_SCHEDULER:
-            prvRestoreContextOfFirstTask();
+            RestoreContextOfFirstTask();
             break;
         case portSVC_YIELD:
             portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;
@@ -580,7 +580,7 @@ BaseType_t xPortIsTaskPrivileged( void ) /* PRIVILEGED_FUNCTION */
     return xTaskIsPrivileged;
 }
 
-static void prvRestoreContextOfFirstTask( void )
+static void RestoreContextOfFirstTask( void )
 {
     __asm volatile
     (
@@ -746,7 +746,7 @@ BaseType_t xPortStartScheduler( void )
     portNVIC_SHPR2_REG = 0;
 
     /* Configure the regions in the MPU that are common to all tasks. */
-    prvSetupMPU();
+    SetupMPU();
     /* Start the timer that generates the tick ISR.  Interrupts are disabled
      * here already. */
     vPortSetupTimerInterrupt();
@@ -945,7 +945,7 @@ __attribute__( ( weak ) ) void vPortSetupTimerInterrupt( void )
     portNVIC_SYSTICK_CTRL_REG = ( portNVIC_SYSTICK_CLK | portNVIC_SYSTICK_INT | portNVIC_SYSTICK_ENABLE );
 }
 
-static void prvSetupMPU( void )
+static void SetupMPU( void )
 {
     #if defined( __ARMCC_VERSION )
         /* Declaration when these variable are defined in code instead of being
@@ -976,7 +976,7 @@ static void prvSetupMPU( void )
                                           ( portUNPRIVILEGED_FLASH_REGION );
         portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_ONLY ) |
                                        ( portMPU_REGION_CACHEABLE_BUFFERABLE ) |
-                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
+                                       ( GetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
                                        ( portMPU_REGION_ENABLE );
         /* Setup the privileged flash for privileged only access.  This is where
          * the kernel code is * placed. */
@@ -985,7 +985,7 @@ static void prvSetupMPU( void )
                                           ( portPRIVILEGED_FLASH_REGION );
         portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_PRIVILEGED_READ_ONLY ) |
                                        ( portMPU_REGION_CACHEABLE_BUFFERABLE ) |
-                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __privileged_functions_end__ - ( uint32_t ) __privileged_functions_start__ ) ) |
+                                       ( GetMPURegionSizeSetting( ( uint32_t ) __privileged_functions_end__ - ( uint32_t ) __privileged_functions_start__ ) ) |
                                        ( portMPU_REGION_ENABLE );
         /* Setup the privileged data RAM region.  This is where the kernel data
          * is placed. */
@@ -995,7 +995,7 @@ static void prvSetupMPU( void )
         portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_PRIVILEGED_READ_WRITE ) |
                                        ( portMPU_REGION_CACHEABLE_BUFFERABLE ) |
                                        ( portMPU_REGION_EXECUTE_NEVER ) |
-                                       prvGetMPURegionSizeSetting( ( uint32_t ) __privileged_data_end__ - ( uint32_t ) __privileged_data_start__ ) |
+                                       GetMPURegionSizeSetting( ( uint32_t ) __privileged_data_end__ - ( uint32_t ) __privileged_data_start__ ) |
                                        ( portMPU_REGION_ENABLE );
         /* By default allow everything to access the general peripherals.  The
          * system peripherals and registers are protected. */
@@ -1003,7 +1003,7 @@ static void prvSetupMPU( void )
                                           ( portMPU_REGION_VALID ) |
                                           ( portGENERAL_PERIPHERALS_REGION );
         portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER ) |
-                                       ( prvGetMPURegionSizeSetting( portPERIPHERALS_END_ADDRESS - portPERIPHERALS_START_ADDRESS ) ) |
+                                       ( GetMPURegionSizeSetting( portPERIPHERALS_END_ADDRESS - portPERIPHERALS_START_ADDRESS ) ) |
                                        ( portMPU_REGION_ENABLE );
         /* Enable the memory fault exception. */
         portNVIC_SYS_CTRL_STATE_REG |= portNVIC_MEM_FAULT_ENABLE;
@@ -1012,7 +1012,7 @@ static void prvSetupMPU( void )
     }
 }
 
-static uint32_t prvGetMPURegionSizeSetting( uint32_t ulActualSizeInBytes )
+static uint32_t GetMPURegionSizeSetting( uint32_t ulActualSizeInBytes )
 {
     uint32_t ulRegionSize, ulReturnValue = 4;
     /* 32 is the smallest region size, 31 is the largest valid value for
@@ -1101,7 +1101,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
             ( portMPU_REGION_READ_WRITE ) |
             ( portMPU_REGION_CACHEABLE_BUFFERABLE ) |
             ( portMPU_REGION_EXECUTE_NEVER ) |
-            ( prvGetMPURegionSizeSetting( ( uint32_t ) __SRAM_segment_end__ - ( uint32_t ) __SRAM_segment_start__ ) ) |
+            ( GetMPURegionSizeSetting( ( uint32_t ) __SRAM_segment_end__ - ( uint32_t ) __SRAM_segment_start__ ) ) |
             ( portMPU_REGION_ENABLE );
         xMPUSettings->xRegionSettings[ 0 ].ulRegionStartAddress = ( uint32_t ) __SRAM_segment_start__;
         xMPUSettings->xRegionSettings[ 0 ].ulRegionEndAddress = ( uint32_t ) __SRAM_segment_end__;
@@ -1133,7 +1133,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
             xMPUSettings->xRegion[ 0 ].ulRegionAttribute =
                 ( portMPU_REGION_READ_WRITE ) |
                 ( portMPU_REGION_EXECUTE_NEVER ) |
-                ( prvGetMPURegionSizeSetting ( ( uint32_t ) ( uxStackDepth * ( configSTACK_DEPTH_TYPE ) sizeof( StackType_t ) ) ) ) |
+                ( GetMPURegionSizeSetting ( ( uint32_t ) ( uxStackDepth * ( configSTACK_DEPTH_TYPE ) sizeof( StackType_t ) ) ) ) |
                 ( portMPU_REGION_CACHEABLE_BUFFERABLE ) |
                 ( portMPU_REGION_ENABLE );
             xMPUSettings->xRegionSettings[ 0 ].ulRegionStartAddress = ( uint32_t ) pxBottomOfStack;
@@ -1155,7 +1155,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
                     ( portMPU_REGION_VALID ) |
                     ( ul - 1UL ); /* Region number. */
                 xMPUSettings->xRegion[ ul ].ulRegionAttribute =
-                    ( prvGetMPURegionSizeSetting( xRegions[ lIndex ].ulLengthInBytes ) ) |
+                    ( GetMPURegionSizeSetting( xRegions[ lIndex ].ulLengthInBytes ) ) |
                     ( xRegions[ lIndex ].ulParameters ) |
                     ( portMPU_REGION_ENABLE );
                 xMPUSettings->xRegionSettings[ ul ].ulRegionStartAddress = ( uint32_t ) xRegions[ lIndex ].pvBaseAddress;

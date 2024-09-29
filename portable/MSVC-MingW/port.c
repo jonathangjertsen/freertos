@@ -49,18 +49,18 @@
  * environment the timer does not achieve anything approaching real time
  * performance though.
  */
-static DWORD WINAPI prvSimulatedPeripheralTimer( LPVOID lpParameter );
+static DWORD WINAPI SimulatedPeripheralTimer( LPVOID lpParameter );
 /*
  * Process all the simulated interrupts - each represented by a bit in
  * ulPendingInterrupts variable.
  */
-static void prvProcessSimulatedInterrupts( void );
+static void ProcessSimulatedInterrupts( void );
 /*
  * Interrupt handlers used by the kernel itself.  These are executed from the
  * simulated interrupt handler thread.
  */
-static uint32_t prvProcessYieldInterrupt( void );
-static uint32_t prvProcessTickInterrupt( void );
+static uint32_t ProcessYieldInterrupt( void );
+static uint32_t ProcessTickInterrupt( void );
 /*
  * Exiting a critical section will cause the calling task to block on yield
  * event to wait for an interrupt to process if an interrupt was pended while
@@ -73,7 +73,7 @@ volatile BaseType_t xInsideInterrupt = false;
  * Called when the process exits to let Windows know the high timer resolution
  * is no longer required.
  */
-static BOOL WINAPI prvEndProcess( DWORD dwCtrlType );
+static BOOL WINAPI EndProcess( DWORD dwCtrlType );
 
 /* The WIN32 simulator runs each task in a thread.  The context switching is
  * managed by the threads, so the task stack does not have to be managed directly,
@@ -116,7 +116,7 @@ extern void * volatile pxCurrentTCB;
 /* Used to ensure nothing is processed during the startup sequence. */
 static BaseType_t xPortRunning = false;
 
-static DWORD WINAPI prvSimulatedPeripheralTimer( LPVOID lpParameter )
+static DWORD WINAPI SimulatedPeripheralTimer( LPVOID lpParameter )
 {
     TickType_t xMinimumWindowsBlockTime;
     TIMECAPS xTimeCaps;
@@ -127,7 +127,7 @@ static DWORD WINAPI prvSimulatedPeripheralTimer( LPVOID lpParameter )
         timeBeginPeriod( xTimeCaps.wPeriodMin );
         /* Register an exit handler so the timeBeginPeriod() function can be
          * matched with a timeEndPeriod() when the application exits. */
-        SetConsoleCtrlHandler( prvEndProcess, TRUE );
+        SetConsoleCtrlHandler( EndProcess, TRUE );
     }
     else
     {
@@ -156,7 +156,7 @@ static DWORD WINAPI prvSimulatedPeripheralTimer( LPVOID lpParameter )
     return 0;
 }
 
-static BOOL WINAPI prvEndProcess( DWORD dwCtrlType )
+static BOOL WINAPI EndProcess( DWORD dwCtrlType )
 {
     TIMECAPS xTimeCaps;
     ( void ) dwCtrlType;
@@ -234,8 +234,8 @@ BaseType_t xPortStartScheduler( void )
             printf( "SetPriorityClass() failed\r\n" );
         }
         /* Install the interrupt handlers used by the scheduler itself. */
-        vPortSetInterruptHandler( portINTERRUPT_YIELD, prvProcessYieldInterrupt );
-        vPortSetInterruptHandler( portINTERRUPT_TICK, prvProcessTickInterrupt );
+        vPortSetInterruptHandler( portINTERRUPT_YIELD, ProcessYieldInterrupt );
+        vPortSetInterruptHandler( portINTERRUPT_TICK, ProcessTickInterrupt );
         /* Create the events and mutexes that are used to synchronise all the
          * threads. */
         pvInterruptEventMutex = CreateMutex( NULL, FALSE, NULL );
@@ -268,7 +268,7 @@ BaseType_t xPortStartScheduler( void )
          * tick interrupts.  The priority is set below that of the simulated
          * interrupt handler so the interrupt event mutex is used for the
          * handshake / overrun protection. */
-        pvHandle = CreateThread( NULL, 0, prvSimulatedPeripheralTimer, NULL, CREATE_SUSPENDED, NULL );
+        pvHandle = CreateThread( NULL, 0, SimulatedPeripheralTimer, NULL, CREATE_SUSPENDED, NULL );
         if( pvHandle != NULL )
         {
             SetThreadPriority( pvHandle, portSIMULATED_TIMER_THREAD_PRIORITY );
@@ -286,20 +286,20 @@ BaseType_t xPortStartScheduler( void )
         ResumeThread( pxThreadState->pvThread );
         /* Handle all simulated interrupts - including yield requests and
          * simulated ticks. */
-        prvProcessSimulatedInterrupts();
+        ProcessSimulatedInterrupts();
     }
-    /* Would not expect to return from prvProcessSimulatedInterrupts(), so should
+    /* Would not expect to return from ProcessSimulatedInterrupts(), so should
      * not get here. */
     return 0;
 }
 
-static uint32_t prvProcessYieldInterrupt( void )
+static uint32_t ProcessYieldInterrupt( void )
 {
     /* Always return true as this is a yield. */
     return true;
 }
 
-static uint32_t prvProcessTickInterrupt( void )
+static uint32_t ProcessTickInterrupt( void )
 {
     uint32_t ulSwitchRequired;
     /* Process the tick itself. */
@@ -308,7 +308,7 @@ static uint32_t prvProcessTickInterrupt( void )
     return ulSwitchRequired;
 }
 
-static void prvProcessSimulatedInterrupts( void )
+static void ProcessSimulatedInterrupts( void )
 {
     uint32_t ulSwitchRequired, i;
     ThreadState_t * pxThreadState;

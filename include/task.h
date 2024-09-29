@@ -868,7 +868,7 @@ void vTaskDelay( const TickType_t xTicksToDelay ) PRIVILEGED_FUNCTION;
  * BaseType_t xWasDelayed;
  *
  *     // Initialise the xLastWakeTime variable with the current time.
- *     xLastWakeTime = xTaskGetTickCount ();
+ *     xLastWakeTime = task_get_tick_count ();
  *     for( ;; )
  *     {
  *         // Wait for the next cycle.
@@ -1624,7 +1624,7 @@ BaseType_t xTaskResumeAll( void ) PRIVILEGED_FUNCTION;
 /**
  * task. h
  * @code{c}
- * TickType_t xTaskGetTickCount( void );
+ * TickType_t task_get_tick_count( void );
  * @endcode
  *
  * @return The count of ticks since vTaskStartScheduler was called.
@@ -1632,7 +1632,7 @@ BaseType_t xTaskResumeAll( void ) PRIVILEGED_FUNCTION;
  * \defgroup xTaskGetTickCount xTaskGetTickCount
  * \ingroup TaskUtils
  */
-TickType_t xTaskGetTickCount( void ) PRIVILEGED_FUNCTION;
+TickType_t task_get_tick_count( void ) PRIVILEGED_FUNCTION;
 /**
  * task. h
  * @code{c}

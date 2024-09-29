@@ -354,7 +354,7 @@ void vCoRoutineSchedule( void );
  * @code{c}
  * // Co-routine function that blocks for a fixed period then posts a number onto
  * // a queue.
- * static void prvCoRoutineFlashTask( CoRoutineHandle_t xHandle, UBaseType_t uxIndex )
+ * static void CoRoutineFlashTask( CoRoutineHandle_t xHandle, UBaseType_t uxIndex )
  * {
  * // Variables in co-routines must be declared static if they must maintain value across a blocking call.
  * static BaseType_t xNumberToPost = 0;
@@ -453,7 +453,7 @@ void vCoRoutineSchedule( void );
  * @code{c}
  * // A co-routine receives the number of an LED to flash from a queue.  It
  * // blocks on the queue until the number is received.
- * static void prvCoRoutineFlashWorkTask( CoRoutineHandle_t xHandle, UBaseType_t uxIndex )
+ * static void CoRoutineFlashWorkTask( CoRoutineHandle_t xHandle, UBaseType_t uxIndex )
  * {
  * // Variables in co-routines must be declared static if they must maintain value across a blocking call.
  * static BaseType_t xResult;

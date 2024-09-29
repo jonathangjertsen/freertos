@@ -118,23 +118,23 @@ PRIVILEGED_DATA static TaskHandle_t xTimerTaskHandle = NULL;
 * Initialise the infrastructure used by the timer service task if it has not
 * been initialised already.
 */
-static void prvCheckForValidListAndQueue( void ) PRIVILEGED_FUNCTION;
+static void CheckForValidListAndQueue( void ) PRIVILEGED_FUNCTION;
 /*
 * The timer service task (daemon).  Timer functionality is controlled by this
 * task.  Other tasks communicate with the timer service task using the
 * xTimerQueue queue.
 */
-static portTASK_FUNCTION_PROTO( prvTimerTask, pvParameters ) PRIVILEGED_FUNCTION;
+static portTASK_FUNCTION_PROTO( TimerTask, pvParameters ) PRIVILEGED_FUNCTION;
 /*
 * Called by the timer service task to interpret and process a command it
 * received on the timer queue.
 */
-static void prvProcessReceivedCommands( void ) PRIVILEGED_FUNCTION;
+static void ProcessReceivedCommands( void ) PRIVILEGED_FUNCTION;
 /*
 * Insert the timer into either xActiveTimerList1, or xActiveTimerList2,
 * depending on if the expire time causes a timer counter overflow.
 */
-static BaseType_t prvInsertTimerInActiveList( Timer_t * const pxTimer,
+static BaseType_t InsertTimerInActiveList( Timer_t * const pxTimer,
                                                 const TickType_t xNextExpiryTime,
                                                 const TickType_t xTimeNow,
                                                 const TickType_t xCommandTime ) PRIVILEGED_FUNCTION;
@@ -143,43 +143,43 @@ static BaseType_t prvInsertTimerInActiveList( Timer_t * const pxTimer,
 * clear the backlog, calling the callback for each additional reload.  When
 * this function returns, the next expiry time is after xTimeNow.
 */
-static void prvReloadTimer( Timer_t * const pxTimer,
+static void ReloadTimer( Timer_t * const pxTimer,
                             TickType_t xExpiredTime,
                             const TickType_t xTimeNow ) PRIVILEGED_FUNCTION;
 /*
 * An active timer has reached its expire time.  Reload the timer if it is an
 * auto-reload timer, then call its callback.
 */
-static void prvProcessExpiredTimer( const TickType_t xNextExpireTime,
+static void ProcessExpiredTimer( const TickType_t xNextExpireTime,
                                     const TickType_t xTimeNow ) PRIVILEGED_FUNCTION;
 /*
 * The tick count has overflowed.  Switch the timer lists after ensuring the
 * current timer list does not still reference some timers.
 */
-static void prvSwitchTimerLists( void ) PRIVILEGED_FUNCTION;
+static void SwitchTimerLists( void ) PRIVILEGED_FUNCTION;
 /*
 * Obtain the current tick count, setting *pxTimerListsWereSwitched to true
-* if a tick count overflow occurred since prvSampleTimeNow() was last called.
+* if a tick count overflow occurred since SampleTimeNow() was last called.
 */
-static TickType_t prvSampleTimeNow( BaseType_t * const pxTimerListsWereSwitched ) PRIVILEGED_FUNCTION;
+static TickType_t SampleTimeNow( BaseType_t * const pxTimerListsWereSwitched ) PRIVILEGED_FUNCTION;
 /*
 * If the timer list contains any active timers then return the expire time of
 * the timer that will expire first and set *pxListWasEmpty to false.  If the
 * timer list does not contain any timers then return 0 and set *pxListWasEmpty
 * to true.
 */
-static TickType_t prvGetNextExpireTime( BaseType_t * const pxListWasEmpty ) PRIVILEGED_FUNCTION;
+static TickType_t GetNextExpireTime( BaseType_t * const pxListWasEmpty ) PRIVILEGED_FUNCTION;
 /*
 * If a timer has expired, process it.  Otherwise, block the timer service task
 * until either a timer does expire or a command is received.
 */
-static void prvProcessTimerOrBlockTask( const TickType_t xNextExpireTime,
+static void ProcessTimerOrBlockTask( const TickType_t xNextExpireTime,
                                         BaseType_t xListWasEmpty ) PRIVILEGED_FUNCTION;
 /*
 * Called after a Timer_t structure has been allocated either statically or
 * dynamically to fill in the structure's members.
 */
-static void prvInitialiseNewTimer( const char * const pcTimerName,
+static void InitialiseNewTimer( const char * const pcTimerName,
                                     const TickType_t xTimerPeriodInTicks,
                                     const BaseType_t xAutoReload,
                                     void * const pvTimerID,
@@ -194,14 +194,14 @@ BaseType_t xTimerCreateTimerTask( void )
         * configUSE_TIMERS is set to 1.  Check that the infrastructure used by the
         * timer service task has been created/initialised.  If timers have already
         * been created then the initialisation will already have been performed. */
-    prvCheckForValidListAndQueue();
+    CheckForValidListAndQueue();
     if( xTimerQueue != NULL )
     {
         StaticTask_t * pxTimerTaskTCBBuffer = NULL;
         StackType_t * pxTimerTaskStackBuffer = NULL;
         configSTACK_DEPTH_TYPE uxTimerTaskStackSize;
         vApplicationGetTimerTaskMemory( &pxTimerTaskTCBBuffer, &pxTimerTaskStackBuffer, &uxTimerTaskStackSize );
-        xTimerTaskHandle = xTaskCreateStatic( prvTimerTask,
+        xTimerTaskHandle = xTaskCreateStatic( TimerTask,
                                                 configTIMER_SERVICE_TASK_NAME,
                                                 uxTimerTaskStackSize,
                                                 NULL,
@@ -233,9 +233,9 @@ BaseType_t xTimerCreateTimerTask( void )
         {
             /* Status is thus far zero as the timer is not created statically
                 * and has not been started.  The auto-reload bit may get set in
-                * prvInitialiseNewTimer. */
+                * InitialiseNewTimer. */
             pxNewTimer->ucStatus = 0x00;
-            prvInitialiseNewTimer( pcTimerName, xTimerPeriodInTicks, xAutoReload, pvTimerID, pxCallbackFunction, pxNewTimer );
+            InitialiseNewTimer( pcTimerName, xTimerPeriodInTicks, xAutoReload, pvTimerID, pxCallbackFunction, pxNewTimer );
         }
         
         return pxNewTimer;
@@ -270,16 +270,16 @@ BaseType_t xTimerCreateTimerTask( void )
         {
             /* Timers can be created statically or dynamically so note this
                 * timer was created statically in case it is later deleted.  The
-                * auto-reload bit may get set in prvInitialiseNewTimer(). */
+                * auto-reload bit may get set in InitialiseNewTimer(). */
             pxNewTimer->ucStatus = ( uint8_t ) tmrSTATUS_IS_STATICALLY_ALLOCATED;
-            prvInitialiseNewTimer( pcTimerName, xTimerPeriodInTicks, xAutoReload, pvTimerID, pxCallbackFunction, pxNewTimer );
+            InitialiseNewTimer( pcTimerName, xTimerPeriodInTicks, xAutoReload, pvTimerID, pxCallbackFunction, pxNewTimer );
         }
         
         return pxNewTimer;
     }
 #endif /* configSUPPORT_STATIC_ALLOCATION */
 
-static void prvInitialiseNewTimer( const char * const pcTimerName,
+static void InitialiseNewTimer( const char * const pcTimerName,
                                     const TickType_t xTimerPeriodInTicks,
                                     const BaseType_t xAutoReload,
                                     void * const pvTimerID,
@@ -290,7 +290,7 @@ static void prvInitialiseNewTimer( const char * const pcTimerName,
     configASSERT( ( xTimerPeriodInTicks > 0 ) );
     /* Ensure the infrastructure used by the timer service task has been
         * created/initialised. */
-    prvCheckForValidListAndQueue();
+    CheckForValidListAndQueue();
     /* Initialise the timer structure members using the function
         * parameters. */
     pxNewTimer->pcTimerName = pcTimerName;
@@ -486,14 +486,14 @@ const char * pcTimerGetName( TimerHandle_t xTimer )
     return pxTimer->pcTimerName;
 }
 
-static void prvReloadTimer( Timer_t * const pxTimer,
+static void ReloadTimer( Timer_t * const pxTimer,
                             TickType_t xExpiredTime,
                             const TickType_t xTimeNow )
 {
     /* Insert the timer into the appropriate list for the next expiry time.
         * If the next expiry time has already passed, advance the expiry time,
         * call the callback function, and try again. */
-    while( prvInsertTimerInActiveList( pxTimer, ( xExpiredTime + pxTimer->xTimerPeriodInTicks ), xTimeNow, xExpiredTime ) != false )
+    while( InsertTimerInActiveList( pxTimer, ( xExpiredTime + pxTimer->xTimerPeriodInTicks ), xTimeNow, xExpiredTime ) != false )
     {
         /* Advance the expiry time. */
         xExpiredTime += pxTimer->xTimerPeriodInTicks;
@@ -502,7 +502,7 @@ static void prvReloadTimer( Timer_t * const pxTimer,
     }
 }
 
-static void prvProcessExpiredTimer( const TickType_t xNextExpireTime,
+static void ProcessExpiredTimer( const TickType_t xNextExpireTime,
                                     const TickType_t xTimeNow )
 {
 
@@ -514,7 +514,7 @@ static void prvProcessExpiredTimer( const TickType_t xNextExpireTime,
         * expiry time and re-insert the timer in the list of active timers. */
     if( ( pxTimer->ucStatus & tmrSTATUS_IS_AUTORELOAD ) != 0U )
     {
-        prvReloadTimer( pxTimer, xNextExpireTime, xTimeNow );
+        ReloadTimer( pxTimer, xNextExpireTime, xTimeNow );
     }
     else
     {
@@ -524,7 +524,7 @@ static void prvProcessExpiredTimer( const TickType_t xNextExpireTime,
     pxTimer->pxCallbackFunction( ( TimerHandle_t ) pxTimer );
 }
 
-static portTASK_FUNCTION( prvTimerTask, pvParameters )
+static portTASK_FUNCTION( TimerTask, pvParameters )
 {
     TickType_t xNextExpireTime;
     BaseType_t xListWasEmpty;
@@ -543,16 +543,16 @@ static portTASK_FUNCTION( prvTimerTask, pvParameters )
     {
         /* Query the timers list to see if it contains any timers, and if so,
             * obtain the time at which the next timer will expire. */
-        xNextExpireTime = prvGetNextExpireTime( &xListWasEmpty );
+        xNextExpireTime = GetNextExpireTime( &xListWasEmpty );
         /* If a timer has expired, process it.  Otherwise, block this task
             * until either a timer does expire, or a command is received. */
-        prvProcessTimerOrBlockTask( xNextExpireTime, xListWasEmpty );
+        ProcessTimerOrBlockTask( xNextExpireTime, xListWasEmpty );
         /* Empty the command queue. */
-        prvProcessReceivedCommands();
+        ProcessReceivedCommands();
     }
 }
 
-static void prvProcessTimerOrBlockTask( const TickType_t xNextExpireTime,
+static void ProcessTimerOrBlockTask( const TickType_t xNextExpireTime,
                                         BaseType_t xListWasEmpty )
 {
     TickType_t xTimeNow;
@@ -563,15 +563,15 @@ static void prvProcessTimerOrBlockTask( const TickType_t xNextExpireTime,
             * has expired or not.  If obtaining the time causes the lists to switch
             * then don't process this timer as any timers that remained in the list
             * when the lists were switched will have been processed within the
-            * prvSampleTimeNow() function. */
-        xTimeNow = prvSampleTimeNow( &xTimerListsWereSwitched );
+            * SampleTimeNow() function. */
+        xTimeNow = SampleTimeNow( &xTimerListsWereSwitched );
         if( xTimerListsWereSwitched == false )
         {
             /* The tick count has not overflowed, has the timer expired? */
             if( ( xListWasEmpty == false ) && ( xNextExpireTime <= xTimeNow ) )
             {
                 ( void ) xTaskResumeAll();
-                prvProcessExpiredTimer( xNextExpireTime, xTimeNow );
+                ProcessExpiredTimer( xNextExpireTime, xTimeNow );
             }
             else
             {
@@ -605,7 +605,7 @@ static void prvProcessTimerOrBlockTask( const TickType_t xNextExpireTime,
     }
 }
 
-static TickType_t prvGetNextExpireTime( BaseType_t * const pxListWasEmpty )
+static TickType_t GetNextExpireTime( BaseType_t * const pxListWasEmpty )
 {
     TickType_t xNextExpireTime;
     /* Timers are listed in expiry time order, with the head of the list
@@ -628,14 +628,14 @@ static TickType_t prvGetNextExpireTime( BaseType_t * const pxListWasEmpty )
     return xNextExpireTime;
 }
 
-static TickType_t prvSampleTimeNow( BaseType_t * const pxTimerListsWereSwitched )
+static TickType_t SampleTimeNow( BaseType_t * const pxTimerListsWereSwitched )
 {
     TickType_t xTimeNow;
     PRIVILEGED_DATA static TickType_t xLastTime = ( TickType_t ) 0U;
-    xTimeNow = xTaskGetTickCount();
+    xTimeNow = GetTickCount();
     if( xTimeNow < xLastTime )
     {
-        prvSwitchTimerLists();
+        SwitchTimerLists();
         *pxTimerListsWereSwitched = true;
     }
     else
@@ -646,7 +646,7 @@ static TickType_t prvSampleTimeNow( BaseType_t * const pxTimerListsWereSwitched 
     return xTimeNow;
 }
 
-static BaseType_t prvInsertTimerInActiveList( Timer_t * const pxTimer,
+static BaseType_t InsertTimerInActiveList( Timer_t * const pxTimer,
                                                 const TickType_t xNextExpiryTime,
                                                 const TickType_t xTimeNow,
                                                 const TickType_t xCommandTime )
@@ -686,7 +686,7 @@ static BaseType_t prvInsertTimerInActiveList( Timer_t * const pxTimer,
     return xProcessTimerNow;
 }
 
-static void prvProcessReceivedCommands( void )
+static void ProcessReceivedCommands( void )
 {
     DaemonTaskMessage_t xMessage = { 0 };
     Timer_t * pxTimer;
@@ -722,12 +722,12 @@ static void prvProcessReceivedCommands( void )
                 ( void ) uxListRemove( &( pxTimer->xTimerListItem ) );
             }
             /* In this case the xTimerListsWereSwitched parameter is not used, but
-                *  it must be present in the function call.  prvSampleTimeNow() must be
+                *  it must be present in the function call.  SampleTimeNow() must be
                 *  called after the message is received from xTimerQueue so there is no
                 *  possibility of a higher priority task adding a message to the message
                 *  queue with a time that is ahead of the timer daemon task (because it
                 *  pre-empted the timer daemon task after the xTimeNow value was set). */
-            xTimeNow = prvSampleTimeNow( &xTimerListsWereSwitched );
+            xTimeNow = SampleTimeNow( &xTimerListsWereSwitched );
             switch( xMessage.xMessageID )
             {
                 case tmrCOMMAND_START:
@@ -736,13 +736,13 @@ static void prvProcessReceivedCommands( void )
                 case tmrCOMMAND_RESET_FROM_ISR:
                     /* Start or restart a timer. */
                     pxTimer->ucStatus |= ( uint8_t ) tmrSTATUS_IS_ACTIVE;
-                    if( prvInsertTimerInActiveList( pxTimer, xMessage.u.xTimerParameters.xMessageValue + pxTimer->xTimerPeriodInTicks, xTimeNow, xMessage.u.xTimerParameters.xMessageValue ) != false )
+                    if( InsertTimerInActiveList( pxTimer, xMessage.u.xTimerParameters.xMessageValue + pxTimer->xTimerPeriodInTicks, xTimeNow, xMessage.u.xTimerParameters.xMessageValue ) != false )
                     {
                         /* The timer expired before it was added to the active
                             * timer list.  Process it now. */
                         if( ( pxTimer->ucStatus & tmrSTATUS_IS_AUTORELOAD ) != 0U )
                         {
-                            prvReloadTimer( pxTimer, xMessage.u.xTimerParameters.xMessageValue + pxTimer->xTimerPeriodInTicks, xTimeNow );
+                            ReloadTimer( pxTimer, xMessage.u.xTimerParameters.xMessageValue + pxTimer->xTimerPeriodInTicks, xTimeNow );
                         }
                         else
                         {
@@ -768,7 +768,7 @@ static void prvProcessReceivedCommands( void )
                         * be zero the next expiry time can only be in the future,
                         * meaning (unlike for the xTimerStart() case above) there is
                         * no fail case that needs to be handled here. */
-                    ( void ) prvInsertTimerInActiveList( pxTimer, ( xTimeNow + pxTimer->xTimerPeriodInTicks ), xTimeNow, xTimeNow );
+                    ( void ) InsertTimerInActiveList( pxTimer, ( xTimeNow + pxTimer->xTimerPeriodInTicks ), xTimeNow, xTimeNow );
                     break;
                 case tmrCOMMAND_DELETE:
                     #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
@@ -803,7 +803,7 @@ static void prvProcessReceivedCommands( void )
     }
 }
 
-static void prvSwitchTimerLists( void )
+static void SwitchTimerLists( void )
 {
     TickType_t xNextExpireTime;
     List_t * pxTemp;
@@ -817,14 +817,14 @@ static void prvSwitchTimerLists( void )
         /* Process the expired timer.  For auto-reload timers, be careful to
             * process only expirations that occur on the current list.  Further
             * expirations must wait until after the lists are switched. */
-        prvProcessExpiredTimer( xNextExpireTime, tmrMAX_TIME_BEFORE_OVERFLOW );
+        ProcessExpiredTimer( xNextExpireTime, tmrMAX_TIME_BEFORE_OVERFLOW );
     }
     pxTemp = pxCurrentTimerList;
     pxCurrentTimerList = pxOverflowTimerList;
     pxOverflowTimerList = pxTemp;
 }
 
-static void prvCheckForValidListAndQueue( void )
+static void CheckForValidListAndQueue( void )
 {
     /* Check that the list from which active timers are referenced, and the
         * queue used to communicate with the timer service, have been

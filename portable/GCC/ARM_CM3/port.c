@@ -88,12 +88,12 @@ typedef void ( * portISR_t )( void );
     #define portNVIC_SYSTICK_CLK_BIT_CONFIG    ( 0 )
 #endif
 /* Let the user override the pre-loading of the initial LR with the address of
- * prvTaskExitError() in case it messes up unwinding of the stack in the
+ * TaskExitError() in case it messes up unwinding of the stack in the
  * debugger. */
 #ifdef configTASK_RETURN_ADDRESS
     #define portTASK_RETURN_ADDRESS    configTASK_RETURN_ADDRESS
 #else
-    #define portTASK_RETURN_ADDRESS    prvTaskExitError
+    #define portTASK_RETURN_ADDRESS    TaskExitError
 #endif
 /*
  * Setup the timer to generate the tick interrupts.  The implementation in this
@@ -110,11 +110,11 @@ void vPortSVCHandler( void ) __attribute__( ( naked ) );
 /*
  * Start first task is a separate function so it can be tested in isolation.
  */
-static void prvPortStartFirstTask( void ) __attribute__( ( naked ) );
+static void PortStartFirstTask( void ) __attribute__( ( naked ) );
 /*
  * Used to catch tasks that attempt to return from their implementing function.
  */
-static void prvTaskExitError( void );
+static void TaskExitError( void );
 
 /* Each task maintains its own interrupt status in the critical nesting
  * variable. */
@@ -171,7 +171,7 @@ StackType_t * pxPortInitialiseStack( StackType_t * pxTopOfStack,
     return pxTopOfStack;
 }
 
-static void prvTaskExitError( void )
+static void TaskExitError( void )
 {
     volatile uint32_t ulDummy = 0UL;
     /* A function that implements a task must not exit or attempt to return to
@@ -184,7 +184,7 @@ static void prvTaskExitError( void )
     portDISABLE_INTERRUPTS();
     while( ulDummy == 0 )
     {
-        /* This file calls prvTaskExitError() after the scheduler has been
+        /* This file calls TaskExitError() after the scheduler has been
          * started to remove a compiler warning about the function being defined
          * but never called.  ulDummy is used purely to quieten other warnings
          * about code appearing after this function is called - making ulDummy
@@ -212,7 +212,7 @@ void vPortSVCHandler( void )
         );
 }
 
-static void prvPortStartFirstTask( void )
+static void PortStartFirstTask( void )
 {
     __asm volatile (
         " ldr r0, =0xE000ED08   \n" /* Use the NVIC offset register to locate the stack. */
@@ -349,7 +349,7 @@ BaseType_t xPortStartScheduler( void )
     /* Initialise the critical nesting count ready for the first task. */
     uxCriticalNesting = 0;
     /* Start the first task. */
-    prvPortStartFirstTask();
+    PortStartFirstTask();
     /* Should never get here as the tasks will now be executing!  Call the task
      * exit error function to prevent compiler warnings about a static function
      * not being called in the case that the application writer overrides this
@@ -357,7 +357,7 @@ BaseType_t xPortStartScheduler( void )
      * vTaskSwitchContext() so link time optimisation does not remove the
      * symbol. */
     vTaskSwitchContext();
-    prvTaskExitError();
+    TaskExitError();
     /* Should not get here! */
     return 0;
 }

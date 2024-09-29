@@ -99,7 +99,7 @@ PRIVILEGED_DATA static BaseType_t xHeapHasBeenInitialised = false;
 /*
  * Initialises the heap structures before their first use.
  */
-static void prvHeapInit( void ) PRIVILEGED_FUNCTION;
+static void HeapInit( void ) PRIVILEGED_FUNCTION;
 
 /* STATIC FUNCTIONS ARE DEFINED AS MACROS TO MINIMIZE THE FUNCTION CALL DEPTH. */
 /*
@@ -107,7 +107,7 @@ static void prvHeapInit( void ) PRIVILEGED_FUNCTION;
  * the block.  Small blocks at the start of the list and large blocks at the end
  * of the list.
  */
-#define prvInsertBlockIntoFreeList( pxBlockToInsert )                                                                               \
+#define InsertBlockIntoFreeList( pxBlockToInsert )                                                                               \
     {                                                                                                                               \
         BlockLink_t * pxIterator;                                                                                                   \
         size_t xBlockSize;                                                                                                          \
@@ -170,7 +170,7 @@ void * pvPortMalloc( size_t xWantedSize )
          * initialisation to setup the list of free blocks. */
         if( xHeapHasBeenInitialised == false )
         {
-            prvHeapInit();
+            HeapInit();
             xHeapHasBeenInitialised = true;
         }
         /* Check the block size we are trying to allocate is not so large that the
@@ -213,7 +213,7 @@ void * pvPortMalloc( size_t xWantedSize )
                         /* Insert the new block into the list of free blocks.
                          * The list of free blocks is sorted by their size, we have to
                          * iterate to find the right place to insert new block. */
-                        prvInsertBlockIntoFreeList( ( pxNewBlockLink ) );
+                        InsertBlockIntoFreeList( ( pxNewBlockLink ) );
                     }
                     xFreeBytesRemaining -= pxBlock->xBlockSize;
                     xAllocatedBlockSize = pxBlock->xBlockSize;
@@ -269,7 +269,7 @@ void vPortFree( void * pv )
                 vTaskSuspendAll();
                 {
                     /* Add this block to the list of free blocks. */
-                    prvInsertBlockIntoFreeList( ( ( BlockLink_t * ) pxLink ) );
+                    InsertBlockIntoFreeList( ( ( BlockLink_t * ) pxLink ) );
                     xFreeBytesRemaining += pxLink->xBlockSize;
                     traceFREE( pv, pxLink->xBlockSize );
                 }
@@ -304,7 +304,7 @@ void * pvPortCalloc( size_t xNum,
     return pv;
 }
 
-static void prvHeapInit( void ) /* PRIVILEGED_FUNCTION */
+static void HeapInit( void ) /* PRIVILEGED_FUNCTION */
 {
     BlockLink_t * pxFirstFreeBlock;
     uint8_t * pucAlignedHeap;

@@ -186,13 +186,13 @@ typedef void ( * portISR_t )( void );
 #endif
 /**
  * @brief Let the user override the pre-loading of the initial LR with the
- * address of prvTaskExitError() in case it messes up unwinding of the stack
+ * address of TaskExitError() in case it messes up unwinding of the stack
  * in the debugger.
  */
 #ifdef configTASK_RETURN_ADDRESS
     #define portTASK_RETURN_ADDRESS    configTASK_RETURN_ADDRESS
 #else
-    #define portTASK_RETURN_ADDRESS    prvTaskExitError
+    #define portTASK_RETURN_ADDRESS    TaskExitError
 #endif
 /**
  * @brief If portPRELOAD_REGISTERS then registers will be given an initial value
@@ -204,12 +204,12 @@ typedef void ( * portISR_t )( void );
  * @brief Used to catch tasks that attempt to return from their implementing
  * function.
  */
-static void prvTaskExitError( void );
+static void TaskExitError( void );
 #if ( configENABLE_MPU == 1 )
     /**
      * @brief Setup the Memory Protection Unit (MPU).
      */
-    static void prvSetupMPU( void ) PRIVILEGED_FUNCTION;
+    static void SetupMPU( void ) PRIVILEGED_FUNCTION;
 #endif /* configENABLE_MPU */
 /**
  * @brief Setup the timer to generate the tick interrupts.
@@ -524,7 +524,7 @@ __attribute__( ( weak ) ) void vPortSetupTimerInterrupt( void ) /* PRIVILEGED_FU
     portNVIC_SYSTICK_CTRL_REG = portNVIC_SYSTICK_CLK_BIT_CONFIG | portNVIC_SYSTICK_INT_BIT | portNVIC_SYSTICK_ENABLE_BIT;
 }
 
-static void prvTaskExitError( void )
+static void TaskExitError( void )
 {
     volatile uint32_t ulDummy = 0UL;
     /* A function that implements a task must not exit or attempt to return to
@@ -536,7 +536,7 @@ static void prvTaskExitError( void )
     portDISABLE_INTERRUPTS();
     while( ulDummy == 0 )
     {
-        /* This file calls prvTaskExitError() after the scheduler has been
+        /* This file calls TaskExitError() after the scheduler has been
          * started to remove a compiler warning about the function being
          * defined but never called.  ulDummy is used purely to quieten other
          * warnings about code appearing after this function is called - making
@@ -547,7 +547,7 @@ static void prvTaskExitError( void )
 }
 
 #if ( configENABLE_MPU == 1 )
-    static uint32_t prvGetMPURegionSizeSetting( uint32_t ulActualSizeInBytes )
+    static uint32_t GetMPURegionSizeSetting( uint32_t ulActualSizeInBytes )
     {
         uint32_t ulRegionSize, ulReturnValue = 7UL;
         /* 256 is the smallest region size, 31 is the largest valid value for
@@ -570,7 +570,7 @@ static void prvTaskExitError( void )
 #endif /* configENABLE_MPU */
 
 #if ( configENABLE_MPU == 1 )
-    static void prvSetupMPU( void ) /* PRIVILEGED_FUNCTION */
+    static void SetupMPU( void ) /* PRIVILEGED_FUNCTION */
     {
         #if defined( __ARMCC_VERSION )
             /* Declaration when these variable are defined in code instead of being
@@ -602,7 +602,7 @@ static void prvTaskExitError( void )
                                  ( portPRIVILEGED_FLASH_REGION ) );
             portMPU_RASR_REG = ( ( portMPU_REGION_PRIV_RO_UNPRIV_NA ) |
                                  ( ( configS_C_B_FLASH & portMPU_RASR_S_C_B_BITMASK ) << portMPU_RASR_S_C_B_LOCATION ) |
-                                 ( prvGetMPURegionSizeSetting( ( uint32_t ) __privileged_functions_end__ - ( uint32_t ) __privileged_functions_start__ ) ) |
+                                 ( GetMPURegionSizeSetting( ( uint32_t ) __privileged_functions_end__ - ( uint32_t ) __privileged_functions_start__ ) ) |
                                  ( portMPU_RASR_REGION_ENABLE_BITMASK ) );
             /* Setup unprivileged flash as Read Only by both privileged and
              * unprivileged tasks. All tasks can read it but no-one can modify. */
@@ -611,7 +611,7 @@ static void prvTaskExitError( void )
                                  ( portUNPRIVILEGED_FLASH_REGION ) );
             portMPU_RASR_REG = ( ( portMPU_REGION_PRIV_RO_UNPRIV_RO ) |
                                  ( ( configS_C_B_FLASH & portMPU_RASR_S_C_B_BITMASK ) << portMPU_RASR_S_C_B_LOCATION ) |
-                                 ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
+                                 ( GetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
                                  ( portMPU_RASR_REGION_ENABLE_BITMASK ) );
             /* Setup RAM containing kernel data for privileged access only. */
             portMPU_RBAR_REG = ( ( uint32_t ) __privileged_sram_start__ ) | /* Base address. */
@@ -620,7 +620,7 @@ static void prvTaskExitError( void )
             portMPU_RASR_REG = ( ( portMPU_REGION_PRIV_RW_UNPRIV_NA ) |
                                  ( portMPU_REGION_EXECUTE_NEVER ) |
                                  ( ( configS_C_B_SRAM & portMPU_RASR_S_C_B_BITMASK ) << portMPU_RASR_S_C_B_LOCATION ) |
-                                 prvGetMPURegionSizeSetting( ( uint32_t ) __privileged_sram_end__ - ( uint32_t ) __privileged_sram_start__ ) |
+                                 GetMPURegionSizeSetting( ( uint32_t ) __privileged_sram_end__ - ( uint32_t ) __privileged_sram_start__ ) |
                                  ( portMPU_RASR_REGION_ENABLE_BITMASK ) );
             /* Enable MPU with privileged background access i.e. unmapped
              * regions have privileged access. */
@@ -1068,7 +1068,7 @@ BaseType_t xPortStartScheduler( void ) /* PRIVILEGED_FUNCTION */
     #if ( configENABLE_MPU == 1 )
     {
         /* Setup the Memory Protection Unit (MPU). */
-        prvSetupMPU();
+        SetupMPU();
     }
     #endif /* configENABLE_MPU */
     /* Start the timer that generates the tick ISR. Interrupts are disabled
@@ -1090,7 +1090,7 @@ BaseType_t xPortStartScheduler( void ) /* PRIVILEGED_FUNCTION */
      * vTaskSwitchContext() so link time optimization does not remove the
      * symbol. */
     vTaskSwitchContext();
-    prvTaskExitError();
+    TaskExitError();
     /* Should not get here. */
     return 0;
 }
@@ -1135,7 +1135,7 @@ void vPortEndScheduler( void ) /* PRIVILEGED_FUNCTION */
                 ( ( portMPU_REGION_PRIV_RW_UNPRIV_RW ) |
                   ( portMPU_REGION_EXECUTE_NEVER ) |
                   ( ( configS_C_B_SRAM & portMPU_RASR_S_C_B_BITMASK ) << portMPU_RASR_S_C_B_LOCATION ) |
-                  ( prvGetMPURegionSizeSetting( ( uint32_t ) __SRAM_segment_end__ - ( uint32_t ) __SRAM_segment_start__ ) ) |
+                  ( GetMPURegionSizeSetting( ( uint32_t ) __SRAM_segment_end__ - ( uint32_t ) __SRAM_segment_start__ ) ) |
                   ( portMPU_RASR_REGION_ENABLE_BITMASK ) );
 
             /* Invalidate user configurable regions. */
@@ -1161,7 +1161,7 @@ void vPortEndScheduler( void ) /* PRIVILEGED_FUNCTION */
                 xMPUSettings->xRegionsSettings[ 0 ].ulRASR =
                     ( ( portMPU_REGION_PRIV_RW_UNPRIV_RW ) |
                       ( portMPU_REGION_EXECUTE_NEVER ) |
-                      ( prvGetMPURegionSizeSetting( uxStackDepth * ( uint32_t ) sizeof( StackType_t ) ) ) |
+                      ( GetMPURegionSizeSetting( uxStackDepth * ( uint32_t ) sizeof( StackType_t ) ) ) |
                       ( ( configS_C_B_SRAM & portMPU_RASR_S_C_B_BITMASK ) << portMPU_RASR_S_C_B_LOCATION ) |
                       ( portMPU_RASR_REGION_ENABLE_BITMASK ) );
             }
@@ -1178,7 +1178,7 @@ void vPortEndScheduler( void ) /* PRIVILEGED_FUNCTION */
                         ( portMPU_RBAR_REGION_NUMBER_VALID_BITMASK ) |
                         ( ul - 1UL ); /* Region number. */
                     xMPUSettings->xRegionsSettings[ ul ].ulRASR =
-                        ( prvGetMPURegionSizeSetting( xRegions[ lIndex ].ulLengthInBytes ) ) |
+                        ( GetMPURegionSizeSetting( xRegions[ lIndex ].ulLengthInBytes ) ) |
                         ( xRegions[ lIndex ].ulParameters ) |
                         ( portMPU_RASR_REGION_ENABLE_BITMASK );
                 }

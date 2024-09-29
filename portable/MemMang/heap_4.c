@@ -117,12 +117,12 @@ typedef struct A_BLOCK_LINK
  * the block in front it and/or the block behind it if the memory blocks are
  * adjacent to each other.
  */
-static void prvInsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert ) PRIVILEGED_FUNCTION;
+static void InsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert ) PRIVILEGED_FUNCTION;
 /*
  * Called automatically to setup the required heap structures the first time
  * pvPortMalloc() is called.
  */
-static void prvHeapInit( void ) PRIVILEGED_FUNCTION;
+static void HeapInit( void ) PRIVILEGED_FUNCTION;
 
 /* The size of the structure placed at the beginning of each allocated memory
  * block must by correctly byte aligned. */
@@ -180,7 +180,7 @@ void * pvPortMalloc( size_t xWantedSize )
          * initialisation to setup the list of free blocks. */
         if( pxEnd == NULL )
         {
-            prvHeapInit();
+            HeapInit();
         }
 
         /* Check the block size we are trying to allocate is not so large that the
@@ -301,7 +301,7 @@ void vPortFree( void * pv )
                     /* Add this block to the list of free blocks. */
                     xFreeBytesRemaining += pxLink->xBlockSize;
                     traceFREE( pv, pxLink->xBlockSize );
-                    prvInsertBlockIntoFreeList( ( ( BlockLink_t * ) pxLink ) );
+                    InsertBlockIntoFreeList( ( ( BlockLink_t * ) pxLink ) );
                     xNumberOfSuccessfulFrees++;
                 }
                 ( void ) xTaskResumeAll();
@@ -341,7 +341,7 @@ void * pvPortCalloc( size_t xNum,
     return pv;
 }
 
-static void prvHeapInit( void ) /* PRIVILEGED_FUNCTION */
+static void HeapInit( void ) /* PRIVILEGED_FUNCTION */
 {
     BlockLink_t * pxFirstFreeBlock;
     portPOINTER_SIZE_TYPE uxStartAddress, uxEndAddress;
@@ -381,7 +381,7 @@ static void prvHeapInit( void ) /* PRIVILEGED_FUNCTION */
     xFreeBytesRemaining = pxFirstFreeBlock->xBlockSize;
 }
 
-static void prvInsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert ) /* PRIVILEGED_FUNCTION */
+static void InsertBlockIntoFreeList( BlockLink_t * pxBlockToInsert ) /* PRIVILEGED_FUNCTION */
 {
     BlockLink_t * pxIterator;
     uint8_t * puc;

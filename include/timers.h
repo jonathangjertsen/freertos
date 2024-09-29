@@ -293,7 +293,7 @@ typedef void (* PendedFunction_t)( void * arg1,
  * // A software timer callback function that increments a variable passed to
  * // it when the software timer was created.  After the 5th increment the
  * // callback function stops the software timer.
- * static void prvTimerCallback( TimerHandle_t xExpiredTimer )
+ * static void TimerCallback( TimerHandle_t xExpiredTimer )
  * {
  * UBaseType_t *puxVariableToIncrement;
  * BaseType_t xReturned;
@@ -325,7 +325,7 @@ typedef void (* PendedFunction_t)( void * arg1,
  *                                  xTimerPeriod,     // The period of the timer in ticks.
  *                                  true,           // This is an auto-reload timer.
  *                                  ( void * ) &uxVariableToIncrement,    // A variable incremented by the software timer's callback function
- *                                  prvTimerCallback, // The function to execute when the timer expires.
+ *                                  TimerCallback, // The function to execute when the timer expires.
  *                                  &xTimerBuffer );  // The buffer that will hold the software timer structure.
  *
  *     // The scheduler has not started yet so a block time is not used.
