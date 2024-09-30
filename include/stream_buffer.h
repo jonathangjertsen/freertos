@@ -33,45 +33,34 @@
 #define sbTYPE_MESSAGE_BUFFER ((BaseType_t)1)
 #define sbTYPE_STREAM_BATCHING_BUFFER ((BaseType_t)2)
 struct StreamBufferDef_t;
-typedef struct StreamBufferDef_t* StreamBufferHandle_t;
-typedef void (*StreamBufferCallbackFunction_t)(
-    StreamBufferHandle_t xStreamBuffer, BaseType_t xIsInsideISR,
-    BaseType_t* const HigherPriorityTaskWoken);
-#define xStreamBufferCreate(xBufferSizeBytes, xTriggerLevelBytes)      \
-  xStreamBufferGenericCreate((xBufferSizeBytes), (xTriggerLevelBytes), \
-                             sbTYPE_STREAM_BUFFER, NULL, NULL)
+typedef struct StreamBufferDef_t *StreamBufferHandle_t;
+typedef void (*StreamBufferCallbackFunction_t)(StreamBufferHandle_t xStreamBuffer, BaseType_t xIsInsideISR,
+                                               BaseType_t *const HigherPriorityTaskWoken);
+#define xStreamBufferCreate(xBufferSizeBytes, xTriggerLevelBytes) \
+  xStreamBufferGenericCreate((xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BUFFER, NULL, NULL)
 
-#define xStreamBufferCreateStatic(xBufferSizeBytes, xTriggerLevelBytes, \
-                                  pucStreamBufferStorageArea,           \
-                                  pStaticStreamBuffer)                  \
-  xStreamBufferGenericCreateStatic(                                     \
-      (xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BUFFER,   \
-      (pucStreamBufferStorageArea), (pStaticStreamBuffer), NULL, NULL)
+#define xStreamBufferCreateStatic(xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, \
+                                  pStaticStreamBuffer)                                              \
+  xStreamBufferGenericCreateStatic((xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BUFFER,  \
+                                   (pucStreamBufferStorageArea), (pStaticStreamBuffer), NULL, NULL)
 #define xStreamBatchingBufferCreate(xBufferSizeBytes, xTriggerLevelBytes) \
-  xStreamBufferGenericCreate((xBufferSizeBytes), (xTriggerLevelBytes),    \
-                             sbTYPE_STREAM_BATCHING_BUFFER, NULL, NULL)
+  xStreamBufferGenericCreate((xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BATCHING_BUFFER, NULL, NULL)
 
-#define xStreamBatchingBufferCreateStatic(                                     \
-    xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea,          \
-    pStaticStreamBuffer)                                                       \
-  xStreamBufferGenericCreateStatic(                                            \
-      (xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BATCHING_BUFFER, \
-      (pucStreamBufferStorageArea), (pStaticStreamBuffer), NULL, NULL)
+#define xStreamBatchingBufferCreateStatic(xBufferSizeBytes, xTriggerLevelBytes, pucStreamBufferStorageArea, \
+                                          pStaticStreamBuffer)                                              \
+  xStreamBufferGenericCreateStatic((xBufferSizeBytes), (xTriggerLevelBytes), sbTYPE_STREAM_BATCHING_BUFFER, \
+                                   (pucStreamBufferStorageArea), (pStaticStreamBuffer), NULL, NULL)
 
-BaseType_t xStreamBufferGetStaticBuffers(
-    StreamBufferHandle_t xStreamBuffer, uint8_t** ppucStreamBufferStorageArea,
-    StaticStreamBuffer_t** ppStaticStreamBuffer);
-size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer,
-                         const void* pvTxData, size_t xDataLengthBytes,
+BaseType_t xStreamBufferGetStaticBuffers(StreamBufferHandle_t xStreamBuffer, uint8_t **ppucStreamBufferStorageArea,
+                                         StaticStreamBuffer_t **ppStaticStreamBuffer);
+size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer, const void *pvTxData, size_t xDataLengthBytes,
                          TickType_t xTicksToWait);
-size_t xStreamBufferSendFromISR(StreamBufferHandle_t xStreamBuffer,
-                                const void* pvTxData, size_t xDataLengthBytes,
-                                BaseType_t* const HigherPriorityTaskWoken);
-size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void* pvRxData,
-                            size_t xBufferLengthBytes, TickType_t xTicksToWait);
-size_t xStreamBufferReceiveFromISR(StreamBufferHandle_t xStreamBuffer,
-                                   void* pvRxData, size_t xBufferLengthBytes,
-                                   BaseType_t* const HigherPriorityTaskWoken);
+size_t xStreamBufferSendFromISR(StreamBufferHandle_t xStreamBuffer, const void *pvTxData, size_t xDataLengthBytes,
+                                BaseType_t *const HigherPriorityTaskWoken);
+size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void *pvRxData, size_t xBufferLengthBytes,
+                            TickType_t xTicksToWait);
+size_t xStreamBufferReceiveFromISR(StreamBufferHandle_t xStreamBuffer, void *pvRxData, size_t xBufferLengthBytes,
+                                   BaseType_t *const HigherPriorityTaskWoken);
 void vStreamBufferDelete(StreamBufferHandle_t xStreamBuffer);
 BaseType_t xStreamBufferIsFull(StreamBufferHandle_t xStreamBuffer);
 BaseType_t xStreamBufferIsEmpty(StreamBufferHandle_t xStreamBuffer);
@@ -79,25 +68,20 @@ BaseType_t xStreamBufferReset(StreamBufferHandle_t xStreamBuffer);
 BaseType_t xStreamBufferResetFromISR(StreamBufferHandle_t xStreamBuffer);
 size_t xStreamBufferSpacesAvailable(StreamBufferHandle_t xStreamBuffer);
 size_t xStreamBufferBytesAvailable(StreamBufferHandle_t xStreamBuffer);
-BaseType_t xStreamBufferSetTriggerLevel(StreamBufferHandle_t xStreamBuffer,
-                                        size_t xTriggerLevel);
-BaseType_t xStreamBufferSendCompletedFromISR(
-    StreamBufferHandle_t xStreamBuffer, BaseType_t* HigherPriorityTaskWoken);
-BaseType_t xStreamBufferReceiveCompletedFromISR(
-    StreamBufferHandle_t xStreamBuffer, BaseType_t* HigherPriorityTaskWoken);
-UBaseType_t uxStreamBufferGetStreamBufferNotificationIndex(
-    StreamBufferHandle_t xStreamBuffer);
-void vStreamBufferSetStreamBufferNotificationIndex(
-    StreamBufferHandle_t xStreamBuffer, UBaseType_t uxNotificationIndex);
-StreamBufferHandle_t xStreamBufferGenericCreate(
-    size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
-    BaseType_t xStreamBufferType,
-    StreamBufferCallbackFunction_t SendCompletedCallback,
-    StreamBufferCallbackFunction_t ReceiveCompletedCallback);
-StreamBufferHandle_t xStreamBufferGenericCreateStatic(
-    size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
-    BaseType_t xStreamBufferType, uint8_t* const pucStreamBufferStorageArea,
-    StaticStreamBuffer_t* const pStaticStreamBuffer,
-    StreamBufferCallbackFunction_t SendCompletedCallback,
-    StreamBufferCallbackFunction_t ReceiveCompletedCallback);
+BaseType_t xStreamBufferSetTriggerLevel(StreamBufferHandle_t xStreamBuffer, size_t xTriggerLevel);
+BaseType_t xStreamBufferSendCompletedFromISR(StreamBufferHandle_t xStreamBuffer, BaseType_t *HigherPriorityTaskWoken);
+BaseType_t xStreamBufferReceiveCompletedFromISR(StreamBufferHandle_t xStreamBuffer,
+                                                BaseType_t *HigherPriorityTaskWoken);
+UBaseType_t uxStreamBufferGetStreamBufferNotificationIndex(StreamBufferHandle_t xStreamBuffer);
+void vStreamBufferSetStreamBufferNotificationIndex(StreamBufferHandle_t xStreamBuffer, UBaseType_t uxNotificationIndex);
+StreamBufferHandle_t xStreamBufferGenericCreate(size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
+                                                BaseType_t xStreamBufferType,
+                                                StreamBufferCallbackFunction_t SendCompletedCallback,
+                                                StreamBufferCallbackFunction_t ReceiveCompletedCallback);
+StreamBufferHandle_t xStreamBufferGenericCreateStatic(size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
+                                                      BaseType_t xStreamBufferType,
+                                                      uint8_t *const pucStreamBufferStorageArea,
+                                                      StaticStreamBuffer_t *const pStaticStreamBuffer,
+                                                      StreamBufferCallbackFunction_t SendCompletedCallback,
+                                                      StreamBufferCallbackFunction_t ReceiveCompletedCallback);
 size_t xStreamBufferNextMessageLengthBytes(StreamBufferHandle_t xStreamBuffer);

@@ -42,12 +42,10 @@ struct EventGroup_t {
   uint8_t StaticallyAllocated;
 };
 
-static BaseType_t TestWaitCondition(const EventBits_t uxCurrentEventBits,
-                                    const EventBits_t uxBitsToWaitFor,
+static BaseType_t TestWaitCondition(const EventBits_t uxCurrentEventBits, const EventBits_t uxBitsToWaitFor,
                                     const BaseType_t xWaitForAllBits);
 
-EventGroupHandle_t xEventGroupCreateStatic(
-    StaticEventGroup_t *EventGroupBuffer) {
+EventGroupHandle_t xEventGroupCreateStatic(StaticEventGroup_t *EventGroupBuffer) {
   EventGroup_t *EventBits;
   EventBits = (EventGroup_t *)EventGroupBuffer;
   if (EventBits != NULL) {
@@ -71,10 +69,8 @@ EventGroupHandle_t xEventGroupCreate(void) {
   return EventBits;
 }
 
-EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
-                            const EventBits_t uxBitsToSet,
-                            const EventBits_t uxBitsToWaitFor,
-                            TickType_t xTicksToWait) {
+EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToSet,
+                            const EventBits_t uxBitsToWaitFor, TickType_t xTicksToWait) {
   EventBits_t uxOriginalBitValue, uRet;
   EventGroup_t *EventBits = xEventGroup;
   BaseType_t xAlreadyYielded;
@@ -83,19 +79,15 @@ EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
   {
     uxOriginalBitValue = EventBits->EventBits;
     (void)xEventGroupSetBits(xEventGroup, uxBitsToSet);
-    if (((uxOriginalBitValue | uxBitsToSet) & uxBitsToWaitFor) ==
-        uxBitsToWaitFor) {
+    if (((uxOriginalBitValue | uxBitsToSet) & uxBitsToWaitFor) == uxBitsToWaitFor) {
       uRet = (uxOriginalBitValue | uxBitsToSet);
 
       EventBits->EventBits &= ~uxBitsToWaitFor;
       xTicksToWait = 0;
     } else {
       if (xTicksToWait != (TickType_t)0) {
-        PlaceOnUnorderedEventList(
-            &(EventBits->TasksWaitingForBits),
-            (uxBitsToWaitFor | eventCLEAR_EVENTS_ON_EXIT_BIT |
-             WAIT_FOR_ALL_BITS),
-            xTicksToWait);
+        PlaceOnUnorderedEventList(&(EventBits->TasksWaitingForBits),
+                                  (uxBitsToWaitFor | eventCLEAR_EVENTS_ON_EXIT_BIT | WAIT_FOR_ALL_BITS), xTicksToWait);
 
         uRet = 0;
       } else {
@@ -129,10 +121,8 @@ EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
   return uRet;
 }
 
-EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
-                                const EventBits_t uxBitsToWaitFor,
-                                const BaseType_t xClearOnExit,
-                                const BaseType_t xWaitForAllBits,
+EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToWaitFor,
+                                const BaseType_t xClearOnExit, const BaseType_t xWaitForAllBits,
                                 TickType_t xTicksToWait) {
   EventGroup_t *EventBits = xEventGroup;
   EventBits_t uRet, uxControlBits = 0;
@@ -143,8 +133,7 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
   {
     const EventBits_t uxCurrentEventBits = EventBits->EventBits;
 
-    xWaitConditionMet =
-        TestWaitCondition(uxCurrentEventBits, uxBitsToWaitFor, xWaitForAllBits);
+    xWaitConditionMet = TestWaitCondition(uxCurrentEventBits, uxBitsToWaitFor, xWaitForAllBits);
     if (xWaitConditionMet != false) {
       uRet = uxCurrentEventBits;
       xTicksToWait = (TickType_t)0;
@@ -163,9 +152,7 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
         uxControlBits |= WAIT_FOR_ALL_BITS;
       }
 
-      PlaceOnUnorderedEventList(&(EventBits->TasksWaitingForBits),
-                                (uxBitsToWaitFor | uxControlBits),
-                                xTicksToWait);
+      PlaceOnUnorderedEventList(&(EventBits->TasksWaitingForBits), (uxBitsToWaitFor | uxControlBits), xTicksToWait);
 
       uRet = 0;
     }
@@ -182,8 +169,7 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
       {
         uRet = EventBits->EventBits;
 
-        if (TestWaitCondition(uRet, uxBitsToWaitFor, xWaitForAllBits) !=
-            false) {
+        if (TestWaitCondition(uRet, uxBitsToWaitFor, xWaitForAllBits) != false) {
           if (xClearOnExit != false) {
             EventBits->EventBits &= ~uxBitsToWaitFor;
           }
@@ -196,8 +182,7 @@ EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
   return uRet;
 }
 
-EventBits_t xEventGroupClearBits(EventGroupHandle_t xEventGroup,
-                                 const EventBits_t uxBitsToClear) {
+EventBits_t xEventGroupClearBits(EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToClear) {
   EventGroup_t *EventBits = xEventGroup;
   EventBits_t uRet;
 
@@ -216,8 +201,7 @@ EventBits_t xEventGroupGetBitsFromISR(EventGroupHandle_t xEventGroup) {
   EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
   return uRet;
 }
-EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
-                               const EventBits_t uxBitsToSet) {
+EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToSet) {
   Item_t<TCB_t> *ListItem;
   Item_t<TCB_t> *Next;
   EventBits_t uxBitsToClear = 0, uxBitsWaitedFor, uxControlBits, uRetBits;
@@ -251,8 +235,7 @@ EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
           uxBitsToClear |= uxBitsWaitedFor;
         }
 
-        RemoveFromUnorderedEventList(
-            ListItem, EventBits->EventBits | eventUNBLOCKED_DUE_TO_BIT_SET);
+        RemoveFromUnorderedEventList(ListItem, EventBits->EventBits | eventUNBLOCKED_DUE_TO_BIT_SET);
       }
 
       ListItem = Next;
@@ -272,16 +255,13 @@ void vEventGroupDelete(EventGroupHandle_t xEventGroup) {
   TaskSuspendAll();
   {
     while (TasksWaitingForBits->Length > (UBaseType_t)0) {
-      RemoveFromUnorderedEventList(TasksWaitingForBits->End.Next,
-                                   eventUNBLOCKED_DUE_TO_BIT_SET);
+      RemoveFromUnorderedEventList(TasksWaitingForBits->End.Next, eventUNBLOCKED_DUE_TO_BIT_SET);
     }
   }
   (void)ResumeAll();
-#if ((configSUPPORT_DYNAMIC_ALLOCATION == 1) && \
-     (configSUPPORT_STATIC_ALLOCATION == 0))
+#if ((configSUPPORT_DYNAMIC_ALLOCATION == 1) && (configSUPPORT_STATIC_ALLOCATION == 0))
   { vPortFree(EventBits); }
-#elif ((configSUPPORT_DYNAMIC_ALLOCATION == 1) && \
-       (configSUPPORT_STATIC_ALLOCATION == 1))
+#elif ((configSUPPORT_DYNAMIC_ALLOCATION == 1) && (configSUPPORT_STATIC_ALLOCATION == 1))
   {
     if (EventBits->StaticallyAllocated == (uint8_t) false) {
       vPortFree(EventBits);
@@ -291,8 +271,7 @@ void vEventGroupDelete(EventGroupHandle_t xEventGroup) {
 }
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-BaseType_t xEventGroupGetStaticBuffer(EventGroupHandle_t xEventGroup,
-                                      StaticEventGroup_t **EventGroupBuffer) {
+BaseType_t xEventGroupGetStaticBuffer(EventGroupHandle_t xEventGroup, StaticEventGroup_t **EventGroupBuffer) {
   BaseType_t Ret;
   EventGroup_t *EventBits = xEventGroup;
 
@@ -307,17 +286,14 @@ BaseType_t xEventGroupGetStaticBuffer(EventGroupHandle_t xEventGroup,
 #endif
 
 void vEventGroupSetBitsCallback(void *pvEventGroup, uint32_t ulBitsToSet) {
-  (void)xEventGroupSetBits((EventGroupHandle_t)pvEventGroup,
-                           (EventBits_t)ulBitsToSet);
+  (void)xEventGroupSetBits((EventGroupHandle_t)pvEventGroup, (EventBits_t)ulBitsToSet);
 }
 
 void vEventGroupClearBitsCallback(void *pvEventGroup, uint32_t ulBitsToClear) {
-  (void)xEventGroupClearBits((EventGroupHandle_t)pvEventGroup,
-                             (EventBits_t)ulBitsToClear);
+  (void)xEventGroupClearBits((EventGroupHandle_t)pvEventGroup, (EventBits_t)ulBitsToClear);
 }
 
-static BaseType_t TestWaitCondition(const EventBits_t uxCurrentEventBits,
-                                    const EventBits_t uxBitsToWaitFor,
+static BaseType_t TestWaitCondition(const EventBits_t uxCurrentEventBits, const EventBits_t uxBitsToWaitFor,
                                     const BaseType_t xWaitForAllBits) {
   BaseType_t xWaitConditionMet = false;
   if (xWaitForAllBits == false) {

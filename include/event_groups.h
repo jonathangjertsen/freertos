@@ -47,41 +47,30 @@
 #endif
 
 struct EventGroup_t;
-typedef struct EventGroup_t* EventGroupHandle_t;
+typedef struct EventGroup_t *EventGroupHandle_t;
 
 typedef TickType_t EventBits_t;
 
 EventGroupHandle_t xEventGroupCreate(void);
-EventGroupHandle_t xEventGroupCreateStatic(
-    StaticEventGroup_t* EventGroupBuffer);
+EventGroupHandle_t xEventGroupCreateStatic(StaticEventGroup_t *EventGroupBuffer);
 
-EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup,
-                                const EventBits_t uxBitsToWaitFor,
-                                const BaseType_t xClearOnExit,
-                                const BaseType_t xWaitForAllBits,
+EventBits_t xEventGroupWaitBits(EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToWaitFor,
+                                const BaseType_t xClearOnExit, const BaseType_t xWaitForAllBits,
                                 TickType_t xTicksToWait);
 
-EventBits_t xEventGroupClearBits(EventGroupHandle_t xEventGroup,
-                                 const EventBits_t uxBitsToClear);
+EventBits_t xEventGroupClearBits(EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToClear);
 
 #define xEventGroupClearBitsFromISR(xEventGroup, uxBitsToClear) \
-  TimerPendFunctionCallFromISR(vEventGroupClearBitsCallback,    \
-                               (void*)(xEventGroup),            \
-                               (uint32_t)(uxBitsToClear), NULL)
+  TimerPendFunctionCallFromISR(vEventGroupClearBitsCallback, (void *)(xEventGroup), (uint32_t)(uxBitsToClear), NULL)
 
-EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup,
-                               const EventBits_t uxBitsToSet);
+EventBits_t xEventGroupSetBits(EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToSet);
 
-#define xEventGroupSetBitsFromISR(xEventGroup, uxBitsToSet,                   \
-                                  HigherPriorityTaskWoken)                    \
-  TimerPendFunctionCallFromISR(vEventGroupSetBitsCallback,                    \
-                               (void*)(xEventGroup), (uint32_t)(uxBitsToSet), \
+#define xEventGroupSetBitsFromISR(xEventGroup, uxBitsToSet, HigherPriorityTaskWoken)                       \
+  TimerPendFunctionCallFromISR(vEventGroupSetBitsCallback, (void *)(xEventGroup), (uint32_t)(uxBitsToSet), \
                                (HigherPriorityTaskWoken))
 
-EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup,
-                            const EventBits_t uxBitsToSet,
-                            const EventBits_t uxBitsToWaitFor,
-                            TickType_t xTicksToWait);
+EventBits_t xEventGroupSync(EventGroupHandle_t xEventGroup, const EventBits_t uxBitsToSet,
+                            const EventBits_t uxBitsToWaitFor, TickType_t xTicksToWait);
 
 #define xEventGroupGetBits(xEventGroup) xEventGroupClearBits((xEventGroup), 0)
 
@@ -89,8 +78,7 @@ EventBits_t xEventGroupGetBitsFromISR(EventGroupHandle_t xEventGroup);
 
 void vEventGroupDelete(EventGroupHandle_t xEventGroup);
 
-BaseType_t xEventGroupGetStaticBuffer(EventGroupHandle_t xEventGroup,
-                                      StaticEventGroup_t** EventGroupBuffer);
+BaseType_t xEventGroupGetStaticBuffer(EventGroupHandle_t xEventGroup, StaticEventGroup_t **EventGroupBuffer);
 
-void vEventGroupSetBitsCallback(void* pvEventGroup, uint32_t ulBitsToSet);
-void vEventGroupClearBitsCallback(void* pvEventGroup, uint32_t ulBitsToClear);
+void vEventGroupSetBitsCallback(void *pvEventGroup, uint32_t ulBitsToSet);
+void vEventGroupClearBitsCallback(void *pvEventGroup, uint32_t ulBitsToClear);

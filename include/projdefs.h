@@ -28,18 +28,16 @@
  */
 #pragma once
 
-typedef void (*TaskFunction_t)(void* arg);
+typedef void (*TaskFunction_t)(void *arg);
 
 #ifndef pdMS_TO_TICKS
-#define pdMS_TO_TICKS(xTimeInMs)                                         \
-  ((TickType_t)(((uint64_t)(xTimeInMs) * (uint64_t)configTICK_RATE_HZ) / \
-                (uint64_t)1000U))
+#define pdMS_TO_TICKS(xTimeInMs) \
+  ((TickType_t)(((uint64_t)(xTimeInMs) * (uint64_t)configTICK_RATE_HZ) / (uint64_t)1000U))
 #endif
 
 #ifndef pdTICKS_TO_MS
-#define pdTICKS_TO_MS(xTimeInTicks)                            \
-  ((TickType_t)(((uint64_t)(xTimeInTicks) * (uint64_t)1000U) / \
-                (uint64_t)configTICK_RATE_HZ))
+#define pdTICKS_TO_MS(xTimeInTicks) \
+  ((TickType_t)(((uint64_t)(xTimeInTicks) * (uint64_t)1000U) / (uint64_t)configTICK_RATE_HZ))
 #endif
 
 #define errQUEUE_EMPTY ((BaseType_t)0)

@@ -36,18 +36,17 @@
 #include "task.hpp"
 
 #ifndef sbRECEIVE_COMPLETED
-#define sbRECEIVE_COMPLETED(StreamBuffer)                            \
-  do {                                                               \
-    TaskSuspendAll();                                                \
-    {                                                                \
-      if ((StreamBuffer)->TaskWaitingToSend != NULL) {               \
-        (void)TaskNotifyIndexed((StreamBuffer)->TaskWaitingToSend,   \
-                                (StreamBuffer)->uxNotificationIndex, \
-                                (uint32_t)0, eNoAction);             \
-        (StreamBuffer)->TaskWaitingToSend = NULL;                    \
-      }                                                              \
-    }                                                                \
-    (void)ResumeAll();                                               \
+#define sbRECEIVE_COMPLETED(StreamBuffer)                                                                            \
+  do {                                                                                                               \
+    TaskSuspendAll();                                                                                                \
+    {                                                                                                                \
+      if ((StreamBuffer)->TaskWaitingToSend != NULL) {                                                               \
+        (void)TaskNotifyIndexed((StreamBuffer)->TaskWaitingToSend, (StreamBuffer)->uxNotificationIndex, (uint32_t)0, \
+                                eNoAction);                                                                          \
+        (StreamBuffer)->TaskWaitingToSend = NULL;                                                                    \
+      }                                                                                                              \
+    }                                                                                                                \
+    (void)ResumeAll();                                                                                               \
   } while (0)
 #endif
 
@@ -64,33 +63,29 @@
 #define RECEIVE_COMPLETED(StreamBuffer) sbRECEIVE_COMPLETED((StreamBuffer))
 #endif
 #ifndef sbRECEIVE_COMPLETED_FROM_ISR
-#define sbRECEIVE_COMPLETED_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken) \
-  do {                                                                      \
-    UBaseType_t uxSavedInterruptStatus;                                     \
-                                                                            \
-    uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();                     \
-    {                                                                       \
-      if ((StreamBuffer)->TaskWaitingToSend != NULL) {                      \
-        (void)TaskNotifyIndexedFromISR((StreamBuffer)->TaskWaitingToSend,   \
-                                       (StreamBuffer)->uxNotificationIndex, \
-                                       (uint32_t)0, eNoAction,              \
-                                       (HigherPriorityTaskWoken));          \
-        (StreamBuffer)->TaskWaitingToSend = NULL;                           \
-      }                                                                     \
-    }                                                                       \
-    EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);                         \
+#define sbRECEIVE_COMPLETED_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken)                                    \
+  do {                                                                                                         \
+    UBaseType_t uxSavedInterruptStatus;                                                                        \
+                                                                                                               \
+    uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();                                                        \
+    {                                                                                                          \
+      if ((StreamBuffer)->TaskWaitingToSend != NULL) {                                                         \
+        (void)TaskNotifyIndexedFromISR((StreamBuffer)->TaskWaitingToSend, (StreamBuffer)->uxNotificationIndex, \
+                                       (uint32_t)0, eNoAction, (HigherPriorityTaskWoken));                     \
+        (StreamBuffer)->TaskWaitingToSend = NULL;                                                              \
+      }                                                                                                        \
+    }                                                                                                          \
+    EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);                                                            \
   } while (0)
 #endif
 #if (configUSE_SB_COMPLETED_CALLBACK == 1)
-#define RECEIVE_COMPLETED_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken)      \
-  do {                                                                         \
-    if ((StreamBuffer)->ReceiveCompletedCallback != NULL) {                    \
-      (StreamBuffer)                                                           \
-          ->ReceiveCompletedCallback((StreamBuffer), true,                     \
-                                     (HigherPriorityTaskWoken));               \
-    } else {                                                                   \
-      sbRECEIVE_COMPLETED_FROM_ISR((StreamBuffer), (HigherPriorityTaskWoken)); \
-    }                                                                          \
+#define RECEIVE_COMPLETED_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken)                        \
+  do {                                                                                           \
+    if ((StreamBuffer)->ReceiveCompletedCallback != NULL) {                                      \
+      (StreamBuffer)->ReceiveCompletedCallback((StreamBuffer), true, (HigherPriorityTaskWoken)); \
+    } else {                                                                                     \
+      sbRECEIVE_COMPLETED_FROM_ISR((StreamBuffer), (HigherPriorityTaskWoken));                   \
+    }                                                                                            \
   } while (0)
 #else
 #define RECEIVE_COMPLETED_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken) \
@@ -98,16 +93,15 @@
 #endif
 
 #ifndef sbSEND_COMPLETED
-#define sbSEND_COMPLETED(StreamBuffer)                              \
-  TaskSuspendAll();                                                 \
-  {                                                                 \
-    if ((StreamBuffer)->TaskWaitingToReceive != NULL) {             \
-      (void)TaskNotifyIndexed((StreamBuffer)->TaskWaitingToReceive, \
-                              (StreamBuffer)->uxNotificationIndex,  \
-                              (uint32_t)0, eNoAction);              \
-      (StreamBuffer)->TaskWaitingToReceive = NULL;                  \
-    }                                                               \
-  }                                                                 \
+#define sbSEND_COMPLETED(StreamBuffer)                                                                                \
+  TaskSuspendAll();                                                                                                   \
+  {                                                                                                                   \
+    if ((StreamBuffer)->TaskWaitingToReceive != NULL) {                                                               \
+      (void)TaskNotifyIndexed((StreamBuffer)->TaskWaitingToReceive, (StreamBuffer)->uxNotificationIndex, (uint32_t)0, \
+                              eNoAction);                                                                             \
+      (StreamBuffer)->TaskWaitingToReceive = NULL;                                                                    \
+    }                                                                                                                 \
+  }                                                                                                                   \
   (void)ResumeAll()
 #endif
 
@@ -125,42 +119,37 @@
 #endif
 
 #ifndef sbSEND_COMPLETE_FROM_ISR
-#define sbSEND_COMPLETE_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken)      \
-  do {                                                                       \
-    UBaseType_t uxSavedInterruptStatus;                                      \
-                                                                             \
-    uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();                      \
-    {                                                                        \
-      if ((StreamBuffer)->TaskWaitingToReceive != NULL) {                    \
-        (void)TaskNotifyIndexedFromISR((StreamBuffer)->TaskWaitingToReceive, \
-                                       (StreamBuffer)->uxNotificationIndex,  \
-                                       (uint32_t)0, eNoAction,               \
-                                       (HigherPriorityTaskWoken));           \
-        (StreamBuffer)->TaskWaitingToReceive = NULL;                         \
-      }                                                                      \
-    }                                                                        \
-    EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);                          \
+#define sbSEND_COMPLETE_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken)                                           \
+  do {                                                                                                            \
+    UBaseType_t uxSavedInterruptStatus;                                                                           \
+                                                                                                                  \
+    uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();                                                           \
+    {                                                                                                             \
+      if ((StreamBuffer)->TaskWaitingToReceive != NULL) {                                                         \
+        (void)TaskNotifyIndexedFromISR((StreamBuffer)->TaskWaitingToReceive, (StreamBuffer)->uxNotificationIndex, \
+                                       (uint32_t)0, eNoAction, (HigherPriorityTaskWoken));                        \
+        (StreamBuffer)->TaskWaitingToReceive = NULL;                                                              \
+      }                                                                                                           \
+    }                                                                                                             \
+    EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);                                                               \
   } while (0)
 #endif
 
 #if (configUSE_SB_COMPLETED_CALLBACK == 1)
-#define SEND_COMPLETE_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken)      \
-  do {                                                                     \
-    if ((StreamBuffer)->SendCompletedCallback != NULL) {                   \
-      (StreamBuffer)                                                       \
-          ->SendCompletedCallback((StreamBuffer), true,                    \
-                                  (HigherPriorityTaskWoken));              \
-    } else {                                                               \
-      sbSEND_COMPLETE_FROM_ISR((StreamBuffer), (HigherPriorityTaskWoken)); \
-    }                                                                      \
+#define SEND_COMPLETE_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken)                         \
+  do {                                                                                        \
+    if ((StreamBuffer)->SendCompletedCallback != NULL) {                                      \
+      (StreamBuffer)->SendCompletedCallback((StreamBuffer), true, (HigherPriorityTaskWoken)); \
+    } else {                                                                                  \
+      sbSEND_COMPLETE_FROM_ISR((StreamBuffer), (HigherPriorityTaskWoken));                    \
+    }                                                                                         \
   } while (0)
 #else
 #define SEND_COMPLETE_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken) \
   sbSEND_COMPLETE_FROM_ISR((StreamBuffer), (HigherPriorityTaskWoken))
 #endif
 
-#define sbBYTES_TO_STORE_MESSAGE_LENGTH \
-  (sizeof(configMESSAGE_BUFFER_LENGTH_TYPE))
+#define sbBYTES_TO_STORE_MESSAGE_LENGTH (sizeof(configMESSAGE_BUFFER_LENGTH_TYPE))
 
 #define sbFLAGS_IS_MESSAGE_BUFFER ((uint8_t)1)
 #define sbFLAGS_IS_STATICALLY_ALLOCATED ((uint8_t)2)
@@ -173,7 +162,7 @@ typedef struct StreamBufferDef_t {
   size_t xTriggerLevelBytes;
   volatile TaskHandle_t TaskWaitingToReceive;
   volatile TaskHandle_t TaskWaitingToSend;
-  uint8_t* pucBuffer;
+  uint8_t *pucBuffer;
   uint8_t ucFlags;
 #if (configUSE_SB_COMPLETED_CALLBACK == 1)
   StreamBufferCallbackFunction_t SendCompletedCallback;
@@ -182,38 +171,30 @@ typedef struct StreamBufferDef_t {
   UBaseType_t uxNotificationIndex;
 } StreamBuffer_t;
 
-static size_t BytesInBuffer(const StreamBuffer_t* const StreamBuffer);
+static size_t BytesInBuffer(const StreamBuffer_t *const StreamBuffer);
 
-static size_t WriteBytesToBuffer(StreamBuffer_t* const StreamBuffer,
-                                 const uint8_t* pucData, size_t xCount,
+static size_t WriteBytesToBuffer(StreamBuffer_t *const StreamBuffer, const uint8_t *pucData, size_t xCount,
                                  size_t xHead);
 
-static size_t ReadMessageFromBuffer(StreamBuffer_t* StreamBuffer,
-                                    void* pvRxData, size_t xBufferLengthBytes,
+static size_t ReadMessageFromBuffer(StreamBuffer_t *StreamBuffer, void *pvRxData, size_t xBufferLengthBytes,
                                     size_t xBytesAvailable);
 
-static size_t WriteMessageToBuffer(StreamBuffer_t* const StreamBuffer,
-                                   const void* pvTxData,
-                                   size_t xDataLengthBytes, size_t xSpace,
-                                   size_t xRequiredSpace);
+static size_t WriteMessageToBuffer(StreamBuffer_t *const StreamBuffer, const void *pvTxData, size_t xDataLengthBytes,
+                                   size_t xSpace, size_t xRequiredSpace);
 
-static size_t ReadBytesFromBuffer(StreamBuffer_t* StreamBuffer,
-                                  uint8_t* pucData, size_t xCount,
-                                  size_t xTail);
+static size_t ReadBytesFromBuffer(StreamBuffer_t *StreamBuffer, uint8_t *pucData, size_t xCount, size_t xTail);
 
-static void InitialiseNewStreamBuffer(
-    StreamBuffer_t* const StreamBuffer, uint8_t* const pucBuffer,
-    size_t xBufferSizeBytes, size_t xTriggerLevelBytes, uint8_t ucFlags,
-    StreamBufferCallbackFunction_t SendCompletedCallback,
-    StreamBufferCallbackFunction_t ReceiveCompletedCallback);
+static void InitialiseNewStreamBuffer(StreamBuffer_t *const StreamBuffer, uint8_t *const pucBuffer,
+                                      size_t xBufferSizeBytes, size_t xTriggerLevelBytes, uint8_t ucFlags,
+                                      StreamBufferCallbackFunction_t SendCompletedCallback,
+                                      StreamBufferCallbackFunction_t ReceiveCompletedCallback);
 
 #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
-StreamBufferHandle_t xStreamBufferGenericCreate(
-    size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
-    BaseType_t xStreamBufferType,
-    StreamBufferCallbackFunction_t SendCompletedCallback,
-    StreamBufferCallbackFunction_t ReceiveCompletedCallback) {
-  void* pvAllocatedMemory;
+StreamBufferHandle_t xStreamBufferGenericCreate(size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
+                                                BaseType_t xStreamBufferType,
+                                                StreamBufferCallbackFunction_t SendCompletedCallback,
+                                                StreamBufferCallbackFunction_t ReceiveCompletedCallback) {
+  void *pvAllocatedMemory;
   uint8_t ucFlags;
 
   if (xStreamBufferType == sbTYPE_MESSAGE_BUFFER) {
@@ -235,12 +216,10 @@ StreamBufferHandle_t xStreamBufferGenericCreate(
     pvAllocatedMemory = NULL;
   }
   if (pvAllocatedMemory != NULL) {
-    InitialiseNewStreamBuffer(
-        (StreamBuffer_t*)pvAllocatedMemory,
+    InitialiseNewStreamBuffer((StreamBuffer_t *)pvAllocatedMemory,
 
-        ((uint8_t*)pvAllocatedMemory) + sizeof(StreamBuffer_t),
-        xBufferSizeBytes, xTriggerLevelBytes, ucFlags, SendCompletedCallback,
-        ReceiveCompletedCallback);
+                              ((uint8_t *)pvAllocatedMemory) + sizeof(StreamBuffer_t), xBufferSizeBytes,
+                              xTriggerLevelBytes, ucFlags, SendCompletedCallback, ReceiveCompletedCallback);
   } else {
   }
 
@@ -249,13 +228,13 @@ StreamBufferHandle_t xStreamBufferGenericCreate(
 #endif
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-StreamBufferHandle_t xStreamBufferGenericCreateStatic(
-    size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
-    BaseType_t xStreamBufferType, uint8_t* const pucStreamBufferStorageArea,
-    StaticStreamBuffer_t* const pStaticStreamBuffer,
-    StreamBufferCallbackFunction_t SendCompletedCallback,
-    StreamBufferCallbackFunction_t ReceiveCompletedCallback) {
-  StreamBuffer_t* const StreamBuffer = (StreamBuffer_t*)pStaticStreamBuffer;
+StreamBufferHandle_t xStreamBufferGenericCreateStatic(size_t xBufferSizeBytes, size_t xTriggerLevelBytes,
+                                                      BaseType_t xStreamBufferType,
+                                                      uint8_t *const pucStreamBufferStorageArea,
+                                                      StaticStreamBuffer_t *const pStaticStreamBuffer,
+                                                      StreamBufferCallbackFunction_t SendCompletedCallback,
+                                                      StreamBufferCallbackFunction_t ReceiveCompletedCallback) {
+  StreamBuffer_t *const StreamBuffer = (StreamBuffer_t *)pStaticStreamBuffer;
   StreamBufferHandle_t Ret;
   uint8_t ucFlags;
 
@@ -271,8 +250,7 @@ StreamBufferHandle_t xStreamBufferGenericCreateStatic(
     ucFlags = sbFLAGS_IS_STATICALLY_ALLOCATED;
   }
   if ((pucStreamBufferStorageArea != NULL) && (pStaticStreamBuffer != NULL)) {
-    InitialiseNewStreamBuffer(StreamBuffer, pucStreamBufferStorageArea,
-                              xBufferSizeBytes, xTriggerLevelBytes, ucFlags,
+    InitialiseNewStreamBuffer(StreamBuffer, pucStreamBufferStorageArea, xBufferSizeBytes, xTriggerLevelBytes, ucFlags,
                               SendCompletedCallback, ReceiveCompletedCallback);
 
     StreamBuffer->ucFlags |= sbFLAGS_IS_STATICALLY_ALLOCATED;
@@ -287,16 +265,15 @@ StreamBufferHandle_t xStreamBufferGenericCreateStatic(
 #endif
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-BaseType_t xStreamBufferGetStaticBuffers(
-    StreamBufferHandle_t xStreamBuffer, uint8_t** ppucStreamBufferStorageArea,
-    StaticStreamBuffer_t** ppStaticStreamBuffer) {
+BaseType_t xStreamBufferGetStaticBuffers(StreamBufferHandle_t xStreamBuffer, uint8_t **ppucStreamBufferStorageArea,
+                                         StaticStreamBuffer_t **ppStaticStreamBuffer) {
   BaseType_t Ret;
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED) != (uint8_t)0) {
     *ppucStreamBufferStorageArea = StreamBuffer->pucBuffer;
 
-    *ppStaticStreamBuffer = (StaticStreamBuffer_t*)StreamBuffer;
+    *ppStaticStreamBuffer = (StaticStreamBuffer_t *)StreamBuffer;
     Ret = true;
   } else {
     Ret = false;
@@ -307,11 +284,10 @@ BaseType_t xStreamBufferGetStaticBuffers(
 #endif
 
 void vStreamBufferDelete(StreamBufferHandle_t xStreamBuffer) {
-  StreamBuffer_t* StreamBuffer = xStreamBuffer;
-  if ((StreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED) ==
-      (uint8_t) false) {
+  StreamBuffer_t *StreamBuffer = xStreamBuffer;
+  if ((StreamBuffer->ucFlags & sbFLAGS_IS_STATICALLY_ALLOCATED) == (uint8_t) false) {
 #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
-    { vPortFree((void*)StreamBuffer); }
+    { vPortFree((void *)StreamBuffer); }
 #else
     {
     }
@@ -322,24 +298,21 @@ void vStreamBufferDelete(StreamBufferHandle_t xStreamBuffer) {
 }
 
 BaseType_t xStreamBufferReset(StreamBufferHandle_t xStreamBuffer) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   BaseType_t Ret = false;
   StreamBufferCallbackFunction_t SendCallback = NULL, ReceiveCallback = NULL;
 
   ENTER_CRITICAL();
   {
-    if ((StreamBuffer->TaskWaitingToReceive == NULL) &&
-        (StreamBuffer->TaskWaitingToSend == NULL)) {
+    if ((StreamBuffer->TaskWaitingToReceive == NULL) && (StreamBuffer->TaskWaitingToSend == NULL)) {
 #if (configUSE_SB_COMPLETED_CALLBACK == 1)
       {
         SendCallback = StreamBuffer->SendCompletedCallback;
         ReceiveCallback = StreamBuffer->ReceiveCompletedCallback;
       }
 #endif
-      InitialiseNewStreamBuffer(
-          StreamBuffer, StreamBuffer->pucBuffer, StreamBuffer->xLength,
-          StreamBuffer->xTriggerLevelBytes, StreamBuffer->ucFlags, SendCallback,
-          ReceiveCallback);
+      InitialiseNewStreamBuffer(StreamBuffer, StreamBuffer->pucBuffer, StreamBuffer->xLength,
+                                StreamBuffer->xTriggerLevelBytes, StreamBuffer->ucFlags, SendCallback, ReceiveCallback);
       Ret = true;
     }
   }
@@ -348,25 +321,22 @@ BaseType_t xStreamBufferReset(StreamBufferHandle_t xStreamBuffer) {
 }
 
 BaseType_t xStreamBufferResetFromISR(StreamBufferHandle_t xStreamBuffer) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   BaseType_t Ret = false;
   StreamBufferCallbackFunction_t SendCallback = NULL, ReceiveCallback = NULL;
   UBaseType_t uxSavedInterruptStatus;
 
   uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
   {
-    if ((StreamBuffer->TaskWaitingToReceive == NULL) &&
-        (StreamBuffer->TaskWaitingToSend == NULL)) {
+    if ((StreamBuffer->TaskWaitingToReceive == NULL) && (StreamBuffer->TaskWaitingToSend == NULL)) {
 #if (configUSE_SB_COMPLETED_CALLBACK == 1)
       {
         SendCallback = StreamBuffer->SendCompletedCallback;
         ReceiveCallback = StreamBuffer->ReceiveCompletedCallback;
       }
 #endif
-      InitialiseNewStreamBuffer(
-          StreamBuffer, StreamBuffer->pucBuffer, StreamBuffer->xLength,
-          StreamBuffer->xTriggerLevelBytes, StreamBuffer->ucFlags, SendCallback,
-          ReceiveCallback);
+      InitialiseNewStreamBuffer(StreamBuffer, StreamBuffer->pucBuffer, StreamBuffer->xLength,
+                                StreamBuffer->xTriggerLevelBytes, StreamBuffer->ucFlags, SendCallback, ReceiveCallback);
       Ret = true;
     }
   }
@@ -374,9 +344,8 @@ BaseType_t xStreamBufferResetFromISR(StreamBufferHandle_t xStreamBuffer) {
   return Ret;
 }
 
-BaseType_t xStreamBufferSetTriggerLevel(StreamBufferHandle_t xStreamBuffer,
-                                        size_t xTriggerLevel) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+BaseType_t xStreamBufferSetTriggerLevel(StreamBufferHandle_t xStreamBuffer, size_t xTriggerLevel) {
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   BaseType_t Ret;
 
   if (xTriggerLevel == (size_t)0) {
@@ -393,7 +362,7 @@ BaseType_t xStreamBufferSetTriggerLevel(StreamBufferHandle_t xStreamBuffer,
 }
 
 size_t xStreamBufferSpacesAvailable(StreamBufferHandle_t xStreamBuffer) {
-  const StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  const StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   size_t xSpace;
   size_t xOriginalTail;
 
@@ -410,16 +379,15 @@ size_t xStreamBufferSpacesAvailable(StreamBufferHandle_t xStreamBuffer) {
 }
 
 size_t xStreamBufferBytesAvailable(StreamBufferHandle_t xStreamBuffer) {
-  const StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  const StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   size_t Ret;
   Ret = BytesInBuffer(StreamBuffer);
   return Ret;
 }
 
-size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer,
-                         const void* pvTxData, size_t xDataLengthBytes,
+size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer, const void *pvTxData, size_t xDataLengthBytes,
                          TickType_t xTicksToWait) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   size_t Ret, xSpace = 0;
   size_t xRequiredSpace = xDataLengthBytes;
   TimeOut_t xTimeOut;
@@ -445,26 +413,23 @@ size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer,
       {
         xSpace = xStreamBufferSpacesAvailable(StreamBuffer);
         if (xSpace < xRequiredSpace) {
-          (void)TaskNotifyStateClearIndexed(NULL,
-                                            StreamBuffer->uxNotificationIndex);
+          (void)TaskNotifyStateClearIndexed(NULL, StreamBuffer->uxNotificationIndex);
 
-          StreamBuffer->TaskWaitingToSend = GetCurrentTaskHandle();
+          StreamBuffer->TaskWaitingToSend = CurrentTaskHandle();
         } else {
           EXIT_CRITICAL();
           break;
         }
       }
       EXIT_CRITICAL();
-      (void)TaskNotifyWaitIndexed(StreamBuffer->uxNotificationIndex,
-                                  (uint32_t)0, (uint32_t)0, NULL, xTicksToWait);
+      (void)TaskNotifyWaitIndexed(StreamBuffer->uxNotificationIndex, (uint32_t)0, (uint32_t)0, NULL, xTicksToWait);
       StreamBuffer->TaskWaitingToSend = NULL;
     } while (CheckForTimeOut(&xTimeOut, &xTicksToWait) == false);
   }
   if (xSpace == (size_t)0) {
     xSpace = xStreamBufferSpacesAvailable(StreamBuffer);
   }
-  Ret = WriteMessageToBuffer(StreamBuffer, pvTxData, xDataLengthBytes, xSpace,
-                             xRequiredSpace);
+  Ret = WriteMessageToBuffer(StreamBuffer, pvTxData, xDataLengthBytes, xSpace, xRequiredSpace);
   if (Ret > (size_t)0) {
     if (BytesInBuffer(StreamBuffer) >= StreamBuffer->xTriggerLevelBytes) {
       SEND_COMPLETED(StreamBuffer);
@@ -473,10 +438,9 @@ size_t xStreamBufferSend(StreamBufferHandle_t xStreamBuffer,
   return Ret;
 }
 
-size_t xStreamBufferSendFromISR(StreamBufferHandle_t xStreamBuffer,
-                                const void* pvTxData, size_t xDataLengthBytes,
-                                BaseType_t* const HigherPriorityTaskWoken) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+size_t xStreamBufferSendFromISR(StreamBufferHandle_t xStreamBuffer, const void *pvTxData, size_t xDataLengthBytes,
+                                BaseType_t *const HigherPriorityTaskWoken) {
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   size_t Ret, xSpace;
   size_t xRequiredSpace = xDataLengthBytes;
 
@@ -484,8 +448,7 @@ size_t xStreamBufferSendFromISR(StreamBufferHandle_t xStreamBuffer,
     xRequiredSpace += sbBYTES_TO_STORE_MESSAGE_LENGTH;
   }
   xSpace = xStreamBufferSpacesAvailable(StreamBuffer);
-  Ret = WriteMessageToBuffer(StreamBuffer, pvTxData, xDataLengthBytes, xSpace,
-                             xRequiredSpace);
+  Ret = WriteMessageToBuffer(StreamBuffer, pvTxData, xDataLengthBytes, xSpace, xRequiredSpace);
   if (Ret > (size_t)0) {
     if (BytesInBuffer(StreamBuffer) >= StreamBuffer->xTriggerLevelBytes) {
       SEND_COMPLETE_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken);
@@ -494,19 +457,16 @@ size_t xStreamBufferSendFromISR(StreamBufferHandle_t xStreamBuffer,
   return Ret;
 }
 
-static size_t WriteMessageToBuffer(StreamBuffer_t* const StreamBuffer,
-                                   const void* pvTxData,
-                                   size_t xDataLengthBytes, size_t xSpace,
-                                   size_t xRequiredSpace) {
+static size_t WriteMessageToBuffer(StreamBuffer_t *const StreamBuffer, const void *pvTxData, size_t xDataLengthBytes,
+                                   size_t xSpace, size_t xRequiredSpace) {
   size_t xNextHead = StreamBuffer->xHead;
   configMESSAGE_BUFFER_LENGTH_TYPE xMessageLength;
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xMessageLength = (configMESSAGE_BUFFER_LENGTH_TYPE)xDataLengthBytes;
 
     if (xSpace >= xRequiredSpace) {
-      xNextHead =
-          WriteBytesToBuffer(StreamBuffer, (const uint8_t*)&(xMessageLength),
-                             sbBYTES_TO_STORE_MESSAGE_LENGTH, xNextHead);
+      xNextHead = WriteBytesToBuffer(StreamBuffer, (const uint8_t *)&(xMessageLength), sbBYTES_TO_STORE_MESSAGE_LENGTH,
+                                     xNextHead);
     } else {
       xDataLengthBytes = 0;
     }
@@ -514,22 +474,19 @@ static size_t WriteMessageToBuffer(StreamBuffer_t* const StreamBuffer,
     xDataLengthBytes = configMIN(xDataLengthBytes, xSpace);
   }
   if (xDataLengthBytes != (size_t)0) {
-    StreamBuffer->xHead = WriteBytesToBuffer(
-        StreamBuffer, (const uint8_t*)pvTxData, xDataLengthBytes, xNextHead);
+    StreamBuffer->xHead = WriteBytesToBuffer(StreamBuffer, (const uint8_t *)pvTxData, xDataLengthBytes, xNextHead);
   }
   return xDataLengthBytes;
 }
 
-size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void* pvRxData,
-                            size_t xBufferLengthBytes,
+size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void *pvRxData, size_t xBufferLengthBytes,
                             TickType_t xTicksToWait) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   size_t xReceivedLength = 0, xBytesAvailable, xBytesToStoreMessageLength;
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xBytesToStoreMessageLength = sbBYTES_TO_STORE_MESSAGE_LENGTH;
-  } else if ((StreamBuffer->ucFlags & sbFLAGS_IS_BATCHING_BUFFER) !=
-             (uint8_t)0) {
+  } else if ((StreamBuffer->ucFlags & sbFLAGS_IS_BATCHING_BUFFER) != (uint8_t)0) {
     xBytesToStoreMessageLength = StreamBuffer->xTriggerLevelBytes;
   } else {
     xBytesToStoreMessageLength = 0;
@@ -540,16 +497,14 @@ size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void* pvRxData,
       xBytesAvailable = BytesInBuffer(StreamBuffer);
 
       if (xBytesAvailable <= xBytesToStoreMessageLength) {
-        (void)TaskNotifyStateClearIndexed(NULL,
-                                          StreamBuffer->uxNotificationIndex);
+        (void)TaskNotifyStateClearIndexed(NULL, StreamBuffer->uxNotificationIndex);
 
-        StreamBuffer->TaskWaitingToReceive = GetCurrentTaskHandle();
+        StreamBuffer->TaskWaitingToReceive = CurrentTaskHandle();
       }
     }
     EXIT_CRITICAL();
     if (xBytesAvailable <= xBytesToStoreMessageLength) {
-      (void)TaskNotifyWaitIndexed(StreamBuffer->uxNotificationIndex,
-                                  (uint32_t)0, (uint32_t)0, NULL, xTicksToWait);
+      (void)TaskNotifyWaitIndexed(StreamBuffer->uxNotificationIndex, (uint32_t)0, (uint32_t)0, NULL, xTicksToWait);
       StreamBuffer->TaskWaitingToReceive = NULL;
 
       xBytesAvailable = BytesInBuffer(StreamBuffer);
@@ -559,8 +514,7 @@ size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void* pvRxData,
   }
 
   if (xBytesAvailable > xBytesToStoreMessageLength) {
-    xReceivedLength = ReadMessageFromBuffer(
-        StreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable);
+    xReceivedLength = ReadMessageFromBuffer(StreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable);
 
     if (xReceivedLength != (size_t)0) {
       RECEIVE_COMPLETED(xStreamBuffer);
@@ -570,15 +524,14 @@ size_t xStreamBufferReceive(StreamBufferHandle_t xStreamBuffer, void* pvRxData,
 }
 
 size_t xStreamBufferNextMessageLengthBytes(StreamBufferHandle_t xStreamBuffer) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   size_t Ret, xBytesAvailable;
   configMESSAGE_BUFFER_LENGTH_TYPE xTempReturn;
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xBytesAvailable = BytesInBuffer(StreamBuffer);
     if (xBytesAvailable > sbBYTES_TO_STORE_MESSAGE_LENGTH) {
-      (void)ReadBytesFromBuffer(StreamBuffer, (uint8_t*)&xTempReturn,
-                                sbBYTES_TO_STORE_MESSAGE_LENGTH,
+      (void)ReadBytesFromBuffer(StreamBuffer, (uint8_t *)&xTempReturn, sbBYTES_TO_STORE_MESSAGE_LENGTH,
                                 StreamBuffer->xTail);
       Ret = (size_t)xTempReturn;
     } else {
@@ -590,10 +543,9 @@ size_t xStreamBufferNextMessageLengthBytes(StreamBufferHandle_t xStreamBuffer) {
   return Ret;
 }
 
-size_t xStreamBufferReceiveFromISR(StreamBufferHandle_t xStreamBuffer,
-                                   void* pvRxData, size_t xBufferLengthBytes,
-                                   BaseType_t* const HigherPriorityTaskWoken) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+size_t xStreamBufferReceiveFromISR(StreamBufferHandle_t xStreamBuffer, void *pvRxData, size_t xBufferLengthBytes,
+                                   BaseType_t *const HigherPriorityTaskWoken) {
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   size_t xReceivedLength = 0, xBytesAvailable, xBytesToStoreMessageLength;
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
@@ -604,8 +556,7 @@ size_t xStreamBufferReceiveFromISR(StreamBufferHandle_t xStreamBuffer,
   xBytesAvailable = BytesInBuffer(StreamBuffer);
 
   if (xBytesAvailable > xBytesToStoreMessageLength) {
-    xReceivedLength = ReadMessageFromBuffer(
-        StreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable);
+    xReceivedLength = ReadMessageFromBuffer(StreamBuffer, pvRxData, xBufferLengthBytes, xBytesAvailable);
 
     if (xReceivedLength != (size_t)0) {
       RECEIVE_COMPLETED_FROM_ISR(StreamBuffer, HigherPriorityTaskWoken);
@@ -614,16 +565,14 @@ size_t xStreamBufferReceiveFromISR(StreamBufferHandle_t xStreamBuffer,
   return xReceivedLength;
 }
 
-static size_t ReadMessageFromBuffer(StreamBuffer_t* StreamBuffer,
-                                    void* pvRxData, size_t xBufferLengthBytes,
+static size_t ReadMessageFromBuffer(StreamBuffer_t *StreamBuffer, void *pvRxData, size_t xBufferLengthBytes,
                                     size_t xBytesAvailable) {
   size_t xCount, xNextMessageLength;
   configMESSAGE_BUFFER_LENGTH_TYPE xTempNextMessageLength;
   size_t xNextTail = StreamBuffer->xTail;
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
-    xNextTail =
-        ReadBytesFromBuffer(StreamBuffer, (uint8_t*)&xTempNextMessageLength,
-                            sbBYTES_TO_STORE_MESSAGE_LENGTH, xNextTail);
+    xNextTail = ReadBytesFromBuffer(StreamBuffer, (uint8_t *)&xTempNextMessageLength, sbBYTES_TO_STORE_MESSAGE_LENGTH,
+                                    xNextTail);
     xNextMessageLength = (size_t)xTempNextMessageLength;
 
     xBytesAvailable -= sbBYTES_TO_STORE_MESSAGE_LENGTH;
@@ -637,14 +586,13 @@ static size_t ReadMessageFromBuffer(StreamBuffer_t* StreamBuffer,
 
   xCount = configMIN(xNextMessageLength, xBytesAvailable);
   if (xCount != (size_t)0) {
-    StreamBuffer->xTail = ReadBytesFromBuffer(StreamBuffer, (uint8_t*)pvRxData,
-                                              xCount, xNextTail);
+    StreamBuffer->xTail = ReadBytesFromBuffer(StreamBuffer, (uint8_t *)pvRxData, xCount, xNextTail);
   }
   return xCount;
 }
 
 BaseType_t xStreamBufferIsEmpty(StreamBufferHandle_t xStreamBuffer) {
-  const StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  const StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   BaseType_t Ret;
   size_t xTail;
 
@@ -660,7 +608,7 @@ BaseType_t xStreamBufferIsEmpty(StreamBufferHandle_t xStreamBuffer) {
 BaseType_t xStreamBufferIsFull(StreamBufferHandle_t xStreamBuffer) {
   BaseType_t Ret;
   size_t xBytesToStoreMessageLength;
-  const StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+  const StreamBuffer_t *const StreamBuffer = xStreamBuffer;
 
   if ((StreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER) != (uint8_t)0) {
     xBytesToStoreMessageLength = sbBYTES_TO_STORE_MESSAGE_LENGTH;
@@ -668,8 +616,7 @@ BaseType_t xStreamBufferIsFull(StreamBufferHandle_t xStreamBuffer) {
     xBytesToStoreMessageLength = 0;
   }
 
-  if (xStreamBufferSpacesAvailable(xStreamBuffer) <=
-      xBytesToStoreMessageLength) {
+  if (xStreamBufferSpacesAvailable(xStreamBuffer) <= xBytesToStoreMessageLength) {
     Ret = true;
   } else {
     Ret = false;
@@ -677,19 +624,16 @@ BaseType_t xStreamBufferIsFull(StreamBufferHandle_t xStreamBuffer) {
   return Ret;
 }
 
-BaseType_t xStreamBufferSendCompletedFromISR(
-    StreamBufferHandle_t xStreamBuffer, BaseType_t* HigherPriorityTaskWoken) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+BaseType_t xStreamBufferSendCompletedFromISR(StreamBufferHandle_t xStreamBuffer, BaseType_t *HigherPriorityTaskWoken) {
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   BaseType_t Ret;
   UBaseType_t uxSavedInterruptStatus;
 
   uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
   {
     if ((StreamBuffer)->TaskWaitingToReceive != NULL) {
-      (void)TaskNotifyIndexedFromISR((StreamBuffer)->TaskWaitingToReceive,
-                                     (StreamBuffer)->uxNotificationIndex,
-                                     (uint32_t)0, eNoAction,
-                                     HigherPriorityTaskWoken);
+      (void)TaskNotifyIndexedFromISR((StreamBuffer)->TaskWaitingToReceive, (StreamBuffer)->uxNotificationIndex,
+                                     (uint32_t)0, eNoAction, HigherPriorityTaskWoken);
       (StreamBuffer)->TaskWaitingToReceive = NULL;
       Ret = true;
     } else {
@@ -700,19 +644,17 @@ BaseType_t xStreamBufferSendCompletedFromISR(
   return Ret;
 }
 
-BaseType_t xStreamBufferReceiveCompletedFromISR(
-    StreamBufferHandle_t xStreamBuffer, BaseType_t* HigherPriorityTaskWoken) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+BaseType_t xStreamBufferReceiveCompletedFromISR(StreamBufferHandle_t xStreamBuffer,
+                                                BaseType_t *HigherPriorityTaskWoken) {
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   BaseType_t Ret;
   UBaseType_t uxSavedInterruptStatus;
 
   uxSavedInterruptStatus = ENTER_CRITICAL_FROM_ISR();
   {
     if ((StreamBuffer)->TaskWaitingToSend != NULL) {
-      (void)TaskNotifyIndexedFromISR((StreamBuffer)->TaskWaitingToSend,
-                                     (StreamBuffer)->uxNotificationIndex,
-                                     (uint32_t)0, eNoAction,
-                                     HigherPriorityTaskWoken);
+      (void)TaskNotifyIndexedFromISR((StreamBuffer)->TaskWaitingToSend, (StreamBuffer)->uxNotificationIndex,
+                                     (uint32_t)0, eNoAction, HigherPriorityTaskWoken);
       (StreamBuffer)->TaskWaitingToSend = NULL;
       Ret = true;
     } else {
@@ -723,19 +665,16 @@ BaseType_t xStreamBufferReceiveCompletedFromISR(
   return Ret;
 }
 
-static size_t WriteBytesToBuffer(StreamBuffer_t* const StreamBuffer,
-                                 const uint8_t* pucData, size_t xCount,
+static size_t WriteBytesToBuffer(StreamBuffer_t *const StreamBuffer, const uint8_t *pucData, size_t xCount,
                                  size_t xHead) {
   size_t xFirstLength;
 
   xFirstLength = configMIN(StreamBuffer->xLength - xHead, xCount);
 
-  (void)memcpy((void*)(&(StreamBuffer->pucBuffer[xHead])), (const void*)pucData,
-               xFirstLength);
+  (void)memcpy((void *)(&(StreamBuffer->pucBuffer[xHead])), (const void *)pucData, xFirstLength);
 
   if (xCount > xFirstLength) {
-    (void)memcpy((void*)StreamBuffer->pucBuffer,
-                 (const void*)&(pucData[xFirstLength]), xCount - xFirstLength);
+    (void)memcpy((void *)StreamBuffer->pucBuffer, (const void *)&(pucData[xFirstLength]), xCount - xFirstLength);
   }
   xHead += xCount;
   if (xHead >= StreamBuffer->xLength) {
@@ -744,19 +683,15 @@ static size_t WriteBytesToBuffer(StreamBuffer_t* const StreamBuffer,
   return xHead;
 }
 
-static size_t ReadBytesFromBuffer(StreamBuffer_t* StreamBuffer,
-                                  uint8_t* pucData, size_t xCount,
-                                  size_t xTail) {
+static size_t ReadBytesFromBuffer(StreamBuffer_t *StreamBuffer, uint8_t *pucData, size_t xCount, size_t xTail) {
   size_t xFirstLength;
 
   xFirstLength = configMIN(StreamBuffer->xLength - xTail, xCount);
 
-  (void)memcpy((void*)pucData, (const void*)&(StreamBuffer->pucBuffer[xTail]),
-               xFirstLength);
+  (void)memcpy((void *)pucData, (const void *)&(StreamBuffer->pucBuffer[xTail]), xFirstLength);
 
   if (xCount > xFirstLength) {
-    (void)memcpy((void*)&(pucData[xFirstLength]),
-                 (void*)(StreamBuffer->pucBuffer), xCount - xFirstLength);
+    (void)memcpy((void *)&(pucData[xFirstLength]), (void *)(StreamBuffer->pucBuffer), xCount - xFirstLength);
   }
 
   xTail += xCount;
@@ -766,7 +701,7 @@ static size_t ReadBytesFromBuffer(StreamBuffer_t* StreamBuffer,
   return xTail;
 }
 
-static size_t BytesInBuffer(const StreamBuffer_t* const StreamBuffer) {
+static size_t BytesInBuffer(const StreamBuffer_t *const StreamBuffer) {
   size_t xCount;
   xCount = StreamBuffer->xLength + StreamBuffer->xHead;
   xCount -= StreamBuffer->xTail;
@@ -776,12 +711,11 @@ static size_t BytesInBuffer(const StreamBuffer_t* const StreamBuffer) {
   return xCount;
 }
 
-static void InitialiseNewStreamBuffer(
-    StreamBuffer_t* const StreamBuffer, uint8_t* const pucBuffer,
-    size_t xBufferSizeBytes, size_t xTriggerLevelBytes, uint8_t ucFlags,
-    StreamBufferCallbackFunction_t SendCompletedCallback,
-    StreamBufferCallbackFunction_t ReceiveCompletedCallback) {
-  (void)memset((void*)StreamBuffer, 0x00, sizeof(StreamBuffer_t));
+static void InitialiseNewStreamBuffer(StreamBuffer_t *const StreamBuffer, uint8_t *const pucBuffer,
+                                      size_t xBufferSizeBytes, size_t xTriggerLevelBytes, uint8_t ucFlags,
+                                      StreamBufferCallbackFunction_t SendCompletedCallback,
+                                      StreamBufferCallbackFunction_t ReceiveCompletedCallback) {
+  (void)memset((void *)StreamBuffer, 0x00, sizeof(StreamBuffer_t));
   StreamBuffer->pucBuffer = pucBuffer;
   StreamBuffer->xLength = xBufferSizeBytes;
   StreamBuffer->xTriggerLevelBytes = xTriggerLevelBytes;
@@ -800,15 +734,14 @@ static void InitialiseNewStreamBuffer(
 #endif
 }
 
-UBaseType_t uxStreamBufferGetStreamBufferNotificationIndex(
-    StreamBufferHandle_t xStreamBuffer) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+UBaseType_t uxStreamBufferGetStreamBufferNotificationIndex(StreamBufferHandle_t xStreamBuffer) {
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
   return StreamBuffer->uxNotificationIndex;
 }
 
-void vStreamBufferSetStreamBufferNotificationIndex(
-    StreamBufferHandle_t xStreamBuffer, UBaseType_t uxNotificationIndex) {
-  StreamBuffer_t* const StreamBuffer = xStreamBuffer;
+void vStreamBufferSetStreamBufferNotificationIndex(StreamBufferHandle_t xStreamBuffer,
+                                                   UBaseType_t uxNotificationIndex) {
+  StreamBuffer_t *const StreamBuffer = xStreamBuffer;
 
   StreamBuffer->uxNotificationIndex = uxNotificationIndex;
 }

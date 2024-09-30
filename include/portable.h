@@ -66,11 +66,10 @@
 #define configSTACK_ALLOCATION_FROM_SEPARATE_HEAP 0
 #endif
 
-StackType_t* PortInitialiseStack(StackType_t* StackTop, TaskFunction_t Code,
-                                 void* Params);
+StackType_t *PortInitialiseStack(StackType_t *StackTop, TaskFunction_t Code, void *Params);
 
 typedef struct HeapRegion {
-  uint8_t* pucStartAddress;
+  uint8_t *pucStartAddress;
   size_t xSizeInBytes;
 } HeapRegion_t;
 
@@ -84,11 +83,11 @@ typedef struct xHeapStats {
   size_t xNumberOfSuccessfulFrees;
 } HeapStats_t;
 
-void vPortDefineHeapRegions(const HeapRegion_t* const HeapRegions);
-void vPortGetHeapStats(HeapStats_t* HeapStats);
-void* pvPortMalloc(size_t xWantedSize);
-void* pvPortCalloc(size_t xNum, size_t xSize);
-void vPortFree(void* pv);
+void vPortDefineHeapRegions(const HeapRegion_t *const HeapRegions);
+void vPortGetHeapStats(HeapStats_t *HeapStats);
+void *pvPortMalloc(size_t xWantedSize);
+void *pvPortCalloc(size_t xNum, size_t xSize);
+void vPortFree(void *pv);
 void vPortInitialiseBlocks(void);
 size_t xPortGetFreeHeapSize(void);
 size_t xPortGetMinimumEverFreeHeapSize(void);

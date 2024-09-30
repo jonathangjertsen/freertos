@@ -51,7 +51,6 @@ struct SemaphoreData_t {
 };
 #define queueSEMAPHORE_QUEUE_ITEM_LENGTH (0)
 #define queueMUTEX_GIVE_BLOCK_TIME ((TickType_t)0U)
-#define queueYIELD_IF_USING_PREEMPTION() portYIELD_WITHIN_API()
 struct Queue_t;
 static BaseType_t NotifyQueueSetContainer(const Queue_t *const Queue);
 
@@ -71,6 +70,20 @@ struct Queue_t {
   volatile int8_t txLock;
   uint8_t StaticallyAllocated;
   struct Queue_t *set;
+
+  bool EmptyFromISR() { return nWaiting == 0; }
+
+  bool Empty() {
+    CriticalSection s;
+    return EmptyFromISR();
+  }
+
+  bool FullFromISR() { return nWaiting == length; }
+
+  bool Full() {
+    CriticalSection s;
+    return FullFromISR();
+  }
 
   void Lock() {
     if (rxLock == queueUNLOCKED) {
@@ -118,59 +131,105 @@ struct Queue_t {
     }
     rxLock = queueUNLOCKED;
   }
+
+  TaskHandle_t MutexHolder() {
+    CriticalSection s;
+    return MutexHolderFromISR();
+  }
+
+  TaskHandle_t MutexHolderFromISR() { return Head == queueQUEUE_IS_MUTEX ? u.sema.MutHolder : nullptr; }
+
+  Queue_t *InitAsMutex() {
+    u.sema.MutHolder = NULL;
+    Head = queueQUEUE_IS_MUTEX;
+    u.sema.RecursiveCallCount = 0;
+    (void)Send(this, NULL, 0U, queueSEND_TO_BACK);
+    return this;
+  }
+
+  Queue_t *InitAsQueue(UBaseType_t length, UBaseType_t itemSIze, uint8_t *storage) {
+    Head = (itemSize > 0 ? (int8_t *)storage : (int8_t *)this);
+    length = length;
+    itemSize = itemSize;
+    (void)QueueGenericReset(this, true);
+    set = NULL;
+    return this;
+  }
+
+  void incTXLock() {
+    if (txLock < TaskGetNumberOfTasks()) {
+      txLock++;
+    }
+  }
+
+  void incRXLock() {
+    if (rxLock < TaskGetNumberOfTasks()) {
+      rxLock++;
+    }
+  }
+
+  void copyInto(void *buf) {
+    if (itemSize != 0) {
+      u.q.read += itemSize;
+      if (u.q.read >= u.q.pcTail) {
+        u.q.read = Head;
+      }
+      (void)memcpy((void *)buf, (void *)u.q.read, itemSize);
+    }
+  }
+
+  bool copyFrom(void const *buf, UBaseType_t pos) {
+    BaseType_t Ret = false;
+    UBaseType_t nWaiting = nWaiting;
+    if (itemSize == 0) {
+      if (Head == queueQUEUE_IS_MUTEX) {
+        Ret = PriorityDisinherit(u.sema.MutHolder);
+        u.sema.MutHolder = NULL;
+      }
+    } else if (pos == queueSEND_TO_BACK) {
+      memcpy(write, buf, (size_t)itemSize);
+      write += itemSize;
+      if (write >= u.q.pcTail) {
+        write = Head;
+      }
+    } else {
+      memcpy(u.q.read, buf, (size_t)itemSize);
+      u.q.read -= itemSize;
+      if (u.q.read < Head) {
+        u.q.read = (u.q.pcTail - itemSize);
+      }
+      if (pos == queueOVERWRITE) {
+        if (nWaiting > 0) {
+          --nWaiting;
+        }
+      }
+    }
+    nWaiting++;
+    return Ret;
+  }
 };
-static BaseType_t IsQueueEmpty(const Queue_t *Queue);
-static BaseType_t IsQueueFull(const Queue_t *Queue);
-static BaseType_t CopyDataToQueue(Queue_t *const Queue,
-                                  const void *pvItemToQueue,
-                                  const BaseType_t xPosition);
-static void CopyDataFromQueue(Queue_t *const Queue, void *const pvBuffer);
 static BaseType_t NotifyQueueSetContainer(const Queue_t *const Queue);
-static void Initialiseq(const UBaseType_t uxQueueLength,
-                        const UBaseType_t uxItemSize, uint8_t *qStorage,
-                        const uint8_t ucQueueType, Queue_t *q);
-static void InitialiseMutex(Queue_t *q);
 static UBaseType_t GetHighestPriorityOfWaitToReceiveList(Queue_t *const Queue);
 
-#define IncrementQueueTxLock(Queue, cTxLock)                    \
-  do {                                                          \
-    const UBaseType_t uxNumberOfTasks = TaskGetNumberOfTasks(); \
-    if ((UBaseType_t)(txLock) < uxNumberOfTasks) {              \
-      (Queue)->txLock = (int8_t)((txLock) + (int8_t)1);         \
-    }                                                           \
-  } while (0)
-
-#define IncrementQueueRxLock(Queue, cRxLock)                    \
-  do {                                                          \
-    const UBaseType_t uxNumberOfTasks = TaskGetNumberOfTasks(); \
-    if ((UBaseType_t)(rxLock) < uxNumberOfTasks) {              \
-      (Queue)->rxLock = (int8_t)((rxLock) + (int8_t)1);         \
-    }                                                           \
-  } while (0)
-
-BaseType_t xQueueGenericReset(QueueHandle_t q, BaseType_t xq) {
+BaseType_t QueueGenericReset(Queue_t *q, BaseType_t xq) {
   BaseType_t Ret = true;
-  if ((q != NULL) && (q->length >= 1U) &&
-
-      ((SIZE_MAX / q->length) >= q->itemSize)) {
+  if ((q != NULL) && (q->length >= 1U) && ((SIZE_MAX / q->length) >= q->itemSize)) {
     ENTER_CRITICAL();
-    {
-      q->u.q.pcTail = q->Head + (q->length * q->itemSize);
-      q->nWaiting = 0U;
-      q->write = q->Head;
-      q->u.q.read = q->Head + ((q->length - 1U) * q->itemSize);
-      q->rxLock = queueUNLOCKED;
-      q->txLock = queueUNLOCKED;
-      if (xq == false) {
-        if (q->PendingTX.Length > 0) {
-          if (RemoveFromEventList(&(q->PendingTX))) {
-            queueYIELD_IF_USING_PREEMPTION();
-          }
+    q->u.q.pcTail = q->Head + (q->length * q->itemSize);
+    q->nWaiting = 0U;
+    q->write = q->Head;
+    q->u.q.read = q->Head + ((q->length - 1U) * q->itemSize);
+    q->rxLock = queueUNLOCKED;
+    q->txLock = queueUNLOCKED;
+    if (xq == false) {
+      if (q->PendingTX.Length > 0) {
+        if (RemoveFromEventList(&(q->PendingTX))) {
+          portYIELD_WITHIN_API();
         }
-      } else {
-        q->PendingTX.init();
-        q->PendingRX.init();
       }
+    } else {
+      q->PendingTX.init();
+      q->PendingRX.init();
     }
     EXIT_CRITICAL();
   } else {
@@ -179,272 +238,163 @@ BaseType_t xQueueGenericReset(QueueHandle_t q, BaseType_t xq) {
   return Ret;
 }
 
-QueueHandle_t QueueCreateStatic(const UBaseType_t len,
-                                const UBaseType_t itemSize, uint8_t *storage,
-                                StaticQueue_t *staticQ, const uint8_t type) {
-  Queue_t *q = NULL;
-
-  if ((len > 0) && (staticQ != NULL) &&
-      (!((storage != NULL) && (itemSize == 0U))) &&
+Queue_t *xQueueCreateStatic(const UBaseType_t len, const UBaseType_t itemSize, uint8_t *storage, StaticQueue_t *staticQ,
+                            const uint8_t type) {
+  if ((len > 0) && (staticQ != NULL) && (!((storage != NULL) && (itemSize == 0U))) &&
       (!((storage == NULL) && (itemSize != 0U)))) {
-    q = (Queue_t *)staticQ;
+    Queue_t *q = (Queue_t *)staticQ;
     q->StaticallyAllocated = true;
-    Initialiseq(len, itemSize, storage, type, q);
+    return q->InitAsQueue(len, itemSize, storage);
   }
-  return q;
+  return nullptr;
 }
 
-BaseType_t GetStaticBuffers(QueueHandle_t xQueue, uint8_t **storage,
-                            StaticQueue_t **staticQ) {
-  BaseType_t Ret;
-  Queue_t *const Queue = xQueue;
-  if (Queue->StaticallyAllocated) {
-    if (storage != NULL) {
-      *storage = (uint8_t *)Queue->Head;
-    }
-
-    *staticQ = (StaticQueue_t *)Queue;
-    return true;
+BaseType_t GetStaticBuffers(Queue_t *const q, uint8_t **storage, StaticQueue_t **staticQ) {
+  if (!q->StaticallyAllocated) {
+    return false;
   }
-  return false;
+  if (storage != NULL) {
+    *storage = (uint8_t *)q->Head;
+  }
+  *staticQ = (StaticQueue_t *)q;
+  return true;
 }
 
-QueueHandle_t xQueueGenericCreate(const UBaseType_t uxQueueLength,
-                                  const UBaseType_t uxItemSize,
-                                  const uint8_t ucQueueType) {
+Queue_t *QueueGenericCreate(const UBaseType_t len, const UBaseType_t itemSize, const uint8_t ucQueueType) {
   Queue_t *q = NULL;
-  size_t xQueueSizeInBytes;
-  uint8_t *qStorage;
-  if ((uxQueueLength > 0) &&
-
-      ((SIZE_MAX / uxQueueLength) >= uxItemSize) &&
-
-      ((UBaseType_t)(SIZE_MAX - sizeof(Queue_t)) >=
-       (uxQueueLength * uxItemSize))) {
-    xQueueSizeInBytes = (size_t)((size_t)uxQueueLength * (size_t)uxItemSize);
-    q = (Queue_t *)pvPortMalloc(sizeof(Queue_t) + xQueueSizeInBytes);
+  if ((len > 0) && ((SIZE_MAX / len) >= itemSize) && ((UBaseType_t)(SIZE_MAX - sizeof(Queue_t)) >= (len * itemSize))) {
+    q = (Queue_t *)pvPortMalloc(sizeof(Queue_t) + (size_t)len * (size_t)itemSize);
     if (q != NULL) {
-      qStorage = (uint8_t *)q;
-      qStorage += sizeof(Queue_t);
-      { q->StaticallyAllocated = false; }
-      Initialiseq(uxQueueLength, uxItemSize, qStorage, ucQueueType, q);
+      q->StaticallyAllocated = false;
+      q->InitAsQueue(len, itemSize, (uint8_t *)q + sizeof(Queue_t));
     }
   }
   return q;
 }
 
-static void Initialiseq(const UBaseType_t length, const UBaseType_t itemSize,
-                        uint8_t *storage, const uint8_t type, Queue_t *q) {
-  (void)type;
-  q->Head = (itemSize > 0 ? (int8_t *)storage : (int8_t *)q);
-  q->length = length;
-  q->itemSize = itemSize;
-  (void)xQueueGenericReset(q, true);
-  q->set = NULL;
+Queue_t *QueueCreateMutex(const uint8_t type) { return QueueGenericCreate(1, 0, type)->InitAsMutex(); }
+
+Queue_t *QueueCreateMutexStatic(const uint8_t type, StaticQueue_t *pStaticQueue) {
+  return xQueueCreateStatic(1, 0, NULL, pStaticQueue, type)->InitAsMutex();
 }
 
-static void InitialiseMutex(Queue_t *q) {
-  if (q != NULL) {
-    q->u.sema.MutHolder = NULL;
-    q->Head = queueQUEUE_IS_MUTEX;
-    q->u.sema.RecursiveCallCount = 0;
-    (void)Send(q, NULL, (TickType_t)0U, queueSEND_TO_BACK);
+BaseType_t QueueGiveMutexRecursive(Queue_t *const Mutex) {
+  if (Mutex->u.sema.MutHolder != CurrentTaskHandle()) {
+    return false;
   }
-}
-
-#if ((configUSE_MUTEXES == 1) && (configSUPPORT_DYNAMIC_ALLOCATION == 1))
-QueueHandle_t xQueueCreateMutex(const uint8_t ucQueueType) {
-  QueueHandle_t xq;
-  const UBaseType_t uxMutexLength = (UBaseType_t)1, uxMutexSize = 0;
-  xq = xQueueGenericCreate(uxMutexLength, uxMutexSize, ucQueueType);
-  InitialiseMutex((Queue_t *)xq);
-  return xq;
-}
-#endif
-
-#if ((configUSE_MUTEXES == 1) && (configSUPPORT_STATIC_ALLOCATION == 1))
-QueueHandle_t xQueueCreateMuteStatic(const uint8_t ucQueueType,
-                                     StaticQueue_t *pStaticQueue) {
-  QueueHandle_t q;
-  const UBaseType_t uxMutexLength = (UBaseType_t)1, uxMutexSize = 0;
-
-  (void)ucQueueType;
-  q = QueueCreateStatic(uxMutexLength, uxMutexSize, NULL, pStaticQueue,
-                        ucQueueType);
-  InitialiseMutex((Queue_t *)q);
-  return q;
-}
-#endif
-
-TaskHandle_t xQueueGetMutexHolder(QueueHandle_t sema) {
-  TaskHandle_t Return;
-  Queue_t *const Semaphore = (Queue_t *)sema;
-
-  ENTER_CRITICAL();
-  {
-    if (Semaphore->Head == queueQUEUE_IS_MUTEX) {
-      Return = Semaphore->u.sema.MutHolder;
-    } else {
-      Return = NULL;
-    }
+  if (--Mutex->u.sema.RecursiveCallCount == 0) {
+    Send(Mutex, NULL, queueMUTEX_GIVE_BLOCK_TIME, queueSEND_TO_BACK);
   }
-  EXIT_CRITICAL();
-  return Return;
+  return true;
 }
 
-TaskHandle_t xQueueGetMutexHolderFromISR(QueueHandle_t xSemaphore) {
-  TaskHandle_t Return;
-
-  if (((Queue_t *)xSemaphore)->Head == queueQUEUE_IS_MUTEX) {
-    Return = ((Queue_t *)xSemaphore)->u.sema.MutHolder;
-  } else {
-    Return = NULL;
-  }
-  return Return;
-}
-
-BaseType_t xQueueGiveMutexRecursive(QueueHandle_t xMutex) {
-  BaseType_t Ret;
-  Queue_t *const Mutex = (Queue_t *)xMutex;
-
-  if (Mutex->u.sema.MutHolder == GetCurrentTaskHandle()) {
-    (Mutex->u.sema.RecursiveCallCount)--;
-
-    if (Mutex->u.sema.RecursiveCallCount == 0) {
-      (void)Send(Mutex, NULL, queueMUTEX_GIVE_BLOCK_TIME, queueSEND_TO_BACK);
-    }
+bool QueueTakeMutexRecursive(Queue_t *const mut, TickType_t ticks) {
+  if (mut->u.sema.MutHolder == CurrentTaskHandle()) {
+    mut->u.sema.RecursiveCallCount++;
     return true;
   }
-  return false;
-}
 
-BaseType_t xQueueTakeMutexRecursive(QueueHandle_t xMutex, TickType_t ticks) {
-  BaseType_t Ret;
-  Queue_t *const Mutex = (Queue_t *)xMutex;
-  if (Mutex->u.sema.MutHolder == GetCurrentTaskHandle()) {
-    (Mutex->u.sema.RecursiveCallCount)++;
-    Ret = true;
-  } else {
-    Ret = xQueueSemaphoreTake(Mutex, ticks);
-
-    if (Ret) {
-      (Mutex->u.sema.RecursiveCallCount)++;
-    }
+  bool ret = QueueSemaphoreTake(mut, ticks);
+  if (ret) {
+    mut->u.sema.RecursiveCallCount++;
   }
-  return Ret;
+  return ret;
 }
-
-#if ((configUSE_COUNTING_SEMAPHORES == 1) && \
-     (configSUPPORT_STATIC_ALLOCATION == 1))
-QueueHandle_t xQueueCreateCountingSemaphoreStatic(
-    const UBaseType_t uxMaxCount, const UBaseType_t uxInitialCount,
-    StaticQueue_t *pStaticQueue) {
-  QueueHandle_t xHandle = NULL;
-  if ((uxMaxCount != 0U) && (uxInitialCount <= uxMaxCount)) {
-    xHandle =
-        QueueCreateStatic(uxMaxCount, queueSEMAPHORE_QUEUE_ITEM_LENGTH, NULL,
-                          pStaticQueue, queueQUEUE_TYPE_COUNTING_SEMAPHORE);
-    if (xHandle != NULL) {
-      ((Queue_t *)xHandle)->nWaiting = uxInitialCount;
-    }
+Queue_t *QueueCreateCountingSemaphoreStatic(const UBaseType_t max, const UBaseType_t init,
+                                            StaticQueue_t *pStaticQueue) {
+  if ((max == 0U) || (init > max)) {
+    return nullptr;
   }
-  return xHandle;
-}
-#endif
-
-#if ((configUSE_COUNTING_SEMAPHORES == 1) && \
-     (configSUPPORT_DYNAMIC_ALLOCATION == 1))
-QueueHandle_t xQueueCreateCountingSemaphore(const UBaseType_t uxMaxCount,
-                                            const UBaseType_t uxInitialCount) {
-  QueueHandle_t xHandle = NULL;
-  if ((uxMaxCount != 0U) && (uxInitialCount <= uxMaxCount)) {
-    xHandle = xQueueGenericCreate(uxMaxCount, queueSEMAPHORE_QUEUE_ITEM_LENGTH,
-                                  queueQUEUE_TYPE_COUNTING_SEMAPHORE);
-    if (xHandle != NULL) {
-      ((Queue_t *)xHandle)->nWaiting = uxInitialCount;
-    }
+  Queue_t *q =
+      xQueueCreateStatic(max, queueSEMAPHORE_QUEUE_ITEM_LENGTH, NULL, pStaticQueue, queueQUEUE_TYPE_COUNTING_SEMAPHORE);
+  if (q != NULL) {
+    q->nWaiting = init;
   }
-  return xHandle;
+  return q;
 }
-#endif
 
-BaseType_t Send(QueueHandle_t xQueue, const void *const pvItemToQueue,
-                TickType_t ticks, const BaseType_t copyPos) {
+Queue_t *QueueCreateCountingSemaphore(const UBaseType_t max, const UBaseType_t init) {
+  if ((max == 0U) || (init > max)) {
+    return nullptr;
+  }
+  Queue_t *q = QueueGenericCreate(max, queueSEMAPHORE_QUEUE_ITEM_LENGTH, queueQUEUE_TYPE_COUNTING_SEMAPHORE);
+  if (q != NULL) {
+    q->nWaiting = init;
+  }
+  return q;
+}
+
+BaseType_t Send(Queue_t *const q, const void *const pvItemToQueue, TickType_t ticks, const BaseType_t copyPos) {
   BaseType_t xEntryTimeSet = false, xYieldRequired;
-  TimeOut_t xTimeOut;
-  Queue_t *const Queue = xQueue;
+  TimeOut_t timeout;
   for (;;) {
     ENTER_CRITICAL();
-    {
-      if ((Queue->nWaiting < Queue->length) || (copyPos == queueOVERWRITE)) {
-        const UBaseType_t nPrevWaiting = Queue->nWaiting;
-        xYieldRequired = CopyDataToQueue(Queue, pvItemToQueue, copyPos);
-        if (Queue->set != NULL) {
-          if ((copyPos == queueOVERWRITE) && (nPrevWaiting != 0)) {
-          } else if (NotifyQueueSetContainer(Queue)) {
-            queueYIELD_IF_USING_PREEMPTION();
-          }
-        } else {
-          if (Queue->PendingRX.Length > 0) {
-            if (RemoveFromEventList(&(Queue->PendingRX))) {
-              queueYIELD_IF_USING_PREEMPTION();
-            }
-          } else if (xYieldRequired) {
-            queueYIELD_IF_USING_PREEMPTION();
-          }
+    if ((q->nWaiting < q->length) || (copyPos == queueOVERWRITE)) {
+      const UBaseType_t nPrevWaiting = q->nWaiting;
+      xYieldRequired = q->copyFrom(pvItemToQueue, copyPos);
+      if (q->set != NULL) {
+        if ((copyPos == queueOVERWRITE) && (nPrevWaiting != 0)) {
+        } else if (NotifyQueueSetContainer(q)) {
+          portYIELD_WITHIN_API();
         }
-        EXIT_CRITICAL();
-        return true;
       } else {
-        if (ticks == (TickType_t)0) {
-          EXIT_CRITICAL();
-          return errQUEUE_FULL;
-        } else if (xEntryTimeSet == false) {
-          SetTimeOutState(&xTimeOut);
-          xEntryTimeSet = true;
+        if (q->PendingRX.Length > 0) {
+          if (RemoveFromEventList(&(q->PendingRX))) {
+            portYIELD_WITHIN_API();
+          }
+        } else if (xYieldRequired) {
+          portYIELD_WITHIN_API();
         }
+      }
+      EXIT_CRITICAL();
+      return true;
+    } else {
+      if (ticks == (TickType_t)0) {
+        EXIT_CRITICAL();
+        return errQUEUE_FULL;
+      } else if (xEntryTimeSet == false) {
+        SetTimeOutState(&timeout);
+        xEntryTimeSet = true;
       }
     }
     EXIT_CRITICAL();
 
     TaskSuspendAll();
-    Queue->Lock();
+    q->Lock();
 
-    if (CheckForTimeOut(&xTimeOut, &ticks) == false) {
-      if (IsQueueFull(Queue)) {
-        PlaceOnEventList(&(Queue->PendingTX), ticks);
-
-        Queue->Unlock();
-
+    if (CheckForTimeOut(&timeout, &ticks) == false) {
+      if (q->Full()) {
+        PlaceOnEventList(&(q->PendingTX), ticks);
+        q->Unlock();
         if (ResumeAll() == false) {
           taskYIELD_WITHIN_API();
         }
       } else {
-        Queue->Unlock();
+        q->Unlock();
         (void)ResumeAll();
       }
     } else {
-      Queue->Unlock();
+      q->Unlock();
       (void)ResumeAll();
       return errQUEUE_FULL;
     }
   }
 }
 
-BaseType_t SendFromISR(QueueHandle_t xQueue, const void *const pvItemToQueue,
-                       BaseType_t *const woken, const BaseType_t copyPos) {
+BaseType_t SendFromISR(Queue_t *Queue, const void *const pvItemToQueue, BaseType_t *const woken,
+                       const BaseType_t copyPos) {
   BaseType_t Ret;
-  UBaseType_t uxSavedInterruptStatus;
-  Queue_t *const q = xQueue;
+  UBaseType_t savedIrqStatus;
+  Queue_t *const q = Queue;
   portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
-  uxSavedInterruptStatus = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
+  savedIrqStatus = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
   {
     if ((q->nWaiting < q->length) || (copyPos == queueOVERWRITE)) {
       const int8_t txLock = q->txLock;
       const UBaseType_t nPrevWaiting = q->nWaiting;
 
-      (void)CopyDataToQueue(q, pvItemToQueue, copyPos);
+      (void)q->copyFrom(pvItemToQueue, copyPos);
 
       if (txLock == queueUNLOCKED) {
         if (q->set != NULL) {
@@ -464,72 +414,68 @@ BaseType_t SendFromISR(QueueHandle_t xQueue, const void *const pvItemToQueue,
           }
         }
       } else {
-        IncrementQueueTxLock(q, txLock);
+        q->incTXLock();
       }
       Ret = true;
     } else {
       Ret = errQUEUE_FULL;
     }
   }
-  EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+  EXIT_CRITICAL_FROM_ISR(savedIrqStatus);
   return Ret;
 }
 
-BaseType_t GiveFromISR(QueueHandle_t q, BaseType_t *const woken) {
+BaseType_t GiveFromISR(Queue_t *q, BaseType_t *const woken) {
   BaseType_t Ret;
   UBaseType_t irqState;
 
   portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
   irqState = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
-  {
-    const UBaseType_t nWaiting = q->nWaiting;
-    if (nWaiting < q->length) {
-      const int8_t txLock = q->txLock;
-      q->nWaiting = (UBaseType_t)(nWaiting + (UBaseType_t)1);
-      if (txLock == queueUNLOCKED) {
-        {
-          if (q->set != NULL) {
-            if (NotifyQueueSetContainer(q)) {
+  const UBaseType_t nWaiting = q->nWaiting;
+  if (nWaiting < q->length) {
+    const int8_t txLock = q->txLock;
+    q->nWaiting++;
+    if (txLock == queueUNLOCKED) {
+      {
+        if (q->set != NULL) {
+          if (NotifyQueueSetContainer(q)) {
+            if (woken != NULL) {
+              *woken = true;
+            }
+          }
+        } else {
+          if (q->PendingRX.Length > 0) {
+            if (RemoveFromEventList(&(q->PendingRX))) {
               if (woken != NULL) {
                 *woken = true;
               }
             }
-          } else {
-            if (q->PendingRX.Length > 0) {
-              if (RemoveFromEventList(&(q->PendingRX))) {
-                if (woken != NULL) {
-                  *woken = true;
-                }
-              }
-            }
           }
         }
-      } else {
-        IncrementQueueTxLock(q, txLock);
       }
-      Ret = true;
     } else {
-      Ret = errQUEUE_FULL;
+      q->incTXLock();
     }
+    Ret = true;
+  } else {
+    Ret = errQUEUE_FULL;
   }
   EXIT_CRITICAL_FROM_ISR(irqState);
   return Ret;
 }
 
-BaseType_t Recv(QueueHandle_t q, void *const pvBuffer, TickType_t ticks) {
+BaseType_t Recv(Queue_t *q, void *const pvBuffer, TickType_t ticks) {
   BaseType_t xEntryTimeSet = false;
-  TimeOut_t xTimeOut;
+  TimeOut_t timeout;
   for (;;) {
     ENTER_CRITICAL();
     {
-      const UBaseType_t nWaiting = q->nWaiting;
-
-      if (nWaiting > 0) {
-        CopyDataFromQueue(q, pvBuffer);
-        q->nWaiting = (UBaseType_t)(nWaiting - (UBaseType_t)1);
+      if (q->nWaiting > 0) {
+        q->copyInto(pvBuffer);
+        q->nWaiting--;
         if (q->PendingTX.Length > 0) {
           if (RemoveFromEventList(&(q->PendingTX))) {
-            queueYIELD_IF_USING_PREEMPTION();
+            portYIELD_WITHIN_API();
           }
         }
         EXIT_CRITICAL();
@@ -539,7 +485,7 @@ BaseType_t Recv(QueueHandle_t q, void *const pvBuffer, TickType_t ticks) {
           EXIT_CRITICAL();
           return errQUEUE_EMPTY;
         } else if (xEntryTimeSet == false) {
-          SetTimeOutState(&xTimeOut);
+          SetTimeOutState(&timeout);
           xEntryTimeSet = true;
         } else {
           mtCOVERAGE_TEST_MARKER();
@@ -551,8 +497,8 @@ BaseType_t Recv(QueueHandle_t q, void *const pvBuffer, TickType_t ticks) {
     TaskSuspendAll();
     q->Lock();
 
-    if (CheckForTimeOut(&xTimeOut, &ticks) == false) {
-      if (IsQueueEmpty(q)) {
+    if (CheckForTimeOut(&timeout, &ticks) == false) {
+      if (q->Empty()) {
         PlaceOnEventList(&(q->PendingRX), ticks);
         q->Unlock();
         if (ResumeAll() == false) {
@@ -565,79 +511,68 @@ BaseType_t Recv(QueueHandle_t q, void *const pvBuffer, TickType_t ticks) {
     } else {
       q->Unlock();
       (void)ResumeAll();
-      if (IsQueueEmpty(q)) {
+      if (q->Empty()) {
         return errQUEUE_EMPTY;
       }
     }
   }
 }
 
-BaseType_t xQueueSemaphoreTake(QueueHandle_t xQueue, TickType_t ticks) {
+BaseType_t QueueSemaphoreTake(Queue_t *const q, TickType_t ticks) {
   BaseType_t xEntryTimeSet = false;
-  TimeOut_t xTimeOut;
-  Queue_t *const Queue = xQueue;
-  BaseType_t xInheritanceOccurred = false;
+  TimeOut_t timeout;
+  bool didInherit = false;
   for (;;) {
     {
       CriticalSection s;
-      const UBaseType_t uxSemaphoreCount = Queue->nWaiting;
-
-      if (uxSemaphoreCount > 0) {
-        Queue->nWaiting = (UBaseType_t)(uxSemaphoreCount - (UBaseType_t)1);
-        if (Queue->Head == queueQUEUE_IS_MUTEX) {
-          Queue->u.sema.MutHolder = IncrementMutexHeldCount();
+      auto n = q->nWaiting;
+      if (n > 0) {
+        q->nWaiting = n - 1;
+        if (q->Head == queueQUEUE_IS_MUTEX) {
+          q->u.sema.MutHolder = IncMutexHeldCount();
         }
-        if (Queue->PendingTX.Length > 0) {
-          if (RemoveFromEventList(&(Queue->PendingTX))) {
-            queueYIELD_IF_USING_PREEMPTION();
+        if (q->PendingTX.Length > 0) {
+          if (RemoveFromEventList(&q->PendingTX)) {
+            portYIELD_WITHIN_API();
           }
         }
         return true;
-      } else {
-        if (ticks == (TickType_t)0) {
-          return errQUEUE_EMPTY;
-        } else if (xEntryTimeSet == false) {
-          SetTimeOutState(&xTimeOut);
-          xEntryTimeSet = true;
-        }
+      }
+      if (ticks == 0) {
+        return errQUEUE_EMPTY;
+      }
+      if (!xEntryTimeSet) {
+        SetTimeOutState(&timeout);
+        xEntryTimeSet = true;
       }
     }
 
     TaskSuspendAll();
-    Queue->Lock();
+    q->Lock();
 
-    if (CheckForTimeOut(&xTimeOut, &ticks) == false) {
-      if (IsQueueEmpty(Queue)) {
-#if (configUSE_MUTEXES == 1)
-        {
-          if (Queue->Head == queueQUEUE_IS_MUTEX) {
-            ENTER_CRITICAL();
-            { xInheritanceOccurred = PriorityInherit(Queue->u.sema.MutHolder); }
-            EXIT_CRITICAL();
-          }
+    if (!CheckForTimeOut(&timeout, &ticks)) {
+      if (q->Empty()) {
+        if (q->Head == queueQUEUE_IS_MUTEX) {
+          CriticalSection s;
+          didInherit = PriorityInherit(q->u.sema.MutHolder);
         }
-#endif
-        PlaceOnEventList(&(Queue->PendingRX), ticks);
-        Queue->Unlock();
+        PlaceOnEventList(&(q->PendingRX), ticks);
+        q->Unlock();
         if (ResumeAll() == false) {
           taskYIELD_WITHIN_API();
         }
       } else {
-        Queue->Unlock();
+        q->Unlock();
         (void)ResumeAll();
       }
     } else {
-      Queue->Unlock();
+      q->Unlock();
       (void)ResumeAll();
 
-      if (IsQueueEmpty(Queue)) {
-        {
-          if (xInheritanceOccurred) {
-            CriticalSection s;
-            PriorityDisinheritAfterTimeout(
-                Queue->u.sema.MutHolder,
-                GetHighestPriorityOfWaitToReceiveList(Queue));
-          }
+      if (q->Empty()) {
+        if (didInherit) {
+          CriticalSection s;
+          PriorityDisinheritAfterTimeout(q->u.sema.MutHolder, GetHighestPriorityOfWaitToReceiveList(q));
         }
         return errQUEUE_EMPTY;
       }
@@ -645,144 +580,119 @@ BaseType_t xQueueSemaphoreTake(QueueHandle_t xQueue, TickType_t ticks) {
   }
 }
 
-BaseType_t xQueuePeek(QueueHandle_t xQueue, void *const pvBuffer,
-                      TickType_t ticks) {
+BaseType_t QueuePeek(Queue_t *const q, void *const pvBuffer, TickType_t ticks) {
   BaseType_t xEntryTimeSet = false;
-  TimeOut_t xTimeOut;
-  int8_t *pcOriginalReadPosition;
-  Queue_t *const Queue = xQueue;
+  TimeOut_t timeout;
   for (;;) {
-    ENTER_CRITICAL();
     {
-      const UBaseType_t nWaiting = Queue->nWaiting;
-
+      CriticalSection s;
+      const UBaseType_t nWaiting = q->nWaiting;
       if (nWaiting > 0) {
-        pcOriginalReadPosition = Queue->u.q.read;
-        CopyDataFromQueue(Queue, pvBuffer);
-
-        Queue->u.q.read = pcOriginalReadPosition;
-
-        if (Queue->PendingRX.Length > 0) {
-          if (RemoveFromEventList(&(Queue->PendingRX))) {
-            queueYIELD_IF_USING_PREEMPTION();
+        int8_t *origReadPos = q->u.q.read;
+        q->copyInto(pvBuffer);
+        q->u.q.read = origReadPos;
+        if (q->PendingRX.Length > 0) {
+          if (RemoveFromEventList(&(q->PendingRX))) {
+            portYIELD_WITHIN_API();
           }
         }
-        EXIT_CRITICAL();
         return true;
       } else {
         if (ticks == (TickType_t)0) {
-          EXIT_CRITICAL();
           return errQUEUE_EMPTY;
-        } else if (xEntryTimeSet == false) {
-          SetTimeOutState(&xTimeOut);
+        } else if (!xEntryTimeSet) {
+          SetTimeOutState(&timeout);
           xEntryTimeSet = true;
         }
       }
     }
-    EXIT_CRITICAL();
 
     TaskSuspendAll();
-    Queue->Lock();
+    q->Lock();
 
-    if (CheckForTimeOut(&xTimeOut, &ticks) == false) {
-      if (IsQueueEmpty(Queue)) {
-        PlaceOnEventList(&(Queue->PendingRX), ticks);
-        Queue->Unlock();
+    if (CheckForTimeOut(&timeout, &ticks) == false) {
+      if (q->Empty()) {
+        PlaceOnEventList(&(q->PendingRX), ticks);
+        q->Unlock();
         if (ResumeAll() == false) {
           taskYIELD_WITHIN_API();
         }
       } else {
-        Queue->Unlock();
+        q->Unlock();
         (void)ResumeAll();
       }
     } else {
-      Queue->Unlock();
+      q->Unlock();
       (void)ResumeAll();
-      if (IsQueueEmpty(Queue)) {
+      if (q->Empty()) {
         return errQUEUE_EMPTY;
       }
     }
   }
 }
-BaseType_t RecvFromISR(QueueHandle_t xQueue, void *const pvBuffer,
-                       BaseType_t *const woken) {
+BaseType_t RecvFromISR(Queue_t *q, void *const pvBuffer, BaseType_t *const woken) {
   BaseType_t Ret;
-  UBaseType_t uxSavedInterruptStatus;
-  Queue_t *const Queue = xQueue;
+  UBaseType_t savedIrqStatus;
   portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
-  uxSavedInterruptStatus = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
-  {
-    const UBaseType_t nWaiting = Queue->nWaiting;
-
-    if (nWaiting > 0) {
-      const int8_t rxLock = Queue->rxLock;
-      CopyDataFromQueue(Queue, pvBuffer);
-      Queue->nWaiting = (UBaseType_t)(nWaiting - (UBaseType_t)1);
-
-      if (rxLock == queueUNLOCKED) {
-        if (Queue->PendingTX.Length > 0) {
-          if (RemoveFromEventList(&(Queue->PendingTX))) {
-            if (woken != NULL) {
-              *woken = true;
-            }
+  savedIrqStatus = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
+  const UBaseType_t nWaiting = q->nWaiting;
+  if (nWaiting > 0) {
+    const int8_t rxLock = q->rxLock;
+    q->copyInto(pvBuffer);
+    q->nWaiting--;
+    if (rxLock == queueUNLOCKED) {
+      if (q->PendingTX.Length > 0) {
+        if (RemoveFromEventList(&(q->PendingTX))) {
+          if (woken != NULL) {
+            *woken = true;
           }
         }
-      } else {
-        IncrementQueueRxLock(Queue, rxLock);
       }
-      Ret = true;
     } else {
-      Ret = false;
+      q->incRXLock();
     }
+    Ret = true;
+  } else {
+    Ret = false;
   }
-  EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+  EXIT_CRITICAL_FROM_ISR(savedIrqStatus);
   return Ret;
 }
 
-BaseType_t xQueuePeekFromISR(QueueHandle_t xQueue, void *const pvBuffer) {
+BaseType_t QueuePeekFromISR(Queue_t *const q, void *const pvBuffer) {
   BaseType_t Ret;
-  UBaseType_t uxSavedInterruptStatus;
-  int8_t *pcOriginalReadPosition;
-  Queue_t *const Queue = xQueue;
+  UBaseType_t savedIrqStatus;
+  int8_t *origReadPos;
   portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
-  uxSavedInterruptStatus = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
-  {
-    if (Queue->nWaiting > 0) {
-      pcOriginalReadPosition = Queue->u.q.read;
-      CopyDataFromQueue(Queue, pvBuffer);
-      Queue->u.q.read = pcOriginalReadPosition;
-      Ret = true;
-    } else {
-      Ret = false;
-    }
+  savedIrqStatus = (UBaseType_t)ENTER_CRITICAL_FROM_ISR();
+  if (q->nWaiting > 0) {
+    origReadPos = q->u.q.read;
+    q->copyInto(pvBuffer);
+    q->u.q.read = origReadPos;
+    Ret = true;
+  } else {
+    Ret = false;
   }
-  EXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+  EXIT_CRITICAL_FROM_ISR(savedIrqStatus);
   return Ret;
 }
-UBaseType_t uxQueueMessagesWaiting(const QueueHandle_t q) {
+
+UBaseType_t uxQueueMessagesWaiting(const Queue_t *q) {
   CriticalSection s;
   return ((Queue_t *)q)->nWaiting;
 }
-UBaseType_t uxQueueSpacesAvailable(const QueueHandle_t q) {
+
+UBaseType_t uxQueueSpacesAvailable(const Queue_t *q) {
   CriticalSection s;
   return (UBaseType_t)(q->length - q->nWaiting);
 }
 
-UBaseType_t uxQueueMessagesWaitingFromISR(const QueueHandle_t q) {
-  return q->nWaiting;
-}
+UBaseType_t uxQueueMessagesWaitingFromISR(const Queue_t *q) { return q->nWaiting; }
 
-void vQueueDelete(QueueHandle_t q) {
+void vQueueDelete(Queue_t *q) {
   if (!q->StaticallyAllocated) {
     vPortFree(q);
   }
-}
-UBaseType_t GetQueueItemSize(QueueHandle_t xQueue) {
-  return ((Queue_t *)xQueue)->itemSize;
-}
-
-UBaseType_t GetQueueLength(QueueHandle_t xQueue) {
-  return ((Queue_t *)xQueue)->length;
 }
 
 static UBaseType_t GetHighestPriorityOfWaitToReceiveList(Queue_t *const Queue) {
@@ -792,145 +702,61 @@ static UBaseType_t GetHighestPriorityOfWaitToReceiveList(Queue_t *const Queue) {
   return tskIDLE_PRIORITY;
 }
 
-static BaseType_t CopyDataToQueue(Queue_t *const q, const void *item,
-                                  BaseType_t pos) {
-  BaseType_t Ret = false;
-  UBaseType_t nWaiting;
-
-  nWaiting = q->nWaiting;
-  if (q->itemSize == 0) {
-    if (q->Head == queueQUEUE_IS_MUTEX) {
-      Ret = PriorityDisinherit(q->u.sema.MutHolder);
-      q->u.sema.MutHolder = NULL;
-    }
-  } else if (pos == queueSEND_TO_BACK) {
-    (void)memcpy((void *)q->write, item, (size_t)q->itemSize);
-    q->write += q->itemSize;
-    if (q->write >= q->u.q.pcTail) {
-      q->write = q->Head;
-    }
-  } else {
-    (void)memcpy((void *)q->u.q.read, item, (size_t)q->itemSize);
-    q->u.q.read -= q->itemSize;
-    if (q->u.q.read < q->Head) {
-      q->u.q.read = (q->u.q.pcTail - q->itemSize);
-    }
-    if (pos == queueOVERWRITE) {
-      if (nWaiting > 0) {
-        --nWaiting;
-      }
-    }
-  }
-  q->nWaiting = (UBaseType_t)(nWaiting + (UBaseType_t)1);
-  return Ret;
-}
-
-static void CopyDataFromQueue(Queue_t *const q, void *const pvBuffer) {
-  if (q->itemSize != 0) {
-    q->u.q.read += q->itemSize;
-    if (q->u.q.read >= q->u.q.pcTail) {
-      q->u.q.read = q->Head;
-    }
-    (void)memcpy((void *)pvBuffer, (void *)q->u.q.read, (size_t)q->itemSize);
-  }
-}
-
-static BaseType_t IsQueueEmpty(const Queue_t *Queue) {
-  CriticalSection s;
-  return Queue->nWaiting == 0;
-}
-
-BaseType_t xQueueIsQueueEmptyFromISR(const QueueHandle_t xQueue) {
-  return xQueue->nWaiting == 0;
-}
-
-static BaseType_t IsQueueFull(const Queue_t *Queue) {
-  CriticalSection s;
-  return Queue->nWaiting == Queue->length;
-}
-
-BaseType_t xQueueIsQueueFullFromISR(const QueueHandle_t xQueue) {
-  BaseType_t Ret;
-  Queue_t *const Queue = xQueue;
-  return Queue->nWaiting == Queue->length;
-}
-
-void vQueueWaitForMessageRestricted(QueueHandle_t Queue, TickType_t ticks,
-                                    const BaseType_t xWaitIndefinitely) {
+void vQueueWaitForMessageRestricted(Queue_t *Queue, TickType_t ticks, const BaseType_t xWaitIndefinitely) {
   Queue->Lock();
   if (Queue->nWaiting == 0U) {
     PlaceOnEventListRestricted(&(Queue->PendingRX), ticks, xWaitIndefinitely);
   }
   Queue->Unlock();
 }
-QueueSetHandle_t xQueueCreateSet(const UBaseType_t uxEventQueueLength) {
-  return xQueueGenericCreate(uxEventQueueLength, (UBaseType_t)sizeof(Queue_t *),
-                             queueQUEUE_TYPE_SET);
+QueueSetHandle_t QueueCreateSet(const UBaseType_t uxEventQueueLength) {
+  return QueueGenericCreate(uxEventQueueLength, (UBaseType_t)sizeof(Queue_t *), queueQUEUE_TYPE_SET);
 }
-BaseType_t xQueueAddToSet(QueueSetMemberHandle_t xQueueOrSemaphore,
-                          QueueSetHandle_t xQueueSet) {
-  BaseType_t Ret;
-  ENTER_CRITICAL();
-  {
-    if (((Queue_t *)xQueueOrSemaphore)->set != NULL) {
-      Ret = false;
-    } else if (((Queue_t *)xQueueOrSemaphore)->nWaiting != 0) {
-      Ret = false;
-    } else {
-      ((Queue_t *)xQueueOrSemaphore)->set = xQueueSet;
-      Ret = true;
-    }
+BaseType_t QueueAddToSet(Queue_t *QueueOrSemaphore, QueueSetHandle_t QueueSet) {
+  CriticalSection s;
+  if ((QueueOrSemaphore->set != NULL) || (QueueOrSemaphore->nWaiting != 0)) {
+    return false;
   }
-  EXIT_CRITICAL();
-  return Ret;
+  QueueOrSemaphore->set = QueueSet;
+  return true;
 }
-BaseType_t xQueueRemoveFromSet(QueueSetMemberHandle_t xQueueOrSemaphore,
-                               QueueSetHandle_t xQueueSet) {
-  BaseType_t Ret;
-  Queue_t *const QueueOrSemaphore = (Queue_t *)xQueueOrSemaphore;
-  if (QueueOrSemaphore->set != xQueueSet) {
-    Ret = false;
-  } else if (QueueOrSemaphore->nWaiting != 0) {
-    Ret = false;
-  } else {
-    ENTER_CRITICAL();
-    { QueueOrSemaphore->set = NULL; }
-    EXIT_CRITICAL();
-    Ret = true;
+BaseType_t QueueRemoveFromSet(Queue_t *const q, QueueSetHandle_t QueueSet) {
+  if ((q->set != QueueSet) || (q->nWaiting != 0)) {
+    return false;
   }
+  CriticalSection s;
+  q->set = NULL;
+  return true;
+}
+
+Queue_t *QueueSelectFromSet(QueueSetHandle_t set, TickType_t const ticks) {
+  Queue_t *Ret = NULL;
+  (void)Recv((Queue_t *)set, &Ret, ticks);
   return Ret;
 }
 
-QueueSetMemberHandle_t xQueueSelectFromSet(QueueSetHandle_t set,
-                                           TickType_t const ticks) {
-  QueueSetMemberHandle_t Ret = NULL;
-  (void)Recv((QueueHandle_t)set, &Ret, ticks);
+Queue_t *QueueSelectFromSetFromISR(QueueSetHandle_t set) {
+  Queue_t *Ret = NULL;
+  (void)RecvFromISR((Queue_t *)set, &Ret, NULL);
   return Ret;
 }
 
-QueueSetMemberHandle_t xQueueSelectFromSetFromISR(QueueSetHandle_t set) {
-  QueueSetMemberHandle_t Ret = NULL;
-  (void)RecvFromISR((QueueHandle_t)set, &Ret, NULL);
-  return Ret;
-}
+static BaseType_t NotifyQueueSetContainer(const Queue_t *const q) {
+  Queue_t *set = q->set;
+  if (set->nWaiting >= set->length) {
+    return false;
+  }
 
-static BaseType_t NotifyQueueSetContainer(const Queue_t *const Queue) {
-  Queue_t *container = Queue->set;
-  BaseType_t Ret = false;
-
-  if (container->nWaiting < container->length) {
-    const int8_t txLock = container->txLock;
-
-    Ret = CopyDataToQueue(container, &Queue, queueSEND_TO_BACK);
-    if (txLock == queueUNLOCKED) {
-      if (container->PendingRX.Length > 0) {
-        if (RemoveFromEventList(&(container->PendingRX))) {
-          Ret = true;
-        }
+  const int8_t txLock = set->txLock;
+  bool ret = set->copyFrom(&q, queueSEND_TO_BACK);
+  if (txLock == queueUNLOCKED) {
+    if (set->PendingRX.Length > 0) {
+      if (RemoveFromEventList(&(set->PendingRX))) {
+        return true;
       }
-    } else {
-      IncrementQueueTxLock(container, txLock);
     }
+  } else {
+    set->incTXLock();
   }
-  return Ret;
+  return ret;
 }

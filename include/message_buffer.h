@@ -31,61 +31,42 @@
 
 typedef StreamBufferHandle_t MessageBufferHandle_t;
 
-#define xMessageBufferCreate(xBufferSizeBytes)              \
-  xStreamBufferGenericCreate((xBufferSizeBytes), (size_t)0, \
-                             sbTYPE_MESSAGE_BUFFER, NULL, NULL)
+#define xMessageBufferCreate(xBufferSizeBytes) \
+  xStreamBufferGenericCreate((xBufferSizeBytes), (size_t)0, sbTYPE_MESSAGE_BUFFER, NULL, NULL)
 
-#define xMessageBufferCreateStatic(                                      \
-    xBufferSizeBytes, pucMessageBufferStorageArea, pStaticMessageBuffer) \
-  xStreamBufferGenericCreateStatic(                                      \
-      (xBufferSizeBytes), 0, sbTYPE_MESSAGE_BUFFER,                      \
-      (pucMessageBufferStorageArea), (pStaticMessageBuffer), NULL, NULL)
+#define xMessageBufferCreateStatic(xBufferSizeBytes, pucMessageBufferStorageArea, pStaticMessageBuffer)         \
+  xStreamBufferGenericCreateStatic((xBufferSizeBytes), 0, sbTYPE_MESSAGE_BUFFER, (pucMessageBufferStorageArea), \
+                                   (pStaticMessageBuffer), NULL, NULL)
 
-#define xMessageBufferSend(xMessageBuffer, pvTxData, xDataLengthBytes, \
-                           xTicksToWait)                               \
-  xStreamBufferSend((xMessageBuffer), (pvTxData), (xDataLengthBytes),  \
-                    (xTicksToWait))
+#define xMessageBufferSend(xMessageBuffer, pvTxData, xDataLengthBytes, xTicksToWait) \
+  xStreamBufferSend((xMessageBuffer), (pvTxData), (xDataLengthBytes), (xTicksToWait))
 
-#define xMessageBufferSendFromISR(xMessageBuffer, pvTxData, xDataLengthBytes, \
-                                  HigherPriorityTaskWoken)                    \
-  xStreamBufferSendFromISR((xMessageBuffer), (pvTxData), (xDataLengthBytes),  \
-                           (HigherPriorityTaskWoken))
+#define xMessageBufferSendFromISR(xMessageBuffer, pvTxData, xDataLengthBytes, HigherPriorityTaskWoken) \
+  xStreamBufferSendFromISR((xMessageBuffer), (pvTxData), (xDataLengthBytes), (HigherPriorityTaskWoken))
 
-#define xMessageBufferReceive(xMessageBuffer, pvRxData, xBufferLengthBytes, \
-                              xTicksToWait)                                 \
-  xStreamBufferReceive((xMessageBuffer), (pvRxData), (xBufferLengthBytes),  \
-                       (xTicksToWait))
+#define xMessageBufferReceive(xMessageBuffer, pvRxData, xBufferLengthBytes, xTicksToWait) \
+  xStreamBufferReceive((xMessageBuffer), (pvRxData), (xBufferLengthBytes), (xTicksToWait))
 
-#define xMessageBufferReceiveFromISR(                                      \
-    xMessageBuffer, pvRxData, xBufferLengthBytes, HigherPriorityTaskWoken) \
-  xStreamBufferReceiveFromISR((xMessageBuffer), (pvRxData),                \
-                              (xBufferLengthBytes), (HigherPriorityTaskWoken))
+#define xMessageBufferReceiveFromISR(xMessageBuffer, pvRxData, xBufferLengthBytes, HigherPriorityTaskWoken) \
+  xStreamBufferReceiveFromISR((xMessageBuffer), (pvRxData), (xBufferLengthBytes), (HigherPriorityTaskWoken))
 
 #define vMessageBufferDelete(xMessageBuffer) vStreamBufferDelete(xMessageBuffer)
 
 #define xMessageBufferIsFull(xMessageBuffer) xStreamBufferIsFull(xMessageBuffer)
 
-#define xMessageBufferIsEmpty(xMessageBuffer) \
-  xStreamBufferIsEmpty(xMessageBuffer)
+#define xMessageBufferIsEmpty(xMessageBuffer) xStreamBufferIsEmpty(xMessageBuffer)
 
 #define xMessageBufferReset(xMessageBuffer) xStreamBufferReset(xMessageBuffer)
 
-#define xMessageBufferResetFromISR(xMessageBuffer) \
-  xStreamBufferResetFromISR(xMessageBuffer)
+#define xMessageBufferResetFromISR(xMessageBuffer) xStreamBufferResetFromISR(xMessageBuffer)
 
-#define xMessageBufferSpaceAvailable(xMessageBuffer) \
-  xStreamBufferSpacesAvailable(xMessageBuffer)
-#define xMessageBufferSpacesAvailable(xMessageBuffer) \
-  xStreamBufferSpacesAvailable(xMessageBuffer)
+#define xMessageBufferSpaceAvailable(xMessageBuffer) xStreamBufferSpacesAvailable(xMessageBuffer)
+#define xMessageBufferSpacesAvailable(xMessageBuffer) xStreamBufferSpacesAvailable(xMessageBuffer)
 
-#define xMessageBufferNextLengthBytes(xMessageBuffer) \
-  xStreamBufferNextMessageLengthBytes(xMessageBuffer)
+#define xMessageBufferNextLengthBytes(xMessageBuffer) xStreamBufferNextMessageLengthBytes(xMessageBuffer)
 
-#define xMessageBufferSendCompletedFromISR(xMessageBuffer,          \
-                                           HigherPriorityTaskWoken) \
+#define xMessageBufferSendCompletedFromISR(xMessageBuffer, HigherPriorityTaskWoken) \
   xStreamBufferSendCompletedFromISR((xMessageBuffer), (HigherPriorityTaskWoken))
 
-#define xMessageBufferReceiveCompletedFromISR(xMessageBuffer,          \
-                                              HigherPriorityTaskWoken) \
-  xStreamBufferReceiveCompletedFromISR((xMessageBuffer),               \
-                                       (HigherPriorityTaskWoken))
+#define xMessageBufferReceiveCompletedFromISR(xMessageBuffer, HigherPriorityTaskWoken) \
+  xStreamBufferReceiveCompletedFromISR((xMessageBuffer), (HigherPriorityTaskWoken))

@@ -309,8 +309,7 @@
 #endif
 #define portHAS_NESTED_INTERRUPTS 0
 #define portSET_INTERRUPT_MASK_FROM_ISR() 0
-#define portCLEAR_INTERRUPT_MASK_FROM_ISR(uxSavedStatusValue) \
-  (void)(uxSavedStatusValue)
+#define portCLEAR_INTERRUPT_MASK_FROM_ISR(uxSavedStatusValue) (void)(uxSavedStatusValue)
 #ifndef portSETUP_TCB
 #define portSETUP_TCB(pxTCB) (void)(pxTCB)
 #endif
@@ -516,34 +515,33 @@
 #define configCONTROL_INFINITE_LOOP()
 #endif
 
-#define tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE \
-  (((portUSING_MPU_WRAPPERS == 0) &&              \
-    (configSUPPORT_DYNAMIC_ALLOCATION == 1) &&    \
-    (configSUPPORT_STATIC_ALLOCATION == 1)) ||    \
+#define tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE                               \
+  (((portUSING_MPU_WRAPPERS == 0) && (configSUPPORT_DYNAMIC_ALLOCATION == 1) && \
+    (configSUPPORT_STATIC_ALLOCATION == 1)) ||                                  \
    ((portUSING_MPU_WRAPPERS == 1) && (configSUPPORT_DYNAMIC_ALLOCATION == 1)))
 
 struct xSTATIC_LIST_ITEM {
   TickType_t xDummy2;
-  void* pvDummy3[4];
+  void *pvDummy3[4];
 };
 typedef struct xSTATIC_LIST_ITEM StaticListItem_t;
 struct xSTATIC_MINI_LIST_ITEM {
   TickType_t xDummy2;
-  void* pvDummy3[2];
+  void *pvDummy3[2];
 };
 typedef struct xSTATIC_MINI_LIST_ITEM StaticMiniListItem_t;
 
 typedef struct xSTATIC_LIST {
   UBaseType_t uxDummy2;
-  void* pvDummy3;
+  void *pvDummy3;
   StaticMiniListItem_t xDummy4;
 } StaticList_t;
 
 typedef struct xSTATIC_TCB {
-  void* pxDummy1;
+  void *pxDummy1;
   StaticListItem_t xDummy3[2];
   UBaseType_t uxDummy5;
-  void* pxDummy6;
+  void *pxDummy6;
   uint8_t ucDummy7[configMAX_TASK_NAME_LEN];
   UBaseType_t uxDummy9;
   UBaseType_t uxDummy12[2];
@@ -554,16 +552,16 @@ typedef struct xSTATIC_TCB {
 } StaticTask_t;
 
 typedef struct xSTATIC_QUEUE {
-  void* pvDummy1[3];
+  void *pvDummy1[3];
   union {
-    void* pvDummy2;
+    void *pvDummy2;
     UBaseType_t uxDummy2;
   } u;
   StaticList_t xDummy3[2];
   UBaseType_t uxDummy4[3];
   uint8_t ucDummy5[2];
   uint8_t ucDummy6;
-  void* pvDummy7;
+  void *pvDummy7;
 } StaticQueue_t;
 typedef StaticQueue_t StaticSemaphore_t;
 
@@ -574,17 +572,17 @@ typedef struct xSTATIC_EVENT_GROUP {
 } StaticEventGroup_t;
 
 typedef struct xSTATIC_TIMER {
-  void* pvDummy1;
+  void *pvDummy1;
   StaticListItem_t xDummy2;
   TickType_t xDummy3;
-  void* pvDummy5;
+  void *pvDummy5;
   TaskFunction_t pvDummy6;
   uint8_t ucDummy8;
 } StaticTimer_t;
 
 typedef struct xSTATIC_STREAM_BUFFER {
   size_t uxDummy1[4];
-  void* pvDummy2[3];
+  void *pvDummy2[3];
   uint8_t ucDummy3;
   UBaseType_t uxDummy6;
 } StaticStreamBuffer_t;
