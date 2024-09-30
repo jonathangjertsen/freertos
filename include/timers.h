@@ -61,7 +61,7 @@ TimerHandle_t TimerCreateStatic(const char *const pcTimerName, const TickType_t 
 #endif
 void *pvTimerGetTimerID(const TimerHandle_t Timer);
 void SetTimerID(TimerHandle_t Timer, void *pvNewID);
-BaseType_t TimerIsTimerActive(TimerHandle_t Timer);
+bool TimerIsTimerActive(TimerHandle_t Timer);
 TaskHandle_t TimerGetTimerDaemonTaskHandle(void);
 #define TimerStart(Timer, xTicksToWait) \
   TimerGenericCommand((Timer), tmrCOMMAND_START, (TaskGetTickCount()), NULL, (xTicksToWait))

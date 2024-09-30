@@ -55,15 +55,15 @@ typedef QueueHandle_t SemaphoreHandle_t;
   GiveFromISR((QueueHandle_t)(xSemaphore), (HigherPriorityTaskWoken))
 #define xSemaphoreTakeFromISR(xSemaphore, HigherPriorityTaskWoken) \
   RecvFromISR((QueueHandle_t)(xSemaphore), NULL, (HigherPriorityTaskWoken))
-#define xSemaphoreCreateMutex() xQueueCreateMutex(queueQUEUE_TYPE_MUTEX)
-#define xSemaphoreCreateMuteStatic(MutexBuffer) xQueueCreateMuteStatic(queueQUEUE_TYPE_MUTEX, (MutexBuffer))
-#define xSemaphoreCreateRecursiveMutex() xQueueCreateMutex(queueQUEUE_TYPE_RECURSIVE_MUTEX)
+#define xSemaphoreCreateMutex() QueueCreateMutex(queueQUEUE_TYPE_MUTEX)
+#define xSemaphoreCreateMuteStatic(MutexBuffer) QueueCreateMuteStatic(queueQUEUE_TYPE_MUTEX, (MutexBuffer))
+#define xSemaphoreCreateRecursiveMutex() QueueCreateMutex(queueQUEUE_TYPE_RECURSIVE_MUTEX)
 #define xSemaphoreCreateRecursiveMuteStatic(pStaticSemaphore) \
-  xQueueCreateMuteStatic(queueQUEUE_TYPE_RECURSIVE_MUTEX, (pStaticSemaphore))
+  QueueCreateMuteStatic(queueQUEUE_TYPE_RECURSIVE_MUTEX, (pStaticSemaphore))
 #define xSemaphoreCreateCounting(uxMaxCount, uxInitialCount) \
-  xQueueCreateCountingSemaphore((uxMaxCount), (uxInitialCount))
+  QueueCreateCountingSemaphore((uxMaxCount), (uxInitialCount))
 #define xSemaphoreCreateCountingStatic(uxMaxCount, uxInitialCount, SemaphoreBuffer) \
-  xQueueCreateCountingSemaphoreStatic((uxMaxCount), (uxInitialCount), (SemaphoreBuffer))
+  QueueCreateCountingSemaphoreStatic((uxMaxCount), (uxInitialCount), (SemaphoreBuffer))
 #define vSemaphoreDelete(xSemaphore) vQueueDelete((QueueHandle_t)(xSemaphore))
 #define xSemaphoreGetMutexHolder(xSemaphore) xQueueGetMutexHolder((xSemaphore))
 #define xSemaphoreGetMutexHolderFromISR(xSemaphore) xQueueGetMutexHolderFromISR((xSemaphore))

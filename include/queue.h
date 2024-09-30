@@ -38,30 +38,22 @@ typedef struct Queue_t *QueueSetHandle_t;
 
 typedef struct Queue_t *QueueSetMemberHandle_t;
 
-#define queueSEND_TO_BACK ((BaseType_t)0)
-#define queueSEND_TO_FRONT ((BaseType_t)1)
-#define queueOVERWRITE ((BaseType_t)2)
+enum class QueuePos_t {
+  Back = 0,
+  Front = 1,
+  Overwrite = 2,
+};
 
-#define queueQUEUE_TYPE_BASE ((uint8_t)0U)
-#define queueQUEUE_TYPE_MUTEX ((uint8_t)1U)
-#define queueQUEUE_TYPE_COUNTING_SEMAPHORE ((uint8_t)2U)
-#define queueQUEUE_TYPE_BINARY_SEMAPHORE ((uint8_t)3U)
-#define queueQUEUE_TYPE_RECURSIVE_MUTEX ((uint8_t)4U)
-#define queueQUEUE_TYPE_SET ((uint8_t)5U)
-
-#define QueueCreate(len, itemSize) QueueGenericCreate(len, itemSize, (queueQUEUE_TYPE_BASE))
-#define QueueCreateStatic(len, itemSize, storage, buf) \
-  xQueueCreateStatic(len, itemSize, storage, buf, (queueQUEUE_TYPE_BASE))
 #define QueueGetStaticBuffers(q, storage, staticQ) GetStaticBuffers(q, storage, (staticQ))
-#define QueueSendToFront(q, item, ticks) Send(q, item, ticks, queueSEND_TO_FRONT)
+#define QueueSendToFront(q, item, ticks) Send(q, item, ticks, QueuePos_t::Front)
 
-#define QueueSendToBack(q, item, ticks) Send(q, item, ticks, queueSEND_TO_BACK)
+#define QueueSendToBack(q, item, ticks) Send(q, item, ticks, QueuePos_t::Back)
 
-#define QueueSend(q, item, ticks) Send(q, item, ticks, queueSEND_TO_BACK)
+#define QueueSend(q, item, ticks) Send(q, item, ticks, QueuePos_t::Back)
 
-#define QueueOverwrite(q, item) QueueGenericSend(q, item, 0, queueOVERWRITE)
+#define QueueOverwrite(q, item) QueueGenericSend(q, item, 0, QueuePos_t::Overwrite)
 
-BaseType_t Send(QueueHandle_t q, const void *const item, TickType_t ticks, const BaseType_t copyPos);
+BaseType_t Send(QueueHandle_t q, const void *const item, TickType_t ticks, QueuePos_t pos);
 
 BaseType_t QueuePeek(QueueHandle_t q, void *const pvBuffer, TickType_t ticks);
 
@@ -75,15 +67,15 @@ UBaseType_t uxQueueSpacesAvailable(const QueueHandle_t q);
 
 void vQueueDelete(QueueHandle_t q);
 
-#define QueueSendToFrontFromISR(q, item, woken) SendFromISR(q, item, woken, queueSEND_TO_FRONT)
+#define QueueSendToFrontFromISR(q, item, woken) SendFromISR(q, item, woken, QueuePos_t::Front)
 
-#define QueueSendToBackFromISR(q, item, woken) SendFromISR(q, item, woken, queueSEND_TO_BACK)
+#define QueueSendToBackFromISR(q, item, woken) SendFromISR(q, item, woken, QueuePos_t::Back)
 
-#define QueueOverwriteFromISR(q, item, woken) SendFromISR(q, item, woken, queueOVERWRITE)
+#define QueueOverwriteFromISR(q, item, woken) SendFromISR(q, item, woken, QueuePos_t::Overwrite)
 
-#define QueueSendFromISR(q, item, woken) SendFromISR(q, item, woken, queueSEND_TO_BACK)
+#define QueueSendFromISR(q, item, woken) SendFromISR(q, item, woken, QueuePos_t::Back)
 
-BaseType_t SendFromISR(QueueHandle_t q, const void *const item, BaseType_t *const woken, const BaseType_t copyPos);
+BaseType_t SendFromISR(QueueHandle_t q, const void *const item, BaseType_t *const woken, QueuePos_t pos);
 BaseType_t GiveFromISR(QueueHandle_t q, BaseType_t *const woken);
 
 BaseType_t RecvFromISR(QueueHandle_t q, void *const pvBuffer, BaseType_t *const woken);
@@ -106,10 +98,10 @@ BaseType_t QueueGiveMutexRecursive(QueueHandle_t xMutex);
 
 #define QueueReset(xQueue) QueueGenericReset((xQueue), false)
 
-QueueHandle_t QueueGenericCreate(const UBaseType_t len, const UBaseType_t itemSize, const uint8_t type);
+QueueHandle_t QueueCreate(const UBaseType_t len, const UBaseType_t itemSize);
 
-QueueHandle_t xQueueCreateStatic(const UBaseType_t len, const UBaseType_t itemSize, uint8_t *storage,
-                                 StaticQueue_t *pStaticQueue, const uint8_t type);
+QueueHandle_t QueueCreateStatic(const UBaseType_t len, const UBaseType_t itemSize, uint8_t *storage,
+                                StaticQueue_t *pStaticQueue);
 
 BaseType_t GetStaticBuffers(QueueHandle_t q, uint8_t **storage, StaticQueue_t **staticQ);
 
@@ -124,6 +116,3 @@ QueueSetMemberHandle_t QueueSelectFromSet(QueueSetHandle_t QueueSet, const TickT
 QueueSetMemberHandle_t QueueSelectFromSetFromISR(QueueSetHandle_t QueueSet);
 
 void vQueueWaitForMessageRestricted(QueueHandle_t q, TickType_t ticks, const BaseType_t xWaitIndefinitely);
-BaseType_t QueueGenericReset(QueueHandle_t q, BaseType_t xNewQueue);
-UBaseType_t GetQueueItemSize(QueueHandle_t q);
-UBaseType_t GetQueueLength(QueueHandle_t q);

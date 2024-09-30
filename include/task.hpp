@@ -100,6 +100,12 @@ struct CriticalSection {
   ~CriticalSection() { EXIT_CRITICAL(); }
 };
 
+struct CriticalSectionISR {
+  UBaseType_t stored;
+  CriticalSectionISR() { stored = ENTER_CRITICAL_FROM_ISR(); }
+  ~CriticalSectionISR() { EXIT_CRITICAL_FROM_ISR(stored); }
+};
+
 #define taskDISABLE_INTERRUPTS() portDISABLE_INTERRUPTS()
 
 #define taskENABLE_INTERRUPTS() portENABLE_INTERRUPTS()
